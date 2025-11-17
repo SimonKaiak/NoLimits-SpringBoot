@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.example.NoLimits.service.ProductoServiceTest
+-------------------------------------------------------------------------------
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 38.13 s -- in com.example.NoLimits.service.ProductoServiceTest
