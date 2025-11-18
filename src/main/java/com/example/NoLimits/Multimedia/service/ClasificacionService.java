@@ -46,12 +46,43 @@ public class ClasificacionService {
         return clasificacionRepository.save(clasificacion);
     }
 
+    /**
+     * PUT: actualización completa.
+     */
     public ClasificacionModel update(Long id, ClasificacionModel detalles) {
         ClasificacionModel existente = findById(id);
 
-        if (detalles.getNombre() != null && !detalles.getNombre().isBlank()) {
-            String nombreNormalizado = detalles.getNombre().trim();
-            // Validar duplicados solo si cambia el nombre
+        if (detalles.getNombre() == null || detalles.getNombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre de la clasificación es obligatorio en PUT");
+        }
+
+        String nombreNormalizado = detalles.getNombre().trim();
+        if (!nombreNormalizado.equalsIgnoreCase(existente.getNombre())
+                && clasificacionRepository.existsByNombreIgnoreCase(nombreNormalizado)) {
+            throw new IllegalArgumentException("Ya existe una clasificación con el nombre: " + nombreNormalizado);
+        }
+        existente.setNombre(nombreNormalizado);
+
+        existente.setDescripcion(detalles.getDescripcion());
+        existente.setActivo(detalles.isActivo());
+
+        return clasificacionRepository.save(existente);
+    }
+
+    /**
+     * PATCH: actualización parcial.
+     * Solo modifica los campos presentes en el mapa.
+     */
+    public ClasificacionModel patch(Long id, Map<String, Object> campos) {
+        ClasificacionModel existente = findById(id);
+
+        if (campos.containsKey("nombre")) {
+            Object valor = campos.get("nombre");
+            if (valor == null || valor.toString().isBlank()) {
+                throw new IllegalArgumentException("El nombre de la clasificación no puede ser vacío");
+            }
+
+            String nombreNormalizado = valor.toString().trim();
             if (!nombreNormalizado.equalsIgnoreCase(existente.getNombre())
                     && clasificacionRepository.existsByNombreIgnoreCase(nombreNormalizado)) {
                 throw new IllegalArgumentException("Ya existe una clasificación con el nombre: " + nombreNormalizado);
@@ -59,13 +90,22 @@ public class ClasificacionService {
             existente.setNombre(nombreNormalizado);
         }
 
-        if (detalles.getDescripcion() != null) {
-            existente.setDescripcion(detalles.getDescripcion());
+        if (campos.containsKey("descripcion")) {
+            Object valor = campos.get("descripcion");
+            existente.setDescripcion(valor != null ? valor.toString() : null);
         }
 
-        // Para update completo podrías decidir actualizar 'activo' aquí.
-        // Si más adelante haces PATCH, conviene manejarlo allá.
-        existente.setActivo(detalles.isActivo());
+        if (campos.containsKey("activo")) {
+            Object valor = campos.get("activo");
+            if (valor == null) {
+                throw new IllegalArgumentException("El campo 'activo' no puede ser null");
+            }
+            if (valor instanceof Boolean booleanValue) {
+                existente.setActivo(booleanValue);
+            } else {
+                throw new IllegalArgumentException("El campo 'activo' debe ser boolean (true/false)");
+            }
+        }
 
         return clasificacionRepository.save(existente);
     }

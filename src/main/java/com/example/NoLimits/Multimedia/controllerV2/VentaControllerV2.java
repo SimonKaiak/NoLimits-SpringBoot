@@ -1,6 +1,5 @@
 package com.example.NoLimits.Multimedia.controllerV2;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +9,15 @@ import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -21,10 +28,14 @@ import com.example.NoLimits.Multimedia.model.VentaModel;
 import com.example.NoLimits.Multimedia.service.VentaService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.*;
-import io.swagger.v3.oas.annotations.responses.*;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping(value = "/api/v2/ventas", produces = MediaTypes.HAL_JSON_VALUE)
@@ -103,7 +114,7 @@ public class VentaControllerV2 {
     @Operation(summary = "Actualizar parcialmente venta (PATCH - HATEOAS)")
     public ResponseEntity<EntityModel<VentaModel>> patch(@PathVariable Long id, @RequestBody VentaModel detalles) {
         try {
-            var actualizada = ventaService.patchVentaModel(id, detalles);
+            var actualizada = ventaService.patch(id, detalles);
             return ResponseEntity.ok(ventaAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();

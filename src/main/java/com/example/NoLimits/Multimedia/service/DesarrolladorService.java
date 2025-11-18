@@ -60,6 +60,28 @@ public class DesarrolladorService {
         return desarrolladorRepository.save(d);
     }
 
+    /** -----------------------------------------
+     ** 🟦 PATCH: actualización parcial**
+     ** ----------------------------------------- */
+    public DesarrolladorModel patch(Long id, DesarrolladorModel in) {
+        DesarrolladorModel d = findById(id);
+
+        // Solo actualiza lo que venga no nulo
+        if (in.getNombre() != null) {
+            String nuevo = in.getNombre().trim();
+            if (nuevo.isEmpty()) {
+                throw new IllegalArgumentException("El nombre no puede estar vacío");
+            }
+            if (!nuevo.equalsIgnoreCase(d.getNombre())
+                    && desarrolladorRepository.existsByNombreIgnoreCase(nuevo)) {
+                throw new IllegalArgumentException("Ya existe un desarrollador con ese nombre");
+            }
+            d.setNombre(nuevo);
+        }
+
+        return desarrolladorRepository.save(d);
+    }
+
     public void deleteById(Long id) {
         // 404 si no existe
         findById(id);

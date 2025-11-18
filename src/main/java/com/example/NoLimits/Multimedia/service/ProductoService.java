@@ -8,7 +8,10 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -73,10 +76,8 @@ public class ProductoService {
     }
 
     public void deleteById(Long id) {
-        // 404 si no existe
         findById(id);
 
-        // 409 si tiene movimientos en detalle_venta
         boolean tieneMovimientos = !detalleVentaRepository.findByProducto_Id(id).isEmpty();
         if (tieneMovimientos) {
             throw new IllegalStateException(
@@ -115,7 +116,6 @@ public class ProductoService {
 
     /* ================= RESUMEN ================= */
 
-    // ID, nombre, precio, tipo, estado
     public List<Map<String, Object>> obtenerProductosConDatos() {
         List<Object[]> resultados = productoRepository.obtenerProductosResumen();
         List<Map<String, Object>> lista = new ArrayList<>();

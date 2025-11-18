@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.example.NoLimits.Multimedia.model.MetodoPagoModel;
 import com.example.NoLimits.Multimedia.repository.MetodoPagoRepository;
+import com.example.NoLimits.Multimedia.repository.VentaRepository;
 import com.example.NoLimits.Multimedia.service.MetodoPagoService;
 
 @SpringBootTest
@@ -31,11 +33,14 @@ public class MetodoPagoServiceTest {
     @MockBean
     private MetodoPagoRepository metodoPagoRepository;
 
-    // Método auxiliar para crear un método de pago base
+    @MockBean
+    private VentaRepository ventaRepository;
+
     private MetodoPagoModel createMetodoPago() {
         MetodoPagoModel metodoPago = new MetodoPagoModel();
         metodoPago.setId(1L);
         metodoPago.setNombre("Tarjeta de Crédito");
+        metodoPago.setActivo(true);
         return metodoPago;
     }
 
@@ -50,10 +55,7 @@ public class MetodoPagoServiceTest {
     @Test
     public void testFindById() {
         when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(createMetodoPago()));
-
-        // Tu servicio debería devolver directamente MetodoPagoModel, no Optional.
         MetodoPagoModel metodoPago = metodoPagoService.findById(1L);
-
         assertNotNull(metodoPago);
         assertEquals("Tarjeta de Crédito", metodoPago.getNombre());
     }
@@ -61,6 +63,7 @@ public class MetodoPagoServiceTest {
     @Test
     public void testSave() {
         MetodoPagoModel metodoPago = createMetodoPago();
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Tarjeta de Crédito")).thenReturn(false);
         when(metodoPagoRepository.save(metodoPago)).thenReturn(metodoPago);
 
         MetodoPagoModel savedMetodoPago = metodoPagoService.save(metodoPago);
@@ -74,8 +77,10 @@ public class MetodoPagoServiceTest {
         MetodoPagoModel existingMetodoPago = createMetodoPago();
         MetodoPagoModel newDetails = new MetodoPagoModel();
         newDetails.setNombre("PayPal");
+        newDetails.setActivo(false);
 
         when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existingMetodoPago));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("PayPal")).thenReturn(false);
         when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -83,6 +88,7 @@ public class MetodoPagoServiceTest {
 
         assertNotNull(updatedMetodoPago);
         assertEquals("PayPal", updatedMetodoPago.getNombre());
+        assertEquals(false, updatedMetodoPago.getActivo());
     }
 
     @Test
@@ -92,6 +98,7 @@ public class MetodoPagoServiceTest {
         patchDetails.setNombre("Transferencia Bancaria");
 
         when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existingMetodoPago));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Transferencia Bancaria")).thenReturn(false);
         when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -106,11 +113,11 @@ public class MetodoPagoServiceTest {
         MetodoPagoModel metodo = createMetodoPago();
 
         when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodo));
+        when(ventaRepository.findByMetodoPagoModel_Id(1L)).thenReturn(Collections.emptyList());
         doNothing().when(metodoPagoRepository).deleteById(1L);
 
         metodoPagoService.deleteById(1L);
 
-        // antes verificabas delete(metodo); tu service usa deleteById(id)
         verify(metodoPagoRepository, times(1)).deleteById(1L);
     }
 }

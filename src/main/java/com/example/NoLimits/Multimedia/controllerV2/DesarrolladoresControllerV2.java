@@ -1,4 +1,7 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/DesarrolladoresControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2;
+
+import java.util.stream.Collectors;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.DesarrolladoresModelAssembler;
@@ -7,14 +10,20 @@ import com.example.NoLimits.Multimedia.service.DesarrolladoresService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(
@@ -59,6 +68,24 @@ public class DesarrolladoresControllerV2 {
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/relaciones/{relacionId}")
+    @Operation(summary = "Actualizar parcialmente la relación Producto ↔ Desarrollador (HATEOAS)")
+    public ResponseEntity<EntityModel<DesarrolladoresModel>> patch(
+            @PathVariable Long productoId,
+            @PathVariable Long relacionId,
+            @RequestBody DesarrolladoresModel parciales
+    ) {
+        try {
+            var actualizado = service.patch(relacionId, parciales);
+            return ResponseEntity.ok(assembler.toModel(actualizado));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException ex) {
+            // p.ej. intento de duplicar una relación existente
             return ResponseEntity.badRequest().build();
         }
     }

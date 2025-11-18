@@ -1,13 +1,5 @@
 package com.example.NoLimits.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.TipoProductoModel;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
@@ -19,6 +11,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -273,13 +280,12 @@ public class TipoProductoServiceTest {
     public void testObtenerTipoProductoConNombres() {
         // Fila simulando: id, nombre, descripcion, activo
         Object[] fila = new Object[]{
-            1L,
-            "Videojuegos",
-            "Categoría para videojuegos",
-            true
+                1L,
+                "Videojuegos",
+                "Categoría para videojuegos",
+                true
         };
 
-        // Muy importante: tipado explícito
         List<Object[]> filas = List.<Object[]>of(fila);
 
         when(tipoProductoRepository.obtenerTipoProductoResumen())

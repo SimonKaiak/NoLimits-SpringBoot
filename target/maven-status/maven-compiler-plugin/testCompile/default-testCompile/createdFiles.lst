@@ -1,11 +1,5 @@
-com\example\NoLimits\service\UsuarioServiceTest.class
 com\example\NoLimits\service\TipoProductoServiceTest.class
 com\example\NoLimits\service\ProductoServiceTest.class
-com\example\NoLimits\service\DetallePedidoServiceTest$4.class
-com\example\NoLimits\service\PedidoServiceTest.class
-com\example\NoLimits\service\VentaServiceTest.class
-com\example\NoLimits\service\DetallePedidoServiceTest$2.class
-com\example\NoLimits\service\DetallePedidoServiceTest$1.class
-com\example\NoLimits\service\DetallePedidoServiceTest$3.class
-com\example\NoLimits\service\DetallePedidoServiceTest.class
 com\example\NoLimits\service\MetodoPagoServiceTest.class
+com\example\NoLimits\service\VentaServiceTest.class
+com\example\NoLimits\service\UsuarioServiceTest.class

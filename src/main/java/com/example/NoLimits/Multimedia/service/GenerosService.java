@@ -26,36 +26,23 @@ public class GenerosService {
     @Autowired
     private GeneroRepository generoRepository;
 
-    /**
-     * Obtiene todas las relaciones Producto–Género de un producto.
-     */
     public List<GenerosModel> findByProducto(Long productoId) {
         return generosRepository.findByProducto_Id(productoId);
     }
 
-    /**
-     * Obtiene todas las relaciones Producto–Género de un género.
-     */
     public List<GenerosModel> findByGenero(Long generoId) {
         return generosRepository.findByGenero_Id(generoId);
     }
 
-    /**
-     * Vincula Producto ↔ Género si no existe la relación.
-     * Si ya existe, devuelve la relación existente.
-     */
     public GenerosModel link(Long productoId, Long generoId) {
-        // Validar existencia de Producto
         ProductoModel p = productoRepository.findById(productoId)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
-        // Validar existencia de Género
         GeneroModel g = generoRepository.findById(generoId)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Género no encontrado con ID: " + generoId));
 
-        // Si la relación ya existe, la retornamos
         if (generosRepository.existsByProducto_IdAndGenero_Id(productoId, generoId)) {
             return generosRepository.findByProducto_Id(productoId).stream()
                     .filter(rel -> rel.getGenero() != null
@@ -66,18 +53,13 @@ public class GenerosService {
                                     "La relación Producto-Género existe en BD pero no se pudo recuperar."));
         }
 
-        // Crear nueva relación
         GenerosModel rel = new GenerosModel();
         rel.setProducto(p);
         rel.setGenero(g);
         return generosRepository.save(rel);
     }
 
-    /**
-     * Elimina el vínculo Producto ↔ Género si existe.
-     */
     public void unlink(Long productoId, Long generoId) {
-        // Validar existencia de Producto y Género
         productoRepository.findById(productoId)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
@@ -92,9 +74,42 @@ public class GenerosService {
     }
 
     /**
-     * Devuelve un resumen crudo de relaciones Producto–Género.
-     * Cada fila: [relId, productoId, productoNombre, generoId, generoNombre]
+     * PATCH: Actualiza parcialmente la relación Producto–Género.
+     * Se puede cambiar el producto o el género asociado.
      */
+    public GenerosModel patch(Long relacionId, Long nuevoProductoId, Long nuevoGeneroId) {
+
+        GenerosModel rel = generosRepository.findById(relacionId)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Relación Producto–Género no encontrada con ID: " + relacionId));
+
+        if (nuevoProductoId != null) {
+            ProductoModel nuevoProducto = productoRepository.findById(nuevoProductoId)
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Producto no encontrado con ID: " + nuevoProductoId));
+
+            if (generosRepository.existsByProducto_IdAndGenero_Id(nuevoProductoId, rel.getGenero().getId())) {
+                throw new IllegalArgumentException("Ya existe una relación con ese producto y género");
+            }
+
+            rel.setProducto(nuevoProducto);
+        }
+
+        if (nuevoGeneroId != null) {
+            GeneroModel nuevoGenero = generoRepository.findById(nuevoGeneroId)
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Género no encontrado con ID: " + nuevoGeneroId));
+
+            if (generosRepository.existsByProducto_IdAndGenero_Id(rel.getProducto().getId(), nuevoGeneroId)) {
+                throw new IllegalArgumentException("Ya existe una relación con ese producto y género");
+            }
+
+            rel.setGenero(nuevoGenero);
+        }
+
+        return generosRepository.save(rel);
+    }
+
     public List<Object[]> obtenerResumen(Long productoId, Long generoId) {
         return generosRepository.obtenerResumen(productoId, generoId);
     }

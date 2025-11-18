@@ -1,4 +1,3 @@
-// Ruta: src/test/java/com/example/NoLimits/service/ClasificacionServiceTest.java
 package com.example.NoLimits.service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -12,12 +11,21 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -135,6 +143,8 @@ public class ClasificacionServiceTest {
 
         ClasificacionModel cambios = new ClasificacionModel();
         cambios.setNombre("E"); // nuevo nombre que ya existe
+        cambios.setDescripcion("Otra");
+        cambios.setActivo(true);
 
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(clasificacionRepository.existsByNombreIgnoreCase("E")).thenReturn(true);
@@ -227,7 +237,7 @@ public class ClasificacionServiceTest {
         when(clasificacionRepository.obtenerClasificacionesResumen())
                 .thenReturn(Collections.singletonList(fila));
 
-        List<java.util.Map<String, Object>> resumen =
+        List<Map<String, Object>> resumen =
                 clasificacionService.obtenerClasificacionesConDatos();
 
         assertNotNull(resumen);
@@ -238,5 +248,98 @@ public class ClasificacionServiceTest {
         assertEquals("T", item.get("Nombre"));
         assertEquals("Contenido apto para adolescentes.", item.get("Descripcion"));
         assertEquals(true, item.get("Activo"));
+    }
+
+    // ================== TESTS PATCH ==================
+
+    @Test
+    public void testPatch_DescripcionYActivo() {
+        ClasificacionModel existente = createClasificacion();
+
+        Map<String, Object> campos = new HashMap<>();
+        campos.put("descripcion", "Actualizada: solo para adultos.");
+        campos.put("activo", false);
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(clasificacionRepository.save(any(ClasificacionModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ClasificacionModel actualizada = clasificacionService.patch(1L, campos);
+
+        assertNotNull(actualizada);
+        assertEquals("T", actualizada.getNombre()); // nombre se mantiene
+        assertEquals("Actualizada: solo para adultos.", actualizada.getDescripcion());
+        assertFalse(actualizada.isActivo());
+    }
+
+    @Test
+    public void testPatch_CambiaNombre_Exito() {
+        ClasificacionModel existente = createClasificacion();
+
+        Map<String, Object> campos = new HashMap<>();
+        campos.put("nombre", "M");
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(clasificacionRepository.existsByNombreIgnoreCase("M")).thenReturn(false);
+        when(clasificacionRepository.save(any(ClasificacionModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ClasificacionModel actualizada = clasificacionService.patch(1L, campos);
+
+        assertNotNull(actualizada);
+        assertEquals("M", actualizada.getNombre());
+        assertEquals("Contenido apto para adolescentes.", actualizada.getDescripcion());
+        assertTrue(actualizada.isActivo());
+    }
+
+    @Test
+    public void testPatch_NombreDuplicado() {
+        ClasificacionModel existente = createClasificacion();
+
+        Map<String, Object> campos = new HashMap<>();
+        campos.put("nombre", "E");
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(clasificacionRepository.existsByNombreIgnoreCase("E")).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> clasificacionService.patch(1L, campos));
+    }
+
+    @Test
+    public void testPatch_NombreVacio() {
+        ClasificacionModel existente = createClasificacion();
+
+        Map<String, Object> campos = new HashMap<>();
+        campos.put("nombre", "  "); // blanco
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> clasificacionService.patch(1L, campos));
+    }
+
+    @Test
+    public void testPatch_ActivoTipoIncorrecto() {
+        ClasificacionModel existente = createClasificacion();
+
+        Map<String, Object> campos = new HashMap<>();
+        campos.put("activo", "si"); // no boolean
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> clasificacionService.patch(1L, campos));
+    }
+
+    @Test
+    public void testPatch_IdNoExiste() {
+        Map<String, Object> campos = new HashMap<>();
+        campos.put("descripcion", "No importa");
+
+        when(clasificacionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> clasificacionService.patch(99L, campos));
     }
 }

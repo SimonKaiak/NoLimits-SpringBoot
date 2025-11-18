@@ -1,7 +1,17 @@
 package com.example.NoLimits.Multimedia.model;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -35,7 +45,11 @@ public class RolModel {
     @Schema(description = "Indica si el rol está activo", example = "true")
     private Boolean activo = true;
 
-    // Utilidad
+    @OneToMany(mappedBy = "rol", cascade = CascadeType.ALL, orphanRemoval = false)
+    @JsonIgnore
+    @Schema(description = "Usuarios que tienen este rol", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<UsuarioModel> usuarios;
+
     public boolean esActivo() {
         return Boolean.TRUE.equals(activo);
     }

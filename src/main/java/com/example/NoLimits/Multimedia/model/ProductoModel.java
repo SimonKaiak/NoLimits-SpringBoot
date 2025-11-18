@@ -4,9 +4,22 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import lombok.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "productos")
@@ -34,7 +47,6 @@ public class ProductoModel {
 
     /* ====== Relaciones N:1 ====== */
 
-    // PRODUCTO -> TIPO_PRODUCTO
     @ManyToOne(optional = false)
     @JoinColumn(name = "tipo_producto_id", nullable = false)
     @NotNull(message = "El producto debe pertenecer a un tipo.")
@@ -45,7 +57,6 @@ public class ProductoModel {
     )
     private TipoProductoModel tipoProducto;
 
-    // PRODUCTO -> CLASIFICACION
     @ManyToOne
     @JoinColumn(name = "clasificacion_id")
     @Schema(
@@ -55,7 +66,6 @@ public class ProductoModel {
     )
     private ClasificacionModel clasificacion;
 
-    // PRODUCTO -> ESTADO
     @ManyToOne(optional = false)
     @JoinColumn(name = "estado_id", nullable = false)
     @NotNull(message = "El producto debe tener un estado.")
@@ -66,41 +76,35 @@ public class ProductoModel {
     )
     private EstadoModel estado;
 
-    /* ====== Relaciones 1:N (propias del producto) ====== */
+    /* ====== Relaciones 1:N ====== */
 
-    // PRODUCTO -> IMAGENES
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Imágenes asociadas al producto", accessMode = Schema.AccessMode.READ_ONLY)
     private List<ImagenesModel> imagenes;
 
-    // PRODUCTO -> DETALLE_VENTA (la venta se modela desde DetalleVentaModel/VentaModel)
     @OneToMany(mappedBy = "producto")
     @JsonIgnore
     @Schema(description = "Detalles de venta donde aparece este producto", accessMode = Schema.AccessMode.READ_ONLY)
     private List<DetalleVentaModel> detallesVenta;
 
-    /* ====== Relaciones N:M via tablas puente ====== */
+    /* ====== Relaciones N:M vía tablas puente ====== */
 
-    // PRODUCTO <-> PLATAFORMA (puente: PLATAFORMAS)
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con plataformas (puente 'plataformas')", accessMode = Schema.AccessMode.READ_ONLY)
     private List<PlataformasModel> plataformas;
 
-    // PRODUCTO <-> GENERO (puente: GENEROS)
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con géneros (puente 'generos')", accessMode = Schema.AccessMode.READ_ONLY)
     private List<GenerosModel> generos;
 
-    // PRODUCTO <-> EMPRESA (puente: EMPRESAS)
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con empresas (puente 'empresas')", accessMode = Schema.AccessMode.READ_ONLY)
     private List<EmpresasModel> empresas;
 
-    // PRODUCTO <-> DESARROLLADOR (puente: DESARROLLADORES)
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con desarrolladores (puente 'desarrolladores')", accessMode = Schema.AccessMode.READ_ONLY)

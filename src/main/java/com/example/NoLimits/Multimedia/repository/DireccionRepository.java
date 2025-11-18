@@ -12,13 +12,21 @@ import com.example.NoLimits.Multimedia.model.DireccionModel;
 @Repository
 public interface DireccionRepository extends JpaRepository<DireccionModel, Long> {
 
+    // 1 usuario → 1 dirección
     Optional<DireccionModel> findByUsuarioModel_Id(Long usuarioId);
     boolean existsByUsuarioModel_Id(Long usuarioId);
 
+    // Direcciones por comuna
     List<DireccionModel> findByComuna_Id(Long comunaId);
 
+    // Para bloquear borrado de Comuna si tiene direcciones
+    boolean existsByComuna_Id(Long comunaId);
+
     @Query("""
-        SELECT d.id, d.calle, d.numero, c.id, c.nombre, r.id, r.nombre, u.id, u.nombre
+        SELECT d.id, d.calle, d.numero,
+               c.id, c.nombre,
+               r.id, r.nombre,
+               u.id, u.nombre
         FROM DireccionModel d
         JOIN d.comuna c
         JOIN c.region r

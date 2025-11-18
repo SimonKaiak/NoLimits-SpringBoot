@@ -74,4 +74,41 @@ public class PlataformasService {
             plataformasRepository.deleteByProducto_IdAndPlataforma_Id(productoId, plataformaId);
         }
     }
+
+    /**
+     * PATCH: Actualiza parcialmente la relación Producto–Plataforma.
+     * Se puede cambiar el producto o la plataforma asociados.
+     */
+    public PlataformasModel patch(Long relacionId, Long nuevoProductoId, Long nuevaPlataformaId) {
+
+        PlataformasModel rel = plataformasRepository.findById(relacionId)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Relación Producto–Plataforma no encontrada con ID: " + relacionId));
+
+        if (nuevoProductoId != null) {
+            ProductoModel nuevoProducto = productoRepository.findById(nuevoProductoId)
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Producto no encontrado con ID: " + nuevoProductoId));
+
+            if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(nuevoProductoId, rel.getPlataforma().getId())) {
+                throw new IllegalArgumentException("Ya existe una relación con ese producto y plataforma");
+            }
+
+            rel.setProducto(nuevoProducto);
+        }
+
+        if (nuevaPlataformaId != null) {
+            PlataformaModel nuevaPlataforma = plataformaRepository.findById(nuevaPlataformaId)
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + nuevaPlataformaId));
+
+            if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(rel.getProducto().getId(), nuevaPlataformaId)) {
+                throw new IllegalArgumentException("Ya existe una relación con ese producto y plataforma");
+            }
+
+            rel.setPlataforma(nuevaPlataforma);
+        }
+
+        return plataformasRepository.save(rel);
+    }
 }

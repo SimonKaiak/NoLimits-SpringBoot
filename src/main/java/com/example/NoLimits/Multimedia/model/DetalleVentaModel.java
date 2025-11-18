@@ -1,7 +1,14 @@
 package com.example.NoLimits.Multimedia.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -38,13 +45,11 @@ public class DetalleVentaModel {
     @Schema(description = "Cantidad vendida", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer cantidad = 1;
 
-    /** Precio unitario cobrado en esta línea (congelado al momento de la venta). */
     @Column(nullable = false)
     @NotNull(message = "Debe indicarse el precio unitario.")
     @Schema(description = "Precio unitario al momento de la venta", example = "12990")
     private Float precioUnitario;
 
-    /** Subtotal calculado (cantidad * precioUnitario). */
     @Schema(description = "Subtotal calculado de la línea", accessMode = Schema.AccessMode.READ_ONLY)
     public Float getSubtotal() {
         if (precioUnitario == null || cantidad == null) return 0f;

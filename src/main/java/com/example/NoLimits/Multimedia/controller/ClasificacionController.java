@@ -16,7 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -167,6 +175,50 @@ public class ClasificacionController {
             @Valid @org.springframework.web.bind.annotation.RequestBody ClasificacionModel detalles
     ) {
         ClasificacionModel actualizada = clasificacionService.update(id, detalles);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    // ================== ACTUALIZAR PARCIAL (PATCH) ==================
+
+    @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
+    @Operation(
+            summary = "Actualizar parcialmente una clasificación.",
+            description = "Modifica uno o más campos de la clasificación indicada (PATCH)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Clasificación actualizada parcialmente.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionModel.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Clasificación no encontrada.")
+    })
+    public ResponseEntity<ClasificacionModel> actualizarParcial(
+            @PathVariable Long id,
+            @RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "PATCH ejemplo",
+                                            description = "Ejemplo de actualización parcial.",
+                                            value = """
+                                                    {
+                                                      "descripcion": "Actualizada: contenido solo para adultos.",
+                                                      "activo": false
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+            @org.springframework.web.bind.annotation.RequestBody Map<String, Object> campos
+    ) {
+        ClasificacionModel actualizada = clasificacionService.patch(id, campos);
         return ResponseEntity.ok(actualizada);
     }
 

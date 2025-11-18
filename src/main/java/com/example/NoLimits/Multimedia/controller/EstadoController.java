@@ -6,7 +6,15 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.EstadoModel;
@@ -17,11 +25,12 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 
 @RestController
 @RequestMapping("/api/v1/estados")
@@ -33,10 +42,7 @@ public class EstadoController {
 
     // ================== LISTAR TODOS ==================
     @GetMapping
-    @Operation(
-        summary = "Listar todos los estados",
-        description = "Obtiene la lista completa de estados registrados."
-    )
+    @Operation(summary = "Listar todos los estados", description = "Obtiene la lista completa de estados registrados.")
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -58,18 +64,12 @@ public class EstadoController {
 
     // ================== BUSCAR POR ID ==================
     @GetMapping("/{id}")
-    @Operation(
-        summary = "Buscar estado por ID",
-        description = "Obtiene un estado específico según su ID."
-    )
+    @Operation(summary = "Buscar estado por ID", description = "Obtiene un estado específico según su ID.")
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
             description = "Estado encontrado.",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = EstadoModel.class)
-            )
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EstadoModel.class))
         ),
         @ApiResponse(responseCode = "404", description = "Estado no encontrado.")
     })
@@ -81,12 +81,9 @@ public class EstadoController {
         }
     }
 
-    // ================== BUSCAR POR NOMBRE (LIKE) ==================
+    // ================== BUSCAR POR NOMBRE ==================
     @GetMapping("/nombre/{nombre}")
-    @Operation(
-        summary = "Buscar estados por nombre",
-        description = "Busca estados cuyo nombre contenga el texto indicado (ignorando mayúsculas/minúsculas)."
-    )
+    @Operation(summary = "Buscar estados por nombre", description = "Busca estados cuyo nombre contenga el texto indicado.")
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -108,10 +105,7 @@ public class EstadoController {
 
     // ================== LISTAR ACTIVOS ==================
     @GetMapping("/activos")
-    @Operation(
-        summary = "Listar estados activos",
-        description = "Devuelve todos los estados con el campo 'activo' = true."
-    )
+    @Operation(summary = "Listar estados activos", description = "Devuelve todos los estados con 'activo' = true.")
     public ResponseEntity<List<EstadoModel>> listarActivos() {
         List<EstadoModel> activos = estadoService.findActivos();
         if (activos.isEmpty()) {
@@ -122,10 +116,7 @@ public class EstadoController {
 
     // ================== LISTAR INACTIVOS ==================
     @GetMapping("/inactivos")
-    @Operation(
-        summary = "Listar estados inactivos",
-        description = "Devuelve todos los estados con el campo 'activo' = false."
-    )
+    @Operation(summary = "Listar estados inactivos", description = "Devuelve todos los estados con 'activo' = false.")
     public ResponseEntity<List<EstadoModel>> listarInactivos() {
         List<EstadoModel> inactivos = estadoService.findInactivos();
         if (inactivos.isEmpty()) {
@@ -136,21 +127,7 @@ public class EstadoController {
 
     // ================== RESUMEN ==================
     @GetMapping("/resumen")
-    @Operation(
-        summary = "Obtener resumen de estados",
-        description = "Devuelve un resumen tabular (ID, Nombre, Descripción, Activo) de los estados."
-    )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Resumen generado correctamente.",
-        content = @Content(
-            mediaType = "application/json",
-            schema = @Schema(
-                description = "Lista de filas con ID, Nombre, Descripcion y Activo.",
-                implementation = Object.class
-            )
-        )
-    )
+    @Operation(summary = "Obtener resumen de estados", description = "Devuelve resumen con ID, Nombre, Descripción y Activo.")
     public ResponseEntity<List<Map<String, Object>>> obtenerResumen() {
         List<Map<String, Object>> resumen = estadoService.obtenerEstadosResumen();
         if (resumen.isEmpty()) {
@@ -164,7 +141,7 @@ public class EstadoController {
     @Operation(
         summary = "Crear un nuevo estado",
         description = "Registra un nuevo estado en el sistema.",
-        requestBody = @RequestBody(
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
             content = @Content(
                 mediaType = "application/json",
@@ -172,11 +149,10 @@ public class EstadoController {
                 examples = {
                     @ExampleObject(
                         name = "Estado básico",
-                        description = "Ejemplo mínimo para crear un estado.",
                         value = """
                         {
                           "nombre": "Activo",
-                          "descripcion": "Producto disponible para su compra",
+                          "descripcion": "Producto disponible para compra",
                           "activo": true
                         }
                         """
@@ -186,14 +162,7 @@ public class EstadoController {
         )
     )
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "201",
-            description = "Estado creado correctamente.",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = EstadoModel.class)
-            )
-        ),
+        @ApiResponse(responseCode = "201", description = "Estado creado correctamente."),
         @ApiResponse(responseCode = "400", description = "Datos inválidos o nombre duplicado.")
     })
     public ResponseEntity<EstadoModel> crearEstado(@Valid @RequestBody EstadoModel body) {
@@ -202,56 +171,22 @@ public class EstadoController {
     }
 
     // ================== ACTUALIZAR (PUT) ==================
-    @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
-    @Operation(
-        summary = "Actualizar un estado (PUT)",
-        description = "Reemplaza los datos de un estado existente."
-    )
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Estado actualizado correctamente.",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = EstadoModel.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Estado no encontrado.")
-    })
-    public ResponseEntity<EstadoModel> actualizarEstado(
-            @PathVariable Long id,
-            @RequestBody EstadoModel body) {
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar un estado (PUT)", description = "Reemplaza los datos de un estado existente.")
+    public ResponseEntity<EstadoModel> actualizarEstado(@PathVariable Long id, @RequestBody EstadoModel body) {
         try {
-            EstadoModel actualizado = estadoService.update(id, body);
-            return ResponseEntity.ok(actualizado);
+            return ResponseEntity.ok(estadoService.update(id, body));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     // ================== ACTUALIZAR PARCIAL (PATCH) ==================
-    @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
-    @Operation(
-        summary = "Actualizar parcialmente un estado (PATCH)",
-        description = "Modifica solo los campos enviados de un estado existente."
-    )
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Estado actualizado parcialmente.",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = EstadoModel.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Estado no encontrado.")
-    })
-    public ResponseEntity<EstadoModel> patchEstado(
-            @PathVariable Long id,
-            @RequestBody EstadoModel body) {
+    @PatchMapping("/{id}")
+    @Operation(summary = "Actualizar parcialmente un estado (PATCH)")
+    public ResponseEntity<EstadoModel> patchEstado(@PathVariable Long id, @RequestBody EstadoModel body) {
         try {
-            EstadoModel actualizado = estadoService.patch(id, body);
-            return ResponseEntity.ok(actualizado);
+            return ResponseEntity.ok(estadoService.patch(id, body));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
         }
@@ -259,14 +194,7 @@ public class EstadoController {
 
     // ================== ELIMINAR ==================
     @DeleteMapping("/{id}")
-    @Operation(
-        summary = "Eliminar un estado",
-        description = "Elimina un estado por su ID."
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Estado eliminado correctamente."),
-        @ApiResponse(responseCode = "404", description = "Estado no encontrado.")
-    })
+    @Operation(summary = "Eliminar un estado")
     public ResponseEntity<Void> eliminarEstado(@PathVariable Long id) {
         try {
             estadoService.deleteById(id);

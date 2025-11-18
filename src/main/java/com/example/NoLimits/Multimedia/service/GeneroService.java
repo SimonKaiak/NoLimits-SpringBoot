@@ -53,15 +53,25 @@ public class GeneroService {
         return generoRepository.save(g);
     }
 
+    public GeneroModel patch(Long id, GeneroModel in) {
+        GeneroModel g = findById(id);
+
+        if (in.getNombre() != null) {
+            String nuevo = in.getNombre().trim();
+            if (nuevo.isEmpty()) {
+                throw new IllegalArgumentException("El nombre no puede estar vacío");
+            }
+            g.setNombre(nuevo);
+        }
+
+        return generoRepository.save(g);
+    }
+
     public void deleteById(Long id) {
-        findById(id); // 404 si no existe
+        findById(id);
         generoRepository.deleteById(id);
     }
 
-    /**
-     * Devuelve el resumen crudo desde el repositorio.
-     * Cada fila: [id, nombre]
-     */
     public List<Object[]> obtenerGenerosResumen() {
         return generoRepository.obtenerGenerosResumen();
     }

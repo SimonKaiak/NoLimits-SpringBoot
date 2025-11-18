@@ -7,7 +7,8 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
 public class TiposDeDesarrolladorModelAssembler
@@ -24,22 +25,25 @@ public class TiposDeDesarrolladorModelAssembler
                 ? entity.getTipoDeDesarrollador().getId()
                 : null;
 
-        // Por seguridad, evitamos NPE si por alguna razón vienen nulos
         EntityModel<TiposDeDesarrolladorModel> model = EntityModel.of(entity);
 
         if (desarrolladorId != null) {
             model.add(
                     linkTo(methodOn(TiposDeDesarrolladorControllerV2.class)
-                            .listar(desarrolladorId)).withRel("lista")
+                            .listar(desarrolladorId))
+                            .withRel("lista")
             );
+
             if (tipoId != null) {
                 model.add(
                         linkTo(methodOn(TiposDeDesarrolladorControllerV2.class)
-                                .link(desarrolladorId, tipoId)).withRel("vincular")
+                                .link(desarrolladorId, tipoId))
+                                .withRel("vincular")
                 );
                 model.add(
                         linkTo(methodOn(TiposDeDesarrolladorControllerV2.class)
-                                .unlink(desarrolladorId, tipoId)).withRel("desvincular")
+                                .unlink(desarrolladorId, tipoId))
+                                .withRel("desvincular")
                 );
             }
         }

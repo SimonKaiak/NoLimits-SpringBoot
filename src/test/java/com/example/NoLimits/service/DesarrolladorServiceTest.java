@@ -4,6 +4,7 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.DesarrolladorRepository;
 import com.example.NoLimits.Multimedia.service.DesarrolladorService;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,8 +14,13 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -52,6 +58,7 @@ public class DesarrolladorServiceTest {
 
         assertNotNull(d);
         assertEquals(1L, d.getId());
+        assertEquals("Insomniac Games", d.getNombre());
     }
 
     @Test
@@ -87,7 +94,7 @@ public class DesarrolladorServiceTest {
     @Test
     void testSave_NombreVacio_LanzaIllegalArgument() {
         DesarrolladorModel input = new DesarrolladorModel();
-        input.setNombre("  ");
+        input.setNombre("   ");
 
         assertThrows(IllegalArgumentException.class,
                 () -> desarrolladorService.save(input));
@@ -119,6 +126,7 @@ public class DesarrolladorServiceTest {
 
         DesarrolladorModel actualizado = desarrolladorService.update(1L, cambios);
 
+        assertNotNull(actualizado);
         assertEquals("Insomniac Studio", actualizado.getNombre());
     }
 
@@ -137,6 +145,50 @@ public class DesarrolladorServiceTest {
     }
 
     @Test
+    void testPatch_CambiaSoloNombre() {
+        DesarrolladorModel existente = dev();
+        DesarrolladorModel parciales = new DesarrolladorModel();
+        parciales.setNombre("Insomniac Studio");
+
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(desarrolladorRepository.existsByNombreIgnoreCase("Insomniac Studio"))
+                .thenReturn(false);
+        when(desarrolladorRepository.save(any(DesarrolladorModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        DesarrolladorModel resultado = desarrolladorService.patch(1L, parciales);
+
+        assertNotNull(resultado);
+        assertEquals("Insomniac Studio", resultado.getNombre());
+    }
+
+    @Test
+    void testPatch_NombreVacio_LanzaIllegalArgument() {
+        DesarrolladorModel existente = dev();
+        DesarrolladorModel parciales = new DesarrolladorModel();
+        parciales.setNombre("   ");
+
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> desarrolladorService.patch(1L, parciales));
+    }
+
+    @Test
+    void testPatch_NombreDuplicado_LanzaIllegalArgument() {
+        DesarrolladorModel existente = dev();
+        DesarrolladorModel parciales = new DesarrolladorModel();
+        parciales.setNombre("Naughty Dog");
+
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(desarrolladorRepository.existsByNombreIgnoreCase("Naughty Dog"))
+                .thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> desarrolladorService.patch(1L, parciales));
+    }
+
+    @Test
     void testDeleteById() {
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
 
@@ -152,7 +204,9 @@ public class DesarrolladorServiceTest {
 
         List<DesarrolladorModel> lista = desarrolladorService.findByNombre("games");
 
+        assertNotNull(lista);
         assertEquals(1, lista.size());
+        assertEquals("Insomniac Games", lista.get(0).getNombre());
         verify(desarrolladorRepository, times(1))
                 .findByNombreContainingIgnoreCase("games");
     }

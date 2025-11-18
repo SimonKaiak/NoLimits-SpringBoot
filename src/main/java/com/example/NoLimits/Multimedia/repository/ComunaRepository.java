@@ -19,13 +19,17 @@ public interface ComunaRepository extends JpaRepository<ComunaModel, Long> {
     """)
     List<Object[]> obtenerComunasResumen();
 
+    // Comunas por región
     List<ComunaModel> findByRegion_Id(Long regionId);
 
+    // Búsquedas por nombre
     List<ComunaModel> findByNombreContainingIgnoreCase(String nombre);
     Optional<ComunaModel> findByNombreIgnoreCase(String nombre);
 
+    // Validaciones de existencia
     boolean existsByNombre(String nombre);
     boolean existsByNombreIgnoreCase(String nombre);
+
     // Para bloquear borrado de Region si tiene comunas
     boolean existsByRegion_Id(Long regionId);
 }

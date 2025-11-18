@@ -12,11 +12,19 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.stream.Collectors;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping(
@@ -40,8 +48,6 @@ public class TiposDeDesarrolladorControllerV2 {
     public ResponseEntity<CollectionModel<EntityModel<TiposDeDesarrolladorModel>>> listar(
             @PathVariable Long desarrolladorId
     ) {
-        // Idealmente tendríamos service.findByDesarrollador(desarrolladorId),
-        // pero si aún no lo tienes, filtramos sobre findAll().
         var lista = service.findAll().stream()
                 .filter(rel -> rel.getDesarrollador() != null
                         && rel.getDesarrollador().getId() != null
@@ -71,7 +77,6 @@ public class TiposDeDesarrolladorControllerV2 {
             var rel = service.link(desarrolladorId, tipoId);
             var entity = assembler.toModel(rel);
 
-            // Location: self de la colección del desarrollador
             return ResponseEntity
                     .created(
                         linkTo(methodOn(TiposDeDesarrolladorControllerV2.class)
@@ -81,8 +86,30 @@ public class TiposDeDesarrolladorControllerV2 {
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException ex) {
-            // Relación ya existe
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // PATCH - Actualizar relación Desarrollador–Tipo (HATEOAS)
+    @PatchMapping("/{relacionId}")
+    @Operation(
+            summary = "Actualizar parcialmente la relación Desarrollador–Tipo (HATEOAS)",
+            description = "Permite cambiar el desarrollador y/o el tipo asociados a la relación. "
+                        + "Puedes enviar solo nuevoDesarrolladorId, solo nuevoTipoId o ambos."
+    )
+    public ResponseEntity<EntityModel<TiposDeDesarrolladorModel>> patch(
+            @PathVariable Long desarrolladorId,
+            @PathVariable Long relacionId,
+            @RequestParam(required = false) Long nuevoDesarrolladorId,
+            @RequestParam(required = false) Long nuevoTipoId
+    ) {
+        try {
+            TiposDeDesarrolladorModel relActualizada =
+                    service.patch(relacionId, nuevoDesarrolladorId, nuevoTipoId);
+
+            return ResponseEntity.ok(assembler.toModel(relActualizada));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
         }
     }
 

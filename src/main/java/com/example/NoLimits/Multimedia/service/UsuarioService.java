@@ -66,9 +66,6 @@ public class UsuarioService {
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
 
-        if (ventaRepository.existsById(id)) {
-            // ojo: existsById(id de venta) no sirve; mejor:
-        }
         boolean tieneVentas = !ventaRepository.findByUsuarioModel_Id(id).isEmpty();
         if (tieneVentas) {
             throw new ResponseStatusException(

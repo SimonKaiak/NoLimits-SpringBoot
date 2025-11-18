@@ -1,11 +1,5 @@
 package com.example.NoLimits.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
-import java.util.Optional;
-
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.GeneroModel;
 import com.example.NoLimits.Multimedia.model.GenerosModel;
@@ -14,12 +8,22 @@ import com.example.NoLimits.Multimedia.repository.GeneroRepository;
 import com.example.NoLimits.Multimedia.repository.GenerosRepository;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.GenerosService;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -88,7 +92,7 @@ public class GenerosServiceTest {
         when(productoRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-            () -> generosService.link(1L, 10L)
+                () -> generosService.link(1L, 10L)
         );
     }
 

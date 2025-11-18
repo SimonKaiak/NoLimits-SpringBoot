@@ -48,7 +48,6 @@ public class TiposDeDesarrolladorService {
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Tipo de desarrollador no encontrado: " + tipoId));
 
-        // Si ya existe, devolvemos la misma relación
         return tiposDeDesarrolladorRepository
                 .findByDesarrollador_IdAndTipoDeDesarrollador_Id(desarrolladorId, tipoId)
                 .orElseGet(() -> {
@@ -64,6 +63,46 @@ public class TiposDeDesarrolladorService {
         TiposDeDesarrolladorModel link = tiposDeDesarrolladorRepository
                 .findByDesarrollador_IdAndTipoDeDesarrollador_Id(desarrolladorId, tipoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Relación no encontrada"));
+
         tiposDeDesarrolladorRepository.delete(link);
+    }
+
+    /**
+     * PATCH: Actualiza parcialmente la relación Desarrollador–TipoDeDesarrollador.
+     * Permite cambiar el desarrollador o el tipo asociado.
+     */
+    public TiposDeDesarrolladorModel patch(Long relacionId, Long nuevoDesarrolladorId, Long nuevoTipoId) {
+
+        TiposDeDesarrolladorModel rel = tiposDeDesarrolladorRepository.findById(relacionId)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Relación no encontrada: " + relacionId));
+
+        if (nuevoDesarrolladorId != null) {
+            DesarrolladorModel nuevoDev = desarrolladorRepository.findById(nuevoDesarrolladorId)
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Desarrollador no encontrado: " + nuevoDesarrolladorId));
+
+            if (tiposDeDesarrolladorRepository.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(
+                    nuevoDesarrolladorId, rel.getTipoDeDesarrollador().getId())) {
+                throw new IllegalArgumentException("Ya existe esa relación con el nuevo desarrollador");
+            }
+
+            rel.setDesarrollador(nuevoDev);
+        }
+
+        if (nuevoTipoId != null) {
+            TipoDeDesarrolladorModel nuevoTipo = tipoDeDesarrolladorRepository.findById(nuevoTipoId)
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Tipo de desarrollador no encontrado: " + nuevoTipoId));
+
+            if (tiposDeDesarrolladorRepository.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(
+                    rel.getDesarrollador().getId(), nuevoTipoId)) {
+                throw new IllegalArgumentException("Ya existe esa relación con el nuevo tipo");
+            }
+
+            rel.setTipoDeDesarrollador(nuevoTipo);
+        }
+
+        return tiposDeDesarrolladorRepository.save(rel);
     }
 }

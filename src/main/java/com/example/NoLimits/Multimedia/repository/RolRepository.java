@@ -23,4 +23,12 @@ public interface RolRepository extends JpaRepository<RolModel, Long> {
 
     boolean existsByNombre(String nombre);
     boolean existsByNombreIgnoreCase(String nombre);
+
+    // Para bloquear borrado de Rol si tiene usuarios asociados
+    @Query("""
+        SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END
+        FROM UsuarioModel u
+        WHERE u.rol.id = :rolId
+    """)
+    boolean existeUsuarioConRol(Long rolId);
 }

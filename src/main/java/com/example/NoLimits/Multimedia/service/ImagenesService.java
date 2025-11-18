@@ -5,6 +5,7 @@ import com.example.NoLimits.Multimedia.model.ImagenesModel;
 import com.example.NoLimits.Multimedia.model.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.ImagenesRepository;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
+
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,6 @@ public class ImagenesService {
     /* ===================== CREAR / ACTUALIZAR ===================== */
 
     public ImagenesModel save(ImagenesModel img) {
-        // Validar producto
         if (img.getProducto() == null || img.getProducto().getId() == null) {
             throw new IllegalArgumentException("Debe indicar el producto de la imagen");
         }
@@ -58,13 +58,11 @@ public class ImagenesService {
 
         img.setProducto(p);
 
-        // Validar ruta
         if (img.getRuta() == null || img.getRuta().trim().isEmpty()) {
             throw new IllegalArgumentException("La ruta/URL de la imagen es obligatoria");
         }
         img.setRuta(img.getRuta().trim());
 
-        // altText opcional, se limpia si viene
         if (img.getAltText() != null) {
             String alt = img.getAltText().trim();
             img.setAltText(alt.isEmpty() ? null : alt);
@@ -76,7 +74,6 @@ public class ImagenesService {
     public ImagenesModel update(Long id, ImagenesModel in) {
         ImagenesModel e = findById(id);
 
-        // Ruta (obligatoria si viene en el update)
         if (in.getRuta() != null) {
             String v = in.getRuta().trim();
             if (v.isEmpty()) {
@@ -85,13 +82,11 @@ public class ImagenesService {
             e.setRuta(v);
         }
 
-        // altText (opcional)
         if (in.getAltText() != null) {
             String alt = in.getAltText().trim();
             e.setAltText(alt.isEmpty() ? null : alt);
         }
 
-        // Cambiar de producto (si viene y cambia el id)
         if (in.getProducto() != null && in.getProducto().getId() != null) {
             Long nuevoProdId = in.getProducto().getId();
             Long actualProdId = (e.getProducto() != null ? e.getProducto().getId() : null);
@@ -107,20 +102,42 @@ public class ImagenesService {
         return imagenesRepository.save(e);
     }
 
+    /* ===================== PATCH ===================== */
+
+    public ImagenesModel patch(Long id, ImagenesModel in) {
+        ImagenesModel e = findById(id);
+
+        if (in.getRuta() != null) {
+            String v = in.getRuta().trim();
+            if (v.isEmpty()) {
+                throw new IllegalArgumentException("La ruta/URL no puede ser vacía");
+            }
+            e.setRuta(v);
+        }
+
+        if (in.getAltText() != null) {
+            String alt = in.getAltText().trim();
+            e.setAltText(alt.isEmpty() ? null : alt);
+        }
+
+        if (in.getProducto() != null && in.getProducto().getId() != null) {
+            ProductoModel nuevoProd = productoRepository.findById(in.getProducto().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Producto no encontrado con ID: " + in.getProducto().getId()));
+            e.setProducto(nuevoProd);
+        }
+
+        return imagenesRepository.save(e);
+    }
+
     /* ===================== ELIMINAR ===================== */
 
     public void deleteById(Long id) {
-        // 404 si no existe
         findById(id);
         imagenesRepository.deleteById(id);
     }
 
-    /**
-     * Elimina todas las imágenes asociadas a un producto
-     * y devuelve cuántas filas se borraron.
-     */
     public long deleteByProducto(Long productoId) {
-        // Opcional: validamos que el producto exista
         if (!productoRepository.existsById(productoId)) {
             throw new RecursoNoEncontradoException(
                     "Producto no encontrado con ID: " + productoId);
@@ -130,10 +147,6 @@ public class ImagenesService {
 
     /* ===================== RESUMEN ===================== */
 
-    /**
-     * Devuelve un resumen de imágenes en formato tabla:
-     * ID, Ruta, AltText, ProductoId
-     */
     public List<Map<String, Object>> obtenerImagenesResumen() {
         List<Object[]> resultados = imagenesRepository.obtenerImagenesResumen();
         List<Map<String, Object>> lista = new ArrayList<>();

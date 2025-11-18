@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/MetodoPagoService.java
 package com.example.NoLimits.Multimedia.service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -7,6 +8,7 @@ import com.example.NoLimits.Multimedia.repository.VentaRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import jakarta.transaction.Transactional;
 
 import java.util.ArrayList;
@@ -46,28 +48,12 @@ public class MetodoPagoService {
             throw new IllegalArgumentException("Ya existe un método de pago con ese nombre");
         }
         metodoPago.setNombre(nombre);
+        if (metodoPago.getActivo() == null) {
+            metodoPago.setActivo(true);
+        }
         return metodoPagoRepository.save(metodoPago);
     }
 
-    // Eliminar un método de pago por ID (evita borrar si está en uso por ventas)
-    public void deleteById(Long id) {
-        // 404 si no existe
-        findById(id);
-
-        boolean enUso = !ventaRepository.findByMetodoPagoModel_Id(id).isEmpty();
-        if (enUso) {
-            throw new IllegalStateException("No se puede eliminar: está asociado a una o más ventas.");
-        }
-        metodoPagoRepository.deleteById(id);
-    }
-
-    // Buscar un método de pago por nombre (ignore-case)
-    public Optional<MetodoPagoModel> findByNombre(String nombre) {
-        if (nombre == null) return Optional.empty();
-        return metodoPagoRepository.findByNombreIgnoreCase(nombre.trim());
-    }
-
-    // Actualizar un método de pago (PUT)
     public MetodoPagoModel update(Long id, MetodoPagoModel metodoPagoDetails) {
         MetodoPagoModel existente = findById(id);
 
@@ -81,10 +67,12 @@ public class MetodoPagoService {
         }
 
         existente.setNombre(nuevoNombre);
+        if (metodoPagoDetails.getActivo() != null) {
+            existente.setActivo(metodoPagoDetails.getActivo());
+        }
         return metodoPagoRepository.save(existente);
     }
 
-    // Actualizar parcialmente un método de pago (PATCH)
     public MetodoPagoModel patch(Long id, MetodoPagoModel metodoPagoDetails) {
         MetodoPagoModel existente = findById(id);
 
@@ -100,7 +88,38 @@ public class MetodoPagoService {
             existente.setNombre(nuevoNombre);
         }
 
+        if (metodoPagoDetails.getActivo() != null) {
+            existente.setActivo(metodoPagoDetails.getActivo());
+        }
+
         return metodoPagoRepository.save(existente);
+    }
+
+    public void deleteById(Long id) {
+        findById(id);
+
+        boolean enUso = !ventaRepository.findByMetodoPagoModel_Id(id).isEmpty();
+        if (enUso) {
+            throw new IllegalStateException(
+                "No se puede eliminar: está asociado a una o más ventas."
+            );
+        }
+
+        metodoPagoRepository.deleteById(id);
+    }
+
+    // Buscar por nombre (para el endpoint /buscar/{nombre})
+    public Optional<MetodoPagoModel> findByNombre(String nombre) {
+        if (nombre == null) {
+            return Optional.empty();
+        }
+
+        String normalizado = normalizar(nombre);
+        if (normalizado == null || normalizado.isBlank()) {
+            return Optional.empty();
+        }
+
+        return metodoPagoRepository.findByNombreIgnoreCase(normalizado);
     }
 
     // Resumen (IDs, nombre, [activo si está en el SELECT])
@@ -112,7 +131,9 @@ public class MetodoPagoService {
             Map<String, Object> datos = new HashMap<>();
             datos.put("ID", fila[0]);
             datos.put("Nombre", fila[1]);
-            if (fila.length > 2) datos.put("Activo", fila[2]);
+            if (fila.length > 2) {
+                datos.put("Activo", fila[2]);
+            }
             lista.add(datos);
         }
         return lista;

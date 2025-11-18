@@ -2,10 +2,19 @@ package com.example.NoLimits.Multimedia.controller;
 
 import com.example.NoLimits.Multimedia.model.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.service.DesarrolladorService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
 @RestController
@@ -15,31 +24,55 @@ public class DesarrolladorController {
     @Autowired
     private DesarrolladorService desarrolladorService;
 
+    // ================== LISTAR ==================
+
     @GetMapping
     public List<DesarrolladorModel> findAll() {
         return desarrolladorService.findAll();
     }
+
+    // ================== OBTENER POR ID ==================
 
     @GetMapping("/{id}")
     public DesarrolladorModel findById(@PathVariable Long id) {
         return desarrolladorService.findById(id);
     }
 
+    // ================== BUSCAR POR NOMBRE ==================
+
     @GetMapping("/search")
     public List<DesarrolladorModel> findByNombre(@RequestParam String nombre) {
         return desarrolladorService.findByNombre(nombre);
     }
+
+    // ================== CREAR ==================
 
     @PostMapping
     public DesarrolladorModel save(@Valid @RequestBody DesarrolladorModel dev) {
         return desarrolladorService.save(dev);
     }
 
+    // ================== ACTUALIZAR COMPLETO (PUT) ==================
+
     @PutMapping("/{id}")
-    public DesarrolladorModel update(@PathVariable Long id,
-                                     @Valid @RequestBody DesarrolladorModel body) {
+    public DesarrolladorModel update(
+            @PathVariable Long id,
+            @Valid @RequestBody DesarrolladorModel body
+    ) {
         return desarrolladorService.update(id, body);
     }
+
+    // ================== ACTUALIZACIÓN PARCIAL (PATCH) ==================
+
+    @PatchMapping("/{id}")
+    public DesarrolladorModel patch(
+            @PathVariable Long id,
+            @RequestBody DesarrolladorModel body
+    ) {
+        return desarrolladorService.patch(id, body);
+    }
+
+    // ================== ELIMINAR ==================
 
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable Long id) {

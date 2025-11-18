@@ -4,9 +4,18 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "clasificaciones")
@@ -34,13 +43,11 @@ public class ClasificacionModel {
     @Schema(description = "Indica si la clasificación está activa.", example = "true")
     private boolean activo = true;
 
-    // Relación con Producto
     @OneToMany(mappedBy = "clasificacion", fetch = FetchType.LAZY)
     @JsonIgnore
     @Schema(description = "Lista de productos asociados", accessMode = Schema.AccessMode.READ_ONLY)
     private List<ProductoModel> productos;
 
-    // Constructor útil sin lista de productos
     public ClasificacionModel(Long id, String nombre, String descripcion, boolean activo) {
         this.id = id;
         this.nombre = nombre;

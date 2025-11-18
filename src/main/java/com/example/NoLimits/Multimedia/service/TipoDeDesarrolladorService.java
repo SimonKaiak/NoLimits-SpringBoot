@@ -62,6 +62,24 @@ public class TipoDeDesarrolladorService {
         return tipoDeDesarrolladorRepository.save(t);
     }
 
+    public TipoDeDesarrolladorModel patch(Long id, TipoDeDesarrolladorModel in) {
+        TipoDeDesarrolladorModel t = findById(id);
+
+        if (in.getNombre() != null) {
+            String v = in.getNombre().trim();
+            if (v.isEmpty()) {
+                throw new IllegalArgumentException("El nombre no puede estar vacío");
+            }
+            if (!v.equalsIgnoreCase(t.getNombre())
+                    && tipoDeDesarrolladorRepository.existsByNombreIgnoreCase(v)) {
+                throw new IllegalArgumentException("Ya existe un tipo de desarrollador con ese nombre");
+            }
+            t.setNombre(v);
+        }
+
+        return tipoDeDesarrolladorRepository.save(t);
+    }
+
     public void deleteById(Long id) {
         findById(id);
         if (tiposDeDesarrolladorRepository.existsByTipoDeDesarrollador_Id(id)) {

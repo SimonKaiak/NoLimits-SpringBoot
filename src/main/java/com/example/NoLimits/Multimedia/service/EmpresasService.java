@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/EmpresasService.java
 package com.example.NoLimits.Multimedia.service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -8,10 +7,11 @@ import com.example.NoLimits.Multimedia.model.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.EmpresaRepository;
 import com.example.NoLimits.Multimedia.repository.EmpresasRepository;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
+
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Service
@@ -35,12 +35,22 @@ public class EmpresasService {
         return empresasRepository.findByEmpresa_Id(empresaId);
     }
 
-    /** Crea vínculo Producto ↔ Empresa si no existe (tabla puente). */
+    public EmpresasModel findById(Long id) {
+        return empresasRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Relación Producto-Empresa no encontrada con ID: " + id));
+    }
+
+    /**
+     * Crea vínculo Producto ↔ Empresa si no existe (tabla puente).
+     */
     public EmpresasModel link(Long productoId, Long empresaId) {
         ProductoModel p = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
         EmpresaModel e = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada con ID: " + empresaId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Empresa no encontrada con ID: " + empresaId));
 
         if (empresasRepository.existsByProducto_IdAndEmpresa_Id(productoId, empresaId)) {
             // ya existe; devolver la existente para idempotencia
@@ -62,13 +72,63 @@ public class EmpresasService {
         return empresasRepository.save(rel);
     }
 
-    /** Elimina el vínculo Producto ↔ Empresa (idempotente). */
+    /**
+     * PATCH: actualización parcial de la relación Producto ↔ Empresa.
+     * Permite cambiar el producto y/o la empresa, validando que la nueva
+     * combinación no duplique otra relación existente.
+     */
+    public EmpresasModel patch(Long id, EmpresasModel in) {
+
+        EmpresasModel existente = findById(id);
+
+        Long productoIdActual = existente.getProducto().getId();
+        Long empresaIdActual = existente.getEmpresa().getId();
+
+        Long nuevoProductoId = productoIdActual;
+        Long nuevaEmpresaId = empresaIdActual;
+
+        // Actualizar producto si viene uno nuevo
+        if (in.getProducto() != null && in.getProducto().getId() != null) {
+            ProductoModel nuevoProducto = productoRepository.findById(in.getProducto().getId())
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Producto no encontrado con ID: " + in.getProducto().getId()));
+            existente.setProducto(nuevoProducto);
+            nuevoProductoId = nuevoProducto.getId();
+        }
+
+        // Actualizar empresa si viene una nueva
+        if (in.getEmpresa() != null && in.getEmpresa().getId() != null) {
+            EmpresaModel nuevaEmpresa = empresaRepository.findById(in.getEmpresa().getId())
+                    .orElseThrow(() ->
+                            new RecursoNoEncontradoException("Empresa no encontrada con ID: " + in.getEmpresa().getId()));
+            existente.setEmpresa(nuevaEmpresa);
+            nuevaEmpresaId = nuevaEmpresa.getId();
+        }
+
+        boolean cambiaProducto = !nuevoProductoId.equals(productoIdActual);
+        boolean cambiaEmpresa = !nuevaEmpresaId.equals(empresaIdActual);
+
+        if (cambiaProducto || cambiaEmpresa) {
+            // Si la combinación nueva ya existe en otra fila, se bloquea
+            if (empresasRepository.existsByProducto_IdAndEmpresa_Id(nuevoProductoId, nuevaEmpresaId)) {
+                throw new IllegalStateException("La relación Producto-Empresa ya existe");
+            }
+        }
+
+        return empresasRepository.save(existente);
+    }
+
+    /**
+     * Elimina el vínculo Producto ↔ Empresa (idempotente).
+     */
     public void unlink(Long productoId, Long empresaId) {
         // validar entidades (mensajes 404 claros)
         productoRepository.findById(productoId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
         empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada con ID: " + empresaId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Empresa no encontrada con ID: " + empresaId));
 
         if (!empresasRepository.existsByProducto_IdAndEmpresa_Id(productoId, empresaId)) {
             return; // nada que borrar, operación idempotente

@@ -1,12 +1,12 @@
 package com.example.NoLimits.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.example.NoLimits.Multimedia.model.UsuarioModel;
+import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
+import com.example.NoLimits.Multimedia.repository.VentaRepository;
+import com.example.NoLimits.Multimedia.service.UsuarioService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +15,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.example.NoLimits.Multimedia.model.UsuarioModel;
-import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
-import com.example.NoLimits.Multimedia.service.UsuarioService;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -29,7 +36,9 @@ public class UsuarioServiceTest {
     @MockBean
     private UsuarioRepository usuarioRepository;
 
-    // Método auxiliar para crear un usuario de ejemplo
+    @MockBean
+    private VentaRepository ventaRepository;
+
     private UsuarioModel createUsuario() {
         UsuarioModel usuario = new UsuarioModel();
         usuario.setId(1L);
@@ -66,13 +75,13 @@ public class UsuarioServiceTest {
     @Test
     public void testFindById_NoExiste() {
         when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
-        // El service lanza ResponseStatusException (404), no RecursoNoEncontradoException
         assertThrows(ResponseStatusException.class, () -> usuarioService.findById(99L));
     }
 
     @Test
     public void testSave() {
         UsuarioModel usuario = createUsuario();
+        when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(false);
         when(usuarioRepository.save(usuario)).thenReturn(usuario);
 
         UsuarioModel savedUsuario = usuarioService.save(usuario);
@@ -94,6 +103,7 @@ public class UsuarioServiceTest {
         cambios.setPassword("nueva_pass");
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(original));
+        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
         when(usuarioRepository.save(any(UsuarioModel.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UsuarioModel actualizado = usuarioService.update(1L, cambios);
@@ -119,15 +129,15 @@ public class UsuarioServiceTest {
         assertNotNull(patched);
         assertEquals("Carlos", patched.getNombre());
         assertEquals("Gómez", patched.getApellidos());
-        assertEquals(original.getCorreo(), patched.getCorreo()); // no cambia
+        assertEquals(original.getCorreo(), patched.getCorreo());
     }
 
     @Test
-    public void testDeleteById_Existe() {
+    public void testDeleteById_Existe_SinVentas() {
         UsuarioModel usuario = createUsuario();
 
-        // El service usa findById(...).orElseThrow(...)
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(ventaRepository.findByUsuarioModel_Id(1L)).thenReturn(List.of());
         doNothing().when(usuarioRepository).deleteById(1L);
 
         usuarioService.deleteById(1L);
@@ -137,7 +147,6 @@ public class UsuarioServiceTest {
 
     @Test
     public void testDeleteById_NoExiste() {
-        // El service verifica con findById(...).orElseThrow(...)
         when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> usuarioService.deleteById(99L));

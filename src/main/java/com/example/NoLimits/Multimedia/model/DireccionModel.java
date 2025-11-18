@@ -1,7 +1,15 @@
 package com.example.NoLimits.Multimedia.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -45,14 +53,12 @@ public class DireccionModel {
     @Schema(description = "Comuna a la que pertenece la dirección", example = "{\"id\": 13101}", accessMode = Schema.AccessMode.WRITE_ONLY)
     private ComunaModel comuna;
 
-    /**
-     * Relación unidireccional: una dirección pertenece a un usuario.
-     * La dejamos desde Dirección → Usuario para no tocar tu UsuarioModel actual.
-     * Si luego quieres la relación bidireccional, agregamos el campo en UsuarioModel.
-     */
     @OneToOne
     @JoinColumn(name = "usuario_id", unique = true)
-    @Schema(description = "Usuario al que pertenece la dirección (solo ID al crear/editar)",
-            example = "{\"id\": 5}", accessMode = Schema.AccessMode.WRITE_ONLY)
+    @Schema(
+            description = "Usuario al que pertenece la dirección (solo ID al crear/editar)",
+            example = "{\"id\": 5}",
+            accessMode = Schema.AccessMode.WRITE_ONLY
+    )
     private UsuarioModel usuarioModel;
 }
