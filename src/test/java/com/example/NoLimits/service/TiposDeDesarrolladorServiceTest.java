@@ -97,14 +97,22 @@ public class TiposDeDesarrolladorServiceTest {
 
     @Test
     void testLink_Duplicado_LanzaIllegalState() {
+        // Mock: desarrollador existe
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
-        when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.of(tipo()));
-        when(tiposRepo.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L))
-                .thenReturn(true);
 
+        // Mock: tipo existe
+        when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.of(tipo()));
+
+        // Mock: ya existe la relación
+        TiposDeDesarrolladorModel existente = link();
+        when(tiposRepo.findByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L))
+                .thenReturn(Optional.of(existente));
+
+        // Como ya existe → debe lanzar IllegalStateException
         assertThrows(IllegalStateException.class,
                 () -> service.link(1L, 10L));
 
+        // No se debe intentar guardar
         verify(tiposRepo, never()).save(any(TiposDeDesarrolladorModel.class));
     }
 

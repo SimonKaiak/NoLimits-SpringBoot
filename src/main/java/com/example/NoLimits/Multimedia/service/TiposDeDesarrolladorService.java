@@ -47,6 +47,12 @@ public class TiposDeDesarrolladorService {
         TipoDeDesarrolladorModel tipo = tipoDeDesarrolladorRepository.findById(tipoId)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Tipo de desarrollador no encontrado: " + tipoId));
+                        
+        if (tiposDeDesarrolladorRepository
+                .findByDesarrollador_IdAndTipoDeDesarrollador_Id(desarrolladorId, tipoId)
+                .isPresent()) {
+            throw new IllegalStateException("Ya existe esta relación");
+        }
 
         return tiposDeDesarrolladorRepository
                 .findByDesarrollador_IdAndTipoDeDesarrollador_Id(desarrolladorId, tipoId)

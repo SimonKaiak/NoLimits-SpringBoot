@@ -131,13 +131,25 @@ public class PlataformasServiceTest {
     void testPatch_CambiarProducto() {
         PlataformasModel r = relacion();
 
+        // Mock de la relación existente
         when(plataformasRepository.findById(100L)).thenReturn(Optional.of(r));
-        when(productoRepository.findById(999L)).thenReturn(Optional.of(producto()));
-        when(plataformasRepository.existsByProducto_IdAndPlataforma_Id(anyLong(), anyLong())).thenReturn(false);
+
+        // Mock de un producto con ID = 999
+        ProductoModel p999 = new ProductoModel();
+        p999.setId(999L);
+        when(productoRepository.findById(999L)).thenReturn(Optional.of(p999));
+
+        // No existe relación duplicada
+        when(plataformasRepository.existsByProducto_IdAndPlataforma_Id(anyLong(), anyLong()))
+                .thenReturn(false);
+
+        // Guardar devuelve el mismo objeto
         when(plataformasRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Ejecutar
         PlataformasModel actualizado = service.patch(100L, 999L, null);
 
+        // Afirmación correcta
         assertEquals(999L, actualizado.getProducto().getId());
     }
 
