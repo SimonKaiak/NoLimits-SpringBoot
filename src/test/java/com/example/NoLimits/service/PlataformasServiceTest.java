@@ -9,10 +9,12 @@ import com.example.NoLimits.Multimedia.repository.PlataformasRepository;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.PlataformasService;
 
+import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 import java.util.List;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 @SpringBootTest
+@ActiveProfiles("test")
 public class PlataformasServiceTest {
 
     @Autowired

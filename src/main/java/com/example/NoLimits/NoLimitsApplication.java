@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
     ),
     servers = {
         @Server(url = "http://localhost:8080"),  // Local
-        @Server(url = "https://6a02-2803-c600-d208-8bd4-6cda-c6e8-d23c-951a.ngrok-free.app")  // Ngrok
+        @Server(url = "https://nolimits-backend-final.onrender.com")  // Producción en Render
     }
 )
 public class NoLimitsApplication {

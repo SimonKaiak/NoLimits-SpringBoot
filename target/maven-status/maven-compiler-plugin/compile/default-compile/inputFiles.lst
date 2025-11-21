@@ -39,6 +39,7 @@ C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Uni
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\EstadoController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\GeneroController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\GenerosController.java
+C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\HealthController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\ImagenesController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\MetodoEnvioController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\MetodoPagoController.java
@@ -47,6 +48,7 @@ C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Uni
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\ProductoController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\RegionController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\RolController.java
+C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\RootRedirectController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\TipoDeDesarrolladorController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\TipoEmpresaController.java
 C:\Users\chris\OneDrive\Escritorio\Escritorio Lenovo\Informatica\Fullstack 2\Unidad 3\NoLimits\NoLimits-SpringBoot-main\src\main\java\com\example\NoLimits\Multimedia\controller\TipoProductoController.java
