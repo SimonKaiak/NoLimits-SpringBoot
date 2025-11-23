@@ -27,8 +27,14 @@ public class DesarrolladorController {
     // ================== LISTAR ==================
 
     @GetMapping
-    public List<DesarrolladorModel> findAll() {
-        return desarrolladorService.findAll();
+    public List<DesarrolladorModel> findAll(
+            @RequestParam(required = false) String nombre
+    ) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return desarrolladorService.findAll();
+        }
+
+        return desarrolladorService.findByNombre(nombre);
     }
 
     // ================== OBTENER POR ID ==================
