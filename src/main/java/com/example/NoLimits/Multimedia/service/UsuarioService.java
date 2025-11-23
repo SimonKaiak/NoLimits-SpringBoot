@@ -212,4 +212,18 @@ public class UsuarioService {
         }
         return lista;
     }
+
+    public UsuarioModel login(String correo, String password) {
+        UsuarioModel usuario = findByCorreo(correo);
+
+        // Aquí puedes aplicar hashing si lo usas.
+        if (!usuario.getPassword().equals(password)) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Credenciales inválidas"
+            );
+        }
+
+        return usuario;
+    }
 }

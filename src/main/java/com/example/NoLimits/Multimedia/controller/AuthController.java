@@ -1,7 +1,10 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/AuthController.java
+
 package com.example.NoLimits.Multimedia.controller;
 
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,13 +14,22 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@CrossOrigin(
+    origins = {
+        "http://localhost:5173",
+        "https://nolimitsreact-update-master.vercel.app" // pon aquí tu dominio real
+    },
+    allowCredentials = "true"
+)
 public class AuthController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> login(
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
 
         String correo = body.get("correo");
         String password = body.get("password");
@@ -35,6 +47,9 @@ public class AuthController {
                     .body("Correo o contraseña incorrectos");
         }
 
+        // 🔴 Guardar el ID en la sesión HTTP
+        session.setAttribute("usuarioId", usuario.getId());
+
         return ResponseEntity.ok(Map.of(
                 "id", usuario.getId(),
                 "nombre", usuario.getNombre(),
@@ -42,5 +57,11 @@ public class AuthController {
                 "correo", usuario.getCorreo(),
                 "rol", usuario.getRol().getNombre()
         ));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpSession session) {
+        session.invalidate();
+        return ResponseEntity.noContent().build();
     }
 }

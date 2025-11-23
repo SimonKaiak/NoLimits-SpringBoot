@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin; // NUEVO: para permitir peticiones desde React.
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
@@ -26,7 +27,23 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpSession;
 
+/**
+ * Controlador REST para operaciones relacionadas con usuarios.
+ * 
+ * Incluye:
+ * - CRUD de usuarios.
+ * - Búsquedas por nombre/correo.
+ * - Consultar compras asociadas.
+ * - Endpoints de perfil basados en sesión (/me).
+ */
+@CrossOrigin(
+    origins = {
+        "http://localhost:5173",
+    },
+    allowCredentials = "true"
+)
 @RestController
 @RequestMapping("/api/v1/usuarios")
 @Tag(name = "Usuarios-Controller", description = "Operaciones relacionadas con los usuarios.")
@@ -203,5 +220,49 @@ public class UsuarioController {
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * Perfil del usuario actualmente autenticado.
+     * Usa la sesión HTTP (atributo "usuarioId") para saber quién es "me".
+     */
+    @GetMapping("/me")
+    @Operation(
+        summary = "Obtener mi perfil",
+        description = "Devuelve los datos del usuario asociado a la sesión actual."
+    )
+    public ResponseEntity<UsuarioModel> obtenerMiPerfil(HttpSession session) {
+        Long usuarioId = (Long) session.getAttribute("usuarioId");
+
+        if (usuarioId == null) {
+            // No hay usuario asociado a la sesión
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UsuarioModel usuario = usuarioService.findById(usuarioId);
+        return ResponseEntity.ok(usuario);
+    }
+
+    /**
+     * Actualizar parcialmente el usuario de la sesión actual.
+     * Similar a PATCH /{id}, pero usa el ID almacenado en sesión.
+     */
+    @PatchMapping("/me")
+    @Operation(
+        summary = "Actualizar mi perfil",
+        description = "Actualiza algunos campos del usuario asociado a la sesión actual."
+    )
+    public ResponseEntity<UsuarioModel> actualizarMiPerfilSesion(
+            @RequestBody UsuarioModel cambios,
+            HttpSession session) {
+
+        Long usuarioId = (Long) session.getAttribute("usuarioId");
+
+        if (usuarioId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UsuarioModel actualizado = usuarioService.patch(usuarioId, cambios);
+        return ResponseEntity.ok(actualizado);
     }
 }
