@@ -20,17 +20,13 @@ public class SwaggerConfig {
         // Crea una instancia y configura sus métodos con info.
         return new OpenAPI()
 
-            // Definimos los servidores donde estará disponible la API
-
-            // Servidor local (uso en desarrollo)
+            // Definimos un único servidor con URL relativa.
+            // Esto hace que Swagger use SIEMPRE el mismo host desde donde se sirve:
+            // - En local:    http://localhost:8080
+            // - En Render:   https://nolimits-backend-final.onrender.com
             .addServersItem(new Server()
-                .url("http://localhost:8080")
-                .description("Servidor Local"))
-
-            // Servidor desplegado en Render (producción)
-            .addServersItem(new Server()
-                .url("https://nolimits-backend-final.onrender.com")
-                .description("Servidor Producción"))
+                .url("/")                     // base relativa → mismo dominio de Swagger
+                .description("Servidor actual (local o Render)"))
 
             // Información visible en Swagger
             .info(new Info()
