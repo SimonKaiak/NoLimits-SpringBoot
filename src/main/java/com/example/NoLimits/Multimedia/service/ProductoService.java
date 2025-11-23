@@ -2,8 +2,12 @@ package com.example.NoLimits.Multimedia.service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.ProductoModel;
+import com.example.NoLimits.Multimedia.repository.ClasificacionRepository;
 import com.example.NoLimits.Multimedia.repository.DetalleVentaRepository;
+import com.example.NoLimits.Multimedia.repository.EstadoRepository;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
+import com.example.NoLimits.Multimedia.repository.TipoProductoRepository;
+
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,16 @@ public class ProductoService {
     @Autowired
     private DetalleVentaRepository detalleVentaRepository;
 
+    @Autowired
+    private TipoProductoRepository tipoProductoRepository;
+
+    @Autowired
+    private ClasificacionRepository clasificacionRepository;
+
+    @Autowired
+    private EstadoRepository estadoRepository;
+
+
     /* ================= CRUD BÁSICO ================= */
 
     public List<ProductoModel> findAll() {
@@ -36,6 +50,34 @@ public class ProductoService {
     }
 
     public ProductoModel save(ProductoModel producto) {
+
+        if (producto.getTipoProducto() == null || producto.getTipoProducto().getId() == null)
+            throw new RecursoNoEncontradoException("Debe indicar un tipo de producto válido.");
+
+        if (producto.getClasificacion() == null || producto.getClasificacion().getId() == null)
+            throw new RecursoNoEncontradoException("Debe indicar una clasificación válida.");
+
+        if (producto.getEstado() == null || producto.getEstado().getId() == null)
+            throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
+
+        producto.setTipoProducto(
+            tipoProductoRepository.findById(producto.getTipoProducto().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Tipo de producto no encontrado con ID: " + producto.getTipoProducto().getId()))
+        );
+
+        producto.setClasificacion(
+            clasificacionRepository.findById(producto.getClasificacion().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Clasificación no encontrada con ID: " + producto.getClasificacion().getId()))
+        );
+
+        producto.setEstado(
+            estadoRepository.findById(producto.getEstado().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Estado no encontrado con ID: " + producto.getEstado().getId()))
+        );
+
         return productoRepository.save(producto);
     }
 
@@ -45,9 +87,33 @@ public class ProductoService {
 
         productoExistente.setNombre(productoDetalles.getNombre());
         productoExistente.setPrecio(productoDetalles.getPrecio());
-        productoExistente.setTipoProducto(productoDetalles.getTipoProducto());
-        productoExistente.setClasificacion(productoDetalles.getClasificacion());
-        productoExistente.setEstado(productoDetalles.getEstado());
+
+        if (productoDetalles.getTipoProducto() == null || productoDetalles.getTipoProducto().getId() == null)
+            throw new RecursoNoEncontradoException("Debe indicar un tipo de producto válido.");
+
+        if (productoDetalles.getClasificacion() == null || productoDetalles.getClasificacion().getId() == null)
+            throw new RecursoNoEncontradoException("Debe indicar una clasificación válida.");
+
+        if (productoDetalles.getEstado() == null || productoDetalles.getEstado().getId() == null)
+            throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
+
+        productoExistente.setTipoProducto(
+            tipoProductoRepository.findById(productoDetalles.getTipoProducto().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Tipo de producto no encontrado con ID: " + productoDetalles.getTipoProducto().getId()))
+        );
+
+        productoExistente.setClasificacion(
+            clasificacionRepository.findById(productoDetalles.getClasificacion().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Clasificación no encontrada con ID: " + productoDetalles.getClasificacion().getId()))
+        );
+
+        productoExistente.setEstado(
+            estadoRepository.findById(productoDetalles.getEstado().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Estado no encontrado con ID: " + productoDetalles.getEstado().getId()))
+        );
 
         return productoRepository.save(productoExistente);
     }
@@ -62,18 +128,31 @@ public class ProductoService {
         if (productoDetalles.getPrecio() != null) {
             productoExistente.setPrecio(productoDetalles.getPrecio());
         }
-        if (productoDetalles.getTipoProducto() != null) {
-            productoExistente.setTipoProducto(productoDetalles.getTipoProducto());
+        if (productoDetalles.getTipoProducto() != null && productoDetalles.getTipoProducto().getId() != null) {
+            productoExistente.setTipoProducto(
+                tipoProductoRepository.findById(productoDetalles.getTipoProducto().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Tipo de producto no encontrado con ID: " + productoDetalles.getTipoProducto().getId()))
+            );
         }
-        if (productoDetalles.getClasificacion() != null) {
-            productoExistente.setClasificacion(productoDetalles.getClasificacion());
+        if (productoDetalles.getClasificacion() != null && productoDetalles.getClasificacion().getId() != null) {
+            productoExistente.setClasificacion(
+                clasificacionRepository.findById(productoDetalles.getClasificacion().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Clasificación no encontrada con ID: " + productoDetalles.getClasificacion().getId()))
+            );
         }
-        if (productoDetalles.getEstado() != null) {
-            productoExistente.setEstado(productoDetalles.getEstado());
+        if (productoDetalles.getEstado() != null && productoDetalles.getEstado().getId() != null) {
+            productoExistente.setEstado(
+                estadoRepository.findById(productoDetalles.getEstado().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Estado no encontrado con ID: " + productoDetalles.getEstado().getId()))
+            );
         }
 
         return productoRepository.save(productoExistente);
     }
+
 
     public void deleteById(Long id) {
         findById(id);
