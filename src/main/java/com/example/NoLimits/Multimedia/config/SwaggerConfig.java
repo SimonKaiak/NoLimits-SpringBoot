@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.servers.Server;
 
 // Definimos la clase como clase de Configuration.
 // Esta clase va a tener métodos o configuraciones que quiero que Spring cargue al iniciar el proyecto.
@@ -15,20 +14,11 @@ public class SwaggerConfig {
     // Método que se usa en una clase Configuration para que el objeto pueda ser instanciado desde cualquier parte con @Autowired.
     @Bean
     // Objeto que usa Springdoc para generar el JSON que alimenta el Swagger UI.
-    public OpenAPI customOpenAPI(){
+    public OpenAPI customOpenAPI() {
 
         // Crea una instancia y configura sus métodos con info.
+        // Los "servers" ahora los definimos en NoLimitsApplication con @OpenAPIDefinition.
         return new OpenAPI()
-
-            // Definimos un único servidor con URL relativa.
-            // Esto hace que Swagger use SIEMPRE el mismo host desde donde se sirve:
-            // - En local:    http://localhost:8080
-            // - En Render:   https://nolimits-backend-final.onrender.com
-            .addServersItem(new Server()
-                .url("/")                     // base relativa → mismo dominio de Swagger
-                .description("Servidor actual (local o Render)"))
-
-            // Información visible en Swagger
             .info(new Info()
                 .title("Controllers 'NoLimits' ")
                 .version("Versión: 1.0")
