@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.NoLimits.Multimedia.model.RolModel;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
+import com.example.NoLimits.Multimedia.model.VentaModel;
 import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.VentaRepository;
 
@@ -71,14 +72,29 @@ public class UsuarioService {
         if (tieneVentas) {
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "No se puede eliminar el usuario porque tiene ventas asociadas."
+                "No se puede eliminar el usuario porque tiene compras asociadas."
             );
         }
 
         usuarioRepository.deleteById(id);
     }
 
-    // 🔍 Buscar por nombre (parcial, sin mayúsculas/minúsculas)
+    // Obtener detalle + total de compras del usuario
+    public Map<String, Object> obtenerDetalleUsuario(long usuarioId) {
+        UsuarioModel usuario = findById(usuarioId);
+
+        List<VentaModel> compras = ventaRepository.findByUsuarioModel_Id(usuarioId);
+        long totalCompras = ventaRepository.countByUsuarioModel_Id(usuarioId);
+
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("usuario", usuario);
+        respuesta.put("compras", compras);
+        respuesta.put("totalCompras", totalCompras);
+
+        return respuesta;
+    }
+
+    // Buscar por nombre (parcial, sin mayúsculas/minúsculas)
     public List<UsuarioModel> findByNombre(String nombreUsuario) {
         if (nombreUsuario == null) {
             throw new ResponseStatusException(
@@ -87,7 +103,6 @@ public class UsuarioService {
 
         String filtro = nombreUsuario.trim();
         if (filtro.isEmpty()) {
-            // si viene vacío, devolvemos todo (mismo comportamiento que listar)
             return usuarioRepository.findAll();
         }
 
@@ -180,7 +195,6 @@ public class UsuarioService {
 
         return usuarioRepository.save(u);
     }
-
 
     // Obtener resumen de usuarios
     public List<Map<String, Object>> obtenerUsuariosConDatos() {

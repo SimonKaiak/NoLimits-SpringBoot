@@ -43,4 +43,5 @@ public interface VentaRepository extends JpaRepository<VentaModel, Long> {
 
     // Combinados
     List<VentaModel> findByUsuarioModel_IdAndMetodoPagoModel_Id(Long idUsuario, Long idMetodoPago);
+    long countByUsuarioModel_Id(Long usuarioId);
 }

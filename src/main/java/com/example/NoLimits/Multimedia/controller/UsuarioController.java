@@ -1,6 +1,7 @@
 package com.example.NoLimits.Multimedia.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
+import com.example.NoLimits.Multimedia.model.VentaModel;
 import com.example.NoLimits.Multimedia.service.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,6 +55,19 @@ public class UsuarioController {
         }
     }
 
+    // 🔹 NUEVO: Listar compras del usuario (ventas asociadas)
+    @GetMapping("/{id}/compras")
+    @Operation(
+        summary = "Listar compras del usuario",
+        description = "Obtiene el listado de compras (ventas) asociadas a un usuario."
+    )
+    public ResponseEntity<?> detalleComprasUsuario(@PathVariable long id) {
+
+        Map<String, Object> data = usuarioService.obtenerDetalleUsuario(id);
+
+        return ResponseEntity.ok(data);
+    }
+
     // Crear usuario
     @PostMapping
     @Operation(
@@ -67,11 +82,11 @@ public class UsuarioController {
                     name = "Nuevo usuario",
                     value = """
                     {
-                    "nombre": "Lucas",
-                    "apellidos": "Fernández",
-                    "correo": "lucas@example.com",
-                    "telefono": 912345678,
-                    "password": "clave123"
+                      "nombre": "Lucas",
+                      "apellidos": "Fernández",
+                      "correo": "lucas@example.com",
+                      "telefono": 912345678,
+                      "password": "clave123"
                     }
                     """
                 )
@@ -98,16 +113,16 @@ public class UsuarioController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = UsuarioModel.class), // ← sin example aquí
-                examples = @ExampleObject(                              // ← el ejemplo va acá
+                schema = @Schema(implementation = UsuarioModel.class),
+                examples = @ExampleObject(
                     name = "Usuario PUT completo",
                     value = """
                     {
-                    "nombre": "Damon",
-                    "apellidos": "Medhurst",
-                    "correo": "damon@example.com",
-                    "telefono": 912345678,
-                    "password": "clave123"
+                      "nombre": "Damon",
+                      "apellidos": "Medhurst",
+                      "correo": "damon@example.com",
+                      "telefono": 912345678,
+                      "password": "clave123"
                     }
                     """
                 )
@@ -142,8 +157,8 @@ public class UsuarioController {
                     name = "Usuario PATCH parcial",
                     value = """
                     {
-                    "telefono": 987654321,
-                    "password": "nuevaClave"
+                      "telefono": 987654321,
+                      "password": "nuevaClave"
                     }
                     """
                 )
