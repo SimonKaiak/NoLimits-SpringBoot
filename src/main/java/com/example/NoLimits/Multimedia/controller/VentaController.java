@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.NoLimits.Multimedia.dto.VentaRequest;
 import com.example.NoLimits.Multimedia.model.VentaModel;
 import com.example.NoLimits.Multimedia.service.VentaService;
 
@@ -64,38 +65,11 @@ public class VentaController {
         return ResponseEntity.ok(ventaService.findById(id));
     }
 
-    @PostMapping(consumes = "application/json", produces = "application/json")
-    @Operation(
-        summary = "Crear una nueva venta",
-        description = "Registra una nueva venta (requiere IDs de usuario, método de pago, método de envío y estado).",
-        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            required = true,
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(
-                    name = "Venta mínima",
-                    value = """
-                    {
-                      "usuarioModel": { "id": 1 },
-                      "metodoPagoModel": { "id": 2 },
-                      "metodoEnvioModel": { "id": 1 },
-                      "estado": { "id": 1 },
-                      "fechaCompra": "2025-07-06",
-                      "horaCompra": "14:30:00"
-                    }
-                    """
-                )
-            )
-        )
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Creada",
-            content = @Content(schema = @Schema(implementation = VentaModel.class))),
-        @ApiResponse(responseCode = "400", description = "Solicitud inválida")
-    })
-    public ResponseEntity<VentaModel> crearVenta(@Valid @RequestBody VentaModel venta) {
-        VentaModel nuevaVenta = ventaService.save(venta);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaVenta);
+    @PostMapping("/registrar")
+    public ResponseEntity<VentaModel> registrarVenta(@RequestBody VentaRequest request) {
+        return ResponseEntity.ok(ventaService.crearVentaDesdeRequest(request));
     }
+
 
     @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
     @Operation(

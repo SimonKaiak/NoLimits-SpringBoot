@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/VentaService.java
 package com.example.NoLimits.Multimedia.service;
 
 import java.time.LocalDate;
@@ -11,14 +12,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.DetalleVentaRequest;
+import com.example.NoLimits.Multimedia.dto.VentaRequest;
+import com.example.NoLimits.Multimedia.model.DetalleVentaModel;
 import com.example.NoLimits.Multimedia.model.EstadoModel;
 import com.example.NoLimits.Multimedia.model.MetodoEnvioModel;
 import com.example.NoLimits.Multimedia.model.MetodoPagoModel;
+import com.example.NoLimits.Multimedia.model.ProductoModel;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.VentaModel;
 import com.example.NoLimits.Multimedia.repository.EstadoRepository;
 import com.example.NoLimits.Multimedia.repository.MetodoEnvioRepository;
 import com.example.NoLimits.Multimedia.repository.MetodoPagoRepository;
+import com.example.NoLimits.Multimedia.repository.ProductoRepository;
 import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.VentaRepository;
 
@@ -33,6 +39,9 @@ public class VentaService {
     @Autowired private MetodoPagoRepository metodoPagoRepository;
     @Autowired private MetodoEnvioRepository metodoEnvioRepository;
     @Autowired private EstadoRepository estadoRepository;
+    @Autowired private ProductoRepository productoRepository;   // 👉 nuevo
+
+    // ================= CRUD CLÁSICO (lo de siempre) =================
 
     public List<VentaModel> findAll() { 
         return ventaRepository.findAll(); 
@@ -128,7 +137,6 @@ public class VentaService {
         return ventaRepository.save(v);
     }
 
-
     public List<Map<String, Object>> obtenerVentasConDatos() {
         List<Object[]> res = ventaRepository.obtenerVentasResumen();
         List<Map<String, Object>> out = new ArrayList<>();
@@ -147,6 +155,62 @@ public class VentaService {
         }
         return out;
     }
+
+    // ================= NUEVO: crear venta desde DTO (carrito) =================
+
+    public VentaModel crearVentaDesdeRequest(VentaRequest request) {
+
+        if (request.getUsuarioId() == null ||
+            request.getMetodoPagoId() == null ||
+            request.getMetodoEnvioId() == null ||
+            request.getEstadoId() == null ||
+            request.getDetalles() == null ||
+            request.getDetalles().isEmpty()) {
+
+            throw new RecursoNoEncontradoException("Datos incompletos para registrar la venta.");
+        }
+
+        // 1) Crear la venta base
+        VentaModel venta = new VentaModel();
+        venta.setUsuarioModel(obtenerUsuario(request.getUsuarioId()));
+        venta.setMetodoPagoModel(obtenerMetodoPago(request.getMetodoPagoId()));
+        venta.setMetodoEnvioModel(obtenerMetodoEnvio(request.getMetodoEnvioId()));
+        venta.setEstado(obtenerEstado(request.getEstadoId()));
+        venta.setFechaCompra(LocalDate.now());
+        venta.setHoraCompra(LocalTime.now());
+
+        // 2) Crear lista de detalles
+        List<DetalleVentaModel> detalles = new ArrayList<>();
+        for (DetalleVentaRequest dReq : request.getDetalles()) {
+
+            if (dReq.getProductoId() == null) {
+                throw new RecursoNoEncontradoException("Falta productoId en uno de los detalles.");
+            }
+
+            ProductoModel producto = productoRepository.findById(dReq.getProductoId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Producto no encontrado con ID: " + dReq.getProductoId()));
+
+            DetalleVentaModel det = new DetalleVentaModel();
+            det.setVenta(venta);
+            det.setProducto(producto);
+            det.setCantidad(
+                dReq.getCantidad() != null && dReq.getCantidad() > 0 ? dReq.getCantidad() : 1
+            );
+            det.setPrecioUnitario(
+                dReq.getPrecioUnitario() != null ? dReq.getPrecioUnitario() : 0f
+            );
+
+            detalles.add(det);
+        }
+
+        venta.setDetalles(detalles);
+
+        // Gracias a cascade = CascadeType.ALL en VentaModel.detalles, se guardan detalles también
+        return ventaRepository.save(venta);
+    }
+
+    // ================= Helpers internos =================
 
     private UsuarioModel obtenerUsuario(Long id) {
         return usuarioRepository.findById(id)
