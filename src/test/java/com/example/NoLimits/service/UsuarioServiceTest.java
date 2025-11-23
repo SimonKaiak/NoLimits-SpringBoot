@@ -45,7 +45,7 @@ public class UsuarioServiceTest {
         usuario.setNombre("Juan");
         usuario.setApellidos("Pérez");
         usuario.setCorreo("correo@test.com");
-        usuario.setTelefono(123456789);
+        usuario.setTelefono(123456789L);
         usuario.setPassword("password");
         return usuario;
     }
@@ -99,7 +99,7 @@ public class UsuarioServiceTest {
         cambios.setNombre("Carlos");
         cambios.setApellidos("Gómez");
         cambios.setCorreo("nuevo@test.com");
-        cambios.setTelefono(987654321);
+        cambios.setTelefono(987654321L);
         cambios.setPassword("nueva_pass");
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(original));

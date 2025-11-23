@@ -53,6 +53,10 @@ public class DireccionModel {
     @Schema(description = "Comuna a la que pertenece la dirección", example = "{\"id\": 13101}", accessMode = Schema.AccessMode.WRITE_ONLY)
     private ComunaModel comuna;
 
+    @Column(nullable = false)
+    @Schema(description = "Indica si la dirección está activa", example = "true")
+    private Boolean activo = true;
+
     @OneToOne
     @JoinColumn(name = "usuario_id", unique = true)
     @Schema(

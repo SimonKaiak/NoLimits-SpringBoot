@@ -9,7 +9,6 @@ import com.example.NoLimits.Multimedia.repository.PlataformasRepository;
 import com.example.NoLimits.Multimedia.repository.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.PlataformasService;
 
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

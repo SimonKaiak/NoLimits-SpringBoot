@@ -56,7 +56,7 @@ public class VentaServiceTest {
         usuario.setNombre("Juan");
         usuario.setApellidos("Pérez");
         usuario.setCorreo("correo@test.com");
-        usuario.setTelefono(123456789);
+        usuario.setTelefono(123456789L);
         usuario.setPassword("password");
 
         MetodoPagoModel metodoPago = new MetodoPagoModel();

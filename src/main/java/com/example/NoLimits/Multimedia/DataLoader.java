@@ -513,7 +513,7 @@ public class DataLoader implements CommandLineRunner {
                 u.setNombre(faker.name().firstName());
                 u.setApellidos(faker.name().lastName());
                 u.setCorreo("user" + i + "@example.com");
-                u.setTelefono(900000000 + random.nextInt(100000000));
+                u.setTelefono(900000000L + random.nextInt(100000000));
                 u.setPassword("clave" + i);
                 u.setRol(rolCliente);
 

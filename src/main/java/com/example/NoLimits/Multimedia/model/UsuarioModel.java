@@ -56,7 +56,7 @@ public class UsuarioModel {
     @Column(nullable = false)
     @NotNull(message = "El usuario requiere de un teléfono.")
     @Schema(description = "Número de teléfono del usuario", example = "987654321")
-    private Integer telefono;
+    private Long telefono;
 
     @Column(length = 10, nullable = false)
     @NotBlank(message = "El usuario requiere de una contraseña.")
