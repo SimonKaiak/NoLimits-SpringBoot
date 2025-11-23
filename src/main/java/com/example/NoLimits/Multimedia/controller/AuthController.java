@@ -25,6 +25,7 @@ public class AuthController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    // LOGIN REAL
     @PostMapping("/login")
     public ResponseEntity<?> login(
             @RequestBody Map<String, String> body,
@@ -38,7 +39,8 @@ public class AuthController {
                     .body("Correo y contraseña son obligatorios");
         }
 
-        UsuarioModel usuario = usuarioRepository.findByCorreo(correo.trim().toLowerCase())
+        UsuarioModel usuario = usuarioRepository
+                .findByCorreo(correo.trim().toLowerCase())
                 .orElse(null);
 
         if (usuario == null || !usuario.getPassword().equals(password)) {
@@ -46,7 +48,7 @@ public class AuthController {
                     .body("Correo o contraseña incorrectos");
         }
 
-        // 🔴 Guardar el ID en la sesión HTTP
+        // Guardamos usuario en sesión
         session.setAttribute("usuarioId", usuario.getId());
 
         return ResponseEntity.ok(Map.of(
@@ -54,10 +56,12 @@ public class AuthController {
                 "nombre", usuario.getNombre(),
                 "apellidos", usuario.getApellidos(),
                 "correo", usuario.getCorreo(),
-                "rol", usuario.getRol().getNombre()
+                "rolId", usuario.getRol().getId(),
+                "rolNombre", usuario.getRol().getNombre()
         ));
     }
 
+    // LOGOUT
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpSession session) {
         session.invalidate();
