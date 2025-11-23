@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
-import com.example.NoLimits.Multimedia.model.VentaModel;
 import com.example.NoLimits.Multimedia.service.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
