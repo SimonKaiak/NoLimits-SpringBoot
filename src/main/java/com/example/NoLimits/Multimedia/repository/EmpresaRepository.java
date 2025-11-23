@@ -13,10 +13,11 @@ import com.example.NoLimits.Multimedia.model.EmpresaModel;
 public interface EmpresaRepository extends JpaRepository<EmpresaModel, Long> {
 
     @Query("""
-        SELECT e.id, e.nombre
+        SELECT e.id, e.nombre, e.activo
         FROM EmpresaModel e
     """)
     List<Object[]> obtenerEmpresasResumen();
+
 
     List<EmpresaModel> findByNombreContainingIgnoreCase(String nombre);
     Optional<EmpresaModel> findByNombreIgnoreCase(String nombre);

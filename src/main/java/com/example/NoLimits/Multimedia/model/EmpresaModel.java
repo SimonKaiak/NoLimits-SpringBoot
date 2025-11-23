@@ -34,6 +34,10 @@ public class EmpresaModel {
     @Schema(description = "Nombre de la empresa", example = "Sony Pictures")
     private String nombre;
 
+    @Column(nullable = false)
+    @Schema(description = "Indica si la empresa está activa", example = "true")
+    private Boolean activo = true;
+
     @OneToMany(mappedBy = "empresa")
     @JsonIgnore
     @Schema(

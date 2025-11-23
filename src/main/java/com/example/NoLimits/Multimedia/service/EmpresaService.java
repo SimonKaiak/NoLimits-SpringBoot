@@ -58,6 +58,10 @@ public class EmpresaService {
             e.setNombre(nuevo);
         }
 
+        if (in.getActivo() != null) {
+            e.setActivo(in.getActivo());
+        }
+
         return empresaRepository.save(e);
     }
 
@@ -79,8 +83,13 @@ public class EmpresaService {
             e.setNombre(nuevo);
         }
 
+        if (in.getActivo() != null) {
+            e.setActivo(in.getActivo());
+        }
+
         return empresaRepository.save(e);
     }
+
 
     public void deleteById(Long id) {
         findById(id);
