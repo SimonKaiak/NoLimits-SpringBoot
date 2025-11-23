@@ -17,7 +17,6 @@ import java.util.Map;
 @CrossOrigin(
     origins = {
         "http://localhost:5173",
-        "https://nolimitsreact-update-master.vercel.app" // pon aquí tu dominio real
     },
     allowCredentials = "true"
 )
