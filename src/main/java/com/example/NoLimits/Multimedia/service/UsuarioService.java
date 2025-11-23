@@ -77,9 +77,20 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
-    // Buscar por nombre
+    // 🔍 Buscar por nombre (parcial, sin mayúsculas/minúsculas)
     public List<UsuarioModel> findByNombre(String nombreUsuario) {
-        return usuarioRepository.findByNombre(nombreUsuario);
+        if (nombreUsuario == null) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "El nombre de búsqueda no puede ser nulo");
+        }
+
+        String filtro = nombreUsuario.trim();
+        if (filtro.isEmpty()) {
+            // si viene vacío, devolvemos todo (mismo comportamiento que listar)
+            return usuarioRepository.findAll();
+        }
+
+        return usuarioRepository.findByNombreContainingIgnoreCase(filtro);
     }
 
     // Buscar por correo (404 si no existe)

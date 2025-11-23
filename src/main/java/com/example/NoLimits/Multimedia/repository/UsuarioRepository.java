@@ -31,4 +31,6 @@ public interface UsuarioRepository extends JpaRepository<UsuarioModel, Long> {
     List<UsuarioModel> findByRol_Id(Long rolId);
     // NUEVO: para bloquear borrado de Rol si hay usuarios con ese rol
     boolean existsByRol_Id(Long rolId);
+
+    List<UsuarioModel> findByNombreContainingIgnoreCase(String nombre);
 }
