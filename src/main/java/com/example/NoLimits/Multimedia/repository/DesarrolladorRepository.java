@@ -14,8 +14,9 @@ import com.example.NoLimits.Multimedia.model.DesarrolladorModel;
 public interface DesarrolladorRepository extends JpaRepository<DesarrolladorModel, Long> {
 
     @Query("""
-        SELECT d.id, d.nombre
+        SELECT d.id, d.nombre, d.activo
         FROM DesarrolladorModel d
+        ORDER BY d.nombre ASC
     """)
     List<Object[]> obtenerDesarrolladoresResumen();
 

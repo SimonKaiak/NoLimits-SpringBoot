@@ -1,3 +1,5 @@
+// Ruta: backend/src/main/java/com/example/NoLimits/Multimedia/service/DesarrolladorService.java
+
 package com.example.NoLimits.Multimedia.service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -33,12 +35,17 @@ public class DesarrolladorService {
 
         String normalizado = d.getNombre().trim();
 
-        // evitar duplicados
         if (desarrolladorRepository.existsByNombreIgnoreCase(normalizado)) {
             throw new IllegalArgumentException("Ya existe un desarrollador con ese nombre");
         }
 
         d.setNombre(normalizado);
+
+        // si desde el front no envían nada, queda true por defecto
+        if (d.getId() == null && !d.isActivo()) {
+            d.setActivo(true);
+        }
+
         return desarrolladorRepository.save(d);
     }
 
@@ -57,16 +64,18 @@ public class DesarrolladorService {
             d.setNombre(nuevo);
         }
 
+        // actualizar activo si viene en el body
+        // (Jackson setea false si viene explícito en el JSON)
+        if (in.isActivo() != d.isActivo()) {
+            d.setActivo(in.isActivo());
+        }
+
         return desarrolladorRepository.save(d);
     }
 
-    /** -----------------------------------------
-     ** 🟦 PATCH: actualización parcial**
-     ** ----------------------------------------- */
     public DesarrolladorModel patch(Long id, DesarrolladorModel in) {
         DesarrolladorModel d = findById(id);
 
-        // Solo actualiza lo que venga no nulo
         if (in.getNombre() != null) {
             String nuevo = in.getNombre().trim();
             if (nuevo.isEmpty()) {
@@ -79,16 +88,20 @@ public class DesarrolladorService {
             d.setNombre(nuevo);
         }
 
+        // para patch podrías manejar activo con un wrapper Boolean, pero
+        // si lo dejas así y el JSON trae "activo": false, también se aplicará
+        if (in.isActivo() != d.isActivo()) {
+            d.setActivo(in.isActivo());
+        }
+
         return desarrolladorRepository.save(d);
     }
 
     public void deleteById(Long id) {
-        // 404 si no existe
         findById(id);
         desarrolladorRepository.deleteById(id);
     }
 
-    // búsquedas de apoyo
     public List<DesarrolladorModel> findByNombre(String nombre) {
         String filtro = (nombre == null) ? "" : nombre.trim();
         return desarrolladorRepository.findByNombreContainingIgnoreCase(filtro);

@@ -34,6 +34,10 @@ public class DesarrolladorModel {
     @Schema(description = "Nombre del desarrollador/estudio", example = "Insomniac Games")
     private String nombre;
 
+    @Column(nullable = false)
+    @Schema(description = "Indica si el desarrollador está activo", example = "true")
+    private boolean activo = true;
+
     @OneToMany(mappedBy = "desarrollador")
     @JsonIgnore
     @Schema(
