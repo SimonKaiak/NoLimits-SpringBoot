@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.NoLimits.Multimedia.model.RolModel;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.VentaRepository;
@@ -171,8 +172,15 @@ public class UsuarioService {
             u.setPassword(d.getPassword());
         }
 
+        if (d.getRol() != null && d.getRol().getId() != null) {
+            RolModel nuevoRol = new RolModel();
+            nuevoRol.setId(d.getRol().getId());
+            u.setRol(nuevoRol);
+        }
+
         return usuarioRepository.save(u);
     }
+
 
     // Obtener resumen de usuarios
     public List<Map<String, Object>> obtenerUsuariosConDatos() {
