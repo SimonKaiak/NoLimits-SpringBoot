@@ -73,8 +73,22 @@ public class VentaController {
     }
 
     @PostMapping("/registrar")
-    public ResponseEntity<VentaModel> registrarVenta(@RequestBody VentaRequest request) {
-        return ResponseEntity.ok(ventaService.crearVentaDesdeRequest(request));
+    public ResponseEntity<VentaModel> registrarVenta(
+            @RequestBody VentaRequest request,
+            jakarta.servlet.http.HttpSession session) {
+
+        Long usuarioId = (Long) session.getAttribute("usuarioId");
+
+        if (usuarioId == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.UNAUTHORIZED,
+                "Usuario no autenticado"
+            );
+        }
+
+        return ResponseEntity.ok(
+            ventaService.crearVentaDesdeRequest(request, usuarioId)
+        );
     }
 
 

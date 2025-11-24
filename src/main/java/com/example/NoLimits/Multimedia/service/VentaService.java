@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/VentaService.java
 package com.example.NoLimits.Multimedia.service;
 
 import java.time.LocalDate;
@@ -9,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.DetalleVentaRequest;
@@ -39,12 +40,12 @@ public class VentaService {
     @Autowired private MetodoPagoRepository metodoPagoRepository;
     @Autowired private MetodoEnvioRepository metodoEnvioRepository;
     @Autowired private EstadoRepository estadoRepository;
-    @Autowired private ProductoRepository productoRepository;   // 👉 nuevo
+    @Autowired private ProductoRepository productoRepository;
 
     // ================= CRUD CLÁSICO (lo de siempre) =================
 
-    public List<VentaModel> findAll() { 
-        return ventaRepository.findAll(); 
+    public List<VentaModel> findAll() {
+        return ventaRepository.findAll();
     }
 
     public VentaModel findById(Long id) {
@@ -57,13 +58,17 @@ public class VentaService {
     }
 
     public VentaModel save(VentaModel venta) {
-        if (venta.getUsuarioModel()==null || venta.getUsuarioModel().getId()==null)
+
+        if (venta.getUsuarioModel() == null || venta.getUsuarioModel().getId() == null)
             throw new RecursoNoEncontradoException("Debe proporcionar un ID de usuario válido.");
-        if (venta.getMetodoPagoModel()==null || venta.getMetodoPagoModel().getId()==null)
+
+        if (venta.getMetodoPagoModel() == null || venta.getMetodoPagoModel().getId() == null)
             throw new RecursoNoEncontradoException("Debe proporcionar un ID de método de pago válido.");
-        if (venta.getMetodoEnvioModel()==null || venta.getMetodoEnvioModel().getId()==null)
+
+        if (venta.getMetodoEnvioModel() == null || venta.getMetodoEnvioModel().getId() == null)
             throw new RecursoNoEncontradoException("Debe proporcionar un ID de método de envío válido.");
-        if (venta.getEstado()==null || venta.getEstado().getId()==null)
+
+        if (venta.getEstado() == null || venta.getEstado().getId() == null)
             throw new RecursoNoEncontradoException("Debe proporcionar un ID de estado válido.");
 
         venta.setUsuarioModel(obtenerUsuario(venta.getUsuarioModel().getId()));
@@ -71,8 +76,8 @@ public class VentaService {
         venta.setMetodoEnvioModel(obtenerMetodoEnvio(venta.getMetodoEnvioModel().getId()));
         venta.setEstado(obtenerEstado(venta.getEstado().getId()));
 
-        if (venta.getFechaCompra()==null) venta.setFechaCompra(LocalDate.now());
-        if (venta.getHoraCompra()==null)  venta.setHoraCompra(LocalTime.now());
+        if (venta.getFechaCompra() == null) venta.setFechaCompra(LocalDate.now());
+        if (venta.getHoraCompra() == null)  venta.setHoraCompra(LocalTime.now());
 
         return ventaRepository.save(venta);
     }
@@ -84,12 +89,12 @@ public class VentaService {
         ventaRepository.deleteById(id);
     }
 
-    public List<VentaModel> findByFechaCompra(LocalDate fechaCompra) { 
-        return ventaRepository.findByFechaCompra(fechaCompra); 
+    public List<VentaModel> findByFechaCompra(LocalDate fechaCompra) {
+        return ventaRepository.findByFechaCompra(fechaCompra);
     }
 
-    public List<VentaModel> findByHoraCompra(LocalTime horaCompra) { 
-        return ventaRepository.findByHoraCompra(horaCompra); 
+    public List<VentaModel> findByHoraCompra(LocalTime horaCompra) {
+        return ventaRepository.findByHoraCompra(horaCompra);
     }
 
     public List<VentaModel> findByUsuarioYMetodoPago(Long usuarioId, Long metodoPagoId) {
@@ -97,52 +102,55 @@ public class VentaService {
     }
 
     public VentaModel update(Long id, VentaModel d) {
+
         var v = findById(id);
         v.setFechaCompra(d.getFechaCompra());
         v.setHoraCompra(d.getHoraCompra());
 
-        if (d.getUsuarioModel()!=null && d.getUsuarioModel().getId()!=null)
+        if (d.getUsuarioModel() != null && d.getUsuarioModel().getId() != null)
             v.setUsuarioModel(obtenerUsuario(d.getUsuarioModel().getId()));
 
-        if (d.getMetodoPagoModel()!=null && d.getMetodoPagoModel().getId()!=null)
+        if (d.getMetodoPagoModel() != null && d.getMetodoPagoModel().getId() != null)
             v.setMetodoPagoModel(obtenerMetodoPago(d.getMetodoPagoModel().getId()));
 
-        if (d.getMetodoEnvioModel()!=null && d.getMetodoEnvioModel().getId()!=null)
+        if (d.getMetodoEnvioModel() != null && d.getMetodoEnvioModel().getId() != null)
             v.setMetodoEnvioModel(obtenerMetodoEnvio(d.getMetodoEnvioModel().getId()));
 
-        if (d.getEstado()!=null && d.getEstado().getId()!=null)
+        if (d.getEstado() != null && d.getEstado().getId() != null)
             v.setEstado(obtenerEstado(d.getEstado().getId()));
 
         return ventaRepository.save(v);
     }
 
     public VentaModel patch(Long id, VentaModel d) {
+
         var v = findById(id);
 
-        if (d.getFechaCompra()!=null) v.setFechaCompra(d.getFechaCompra());
-        if (d.getHoraCompra()!=null)  v.setHoraCompra(d.getHoraCompra());
+        if (d.getFechaCompra() != null) v.setFechaCompra(d.getFechaCompra());
+        if (d.getHoraCompra() != null)  v.setHoraCompra(d.getHoraCompra());
 
-        if (d.getUsuarioModel()!=null && d.getUsuarioModel().getId()!=null)
+        if (d.getUsuarioModel() != null && d.getUsuarioModel().getId() != null)
             v.setUsuarioModel(obtenerUsuario(d.getUsuarioModel().getId()));
 
-        if (d.getMetodoPagoModel()!=null && d.getMetodoPagoModel().getId()!=null)
+        if (d.getMetodoPagoModel() != null && d.getMetodoPagoModel().getId() != null)
             v.setMetodoPagoModel(obtenerMetodoPago(d.getMetodoPagoModel().getId()));
 
-        if (d.getMetodoEnvioModel()!=null && d.getMetodoEnvioModel().getId()!=null)
+        if (d.getMetodoEnvioModel() != null && d.getMetodoEnvioModel().getId() != null)
             v.setMetodoEnvioModel(obtenerMetodoEnvio(d.getMetodoEnvioModel().getId()));
 
-        if (d.getEstado()!=null && d.getEstado().getId()!=null)
+        if (d.getEstado() != null && d.getEstado().getId() != null)
             v.setEstado(obtenerEstado(d.getEstado().getId()));
 
         return ventaRepository.save(v);
     }
 
     public List<Map<String, Object>> obtenerVentasConDatos() {
+
         List<Object[]> res = ventaRepository.obtenerVentasResumen();
         List<Map<String, Object>> out = new ArrayList<>();
 
         for (Object[] r : res) {
-            Map<String,Object> m = new HashMap<>();
+            Map<String, Object> m = new HashMap<>();
             m.put("ID", r[0]);
             m.put("Fecha Compra", r[1]);
             m.put("Hora Compra", r[2]);
@@ -153,62 +161,53 @@ public class VentaService {
             m.put("Estado", r[7]);
             out.add(m);
         }
+
         return out;
     }
 
-    // ================= NUEVO: crear venta desde DTO (carrito) =================
+    // ================= NUEVO: crear venta desde DTO usando sesión =================
 
-    public VentaModel crearVentaDesdeRequest(VentaRequest request) {
+// Crear venta usando usuarioId de la sesión y guardando detalles
+public VentaModel crearVentaDesdeRequest(VentaRequest request, Long usuarioId) {
 
-        if (request.getUsuarioId() == null ||
-            request.getMetodoPagoId() == null ||
-            request.getMetodoEnvioId() == null ||
-            request.getEstadoId() == null ||
-            request.getDetalles() == null ||
-            request.getDetalles().isEmpty()) {
+    UsuarioModel usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-            throw new RecursoNoEncontradoException("Datos incompletos para registrar la venta.");
+    VentaModel venta = new VentaModel();
+    venta.setUsuarioModel(usuario);
+    venta.setMetodoPagoModel(obtenerMetodoPago(request.getMetodoPagoId()));
+    venta.setMetodoEnvioModel(obtenerMetodoEnvio(request.getMetodoEnvioId()));
+    venta.setEstado(obtenerEstado(request.getEstadoId()));
+    venta.setFechaCompra(LocalDate.now());
+    venta.setHoraCompra(LocalTime.now());
+
+    List<DetalleVentaModel> detalles = new ArrayList<>();
+
+    // Guardar detalles si vienen en el request
+    if (request.getDetalles() != null) {
+        for (DetalleVentaRequest d : request.getDetalles()) {
+
+            ProductoModel producto = productoRepository.findById(d.getProductoId())
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Producto no encontrado"));
+
+            DetalleVentaModel detalle = new DetalleVentaModel();
+            detalle.setVenta(venta);
+            detalle.setProducto(producto);
+            detalle.setCantidad(d.getCantidad());
+            detalle.setPrecioUnitario(d.getPrecioUnitario());
+
+            // NO se usa setSubtotal: el modelo lo calcula automáticamente
+            detalles.add(detalle);
         }
-
-        // 1) Crear la venta base
-        VentaModel venta = new VentaModel();
-        venta.setUsuarioModel(obtenerUsuario(request.getUsuarioId()));
-        venta.setMetodoPagoModel(obtenerMetodoPago(request.getMetodoPagoId()));
-        venta.setMetodoEnvioModel(obtenerMetodoEnvio(request.getMetodoEnvioId()));
-        venta.setEstado(obtenerEstado(request.getEstadoId()));
-        venta.setFechaCompra(LocalDate.now());
-        venta.setHoraCompra(LocalTime.now());
-
-        // 2) Crear lista de detalles
-        List<DetalleVentaModel> detalles = new ArrayList<>();
-        for (DetalleVentaRequest dReq : request.getDetalles()) {
-
-            if (dReq.getProductoId() == null) {
-                throw new RecursoNoEncontradoException("Falta productoId en uno de los detalles.");
-            }
-
-            ProductoModel producto = productoRepository.findById(dReq.getProductoId())
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                    "Producto no encontrado con ID: " + dReq.getProductoId()));
-
-            DetalleVentaModel det = new DetalleVentaModel();
-            det.setVenta(venta);
-            det.setProducto(producto);
-            det.setCantidad(
-                dReq.getCantidad() != null && dReq.getCantidad() > 0 ? dReq.getCantidad() : 1
-            );
-            det.setPrecioUnitario(
-                dReq.getPrecioUnitario() != null ? dReq.getPrecioUnitario() : 0f
-            );
-
-            detalles.add(det);
-        }
-
-        venta.setDetalles(detalles);
-
-        // Gracias a cascade = CascadeType.ALL en VentaModel.detalles, se guardan detalles también
-        return ventaRepository.save(venta);
     }
+
+    venta.setDetalles(detalles);
+
+    // Cascade.ALL guardará también los detalles
+    return ventaRepository.save(venta);
+}
 
     // ================= Helpers internos =================
 
