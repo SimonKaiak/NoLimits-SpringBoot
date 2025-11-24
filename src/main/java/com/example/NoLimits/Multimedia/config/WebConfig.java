@@ -24,12 +24,17 @@ public class WebConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 // Aplica las reglas CORS a todas las URL del backend, sin importar qué ruta sea.
                 registry.addMapping("/**")
-                        // Permite peticiones CORS desde cualquier dominio.
-                        .allowedOriginPatterns("*")  // "*": Todos los dominios pueden acceder.
-                        // Indica a Spring qué métodos HTTP están permitidos cuando una aplicación externa hace peticiones al backend. (Get. Post, Put, Patch, Delete)
-                        .allowedMethods("*")
-                        // Soluciona error con conexión HTTP y HTTPS para Ngrok.
-                        .allowedHeaders("*");
+                        // Dominios permitidos
+                        .allowedOrigins(
+                                "http://localhost:5173",
+                                "https://nolimits-react.vercel.app" // cambia por tu vercel real si es otro
+                        )
+                        // Indica a Spring qué métodos HTTP están permitidos cuando una aplicación externa hace peticiones al backend.
+                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                        // Permite cualquier header en las peticiones
+                        .allowedHeaders("*")
+                        // Permite enviar cookies / sesión
+                        .allowCredentials(true);
             }
         };
     }
