@@ -27,7 +27,7 @@ public class WebConfig {
                         // Dominios permitidos
                         .allowedOrigins(
                                 "http://localhost:5173",
-                                "https://nolimits-react.vercel.app" // cambia por tu vercel real si es otro
+                                "https://no-limits-react.vercel.app"
                         )
                         // Indica a Spring qué métodos HTTP están permitidos cuando una aplicación externa hace peticiones al backend.
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
