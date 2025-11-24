@@ -17,7 +17,7 @@ import java.util.Map;
 @CrossOrigin(
     origins = {
         "http://localhost:5173",
-        "https://no-limits-vercel.app"
+        "https://no-limits-react.vercel.app"
     },
     allowCredentials = "true"
 )
