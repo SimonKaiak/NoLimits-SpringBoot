@@ -85,7 +85,6 @@ public class VentaModel {
     private EstadoModel estado;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     @Schema(description = "Detalles asociados a la venta", accessMode = Schema.AccessMode.READ_ONLY)
     private List<DetalleVentaModel> detalles;
 

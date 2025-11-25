@@ -1,5 +1,6 @@
 package com.example.NoLimits.Multimedia.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,13 +32,18 @@ public class DetalleVentaModel {
     @ManyToOne(optional = false)
     @JoinColumn(name = "venta_id", nullable = false)
     @NotNull(message = "El detalle debe pertenecer a una venta.")
+    @JsonIgnore // evita recursión Venta -> Detalle -> Venta en las respuestas JSON
     @Schema(description = "Venta a la que pertenece este detalle", accessMode = Schema.AccessMode.WRITE_ONLY)
     private VentaModel venta;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "producto_id", nullable = false)
     @NotNull(message = "El detalle requiere un producto.")
-    @Schema(description = "Producto vendido (solo ID al crear/editar).", example = "{\"id\": 10}", accessMode = Schema.AccessMode.WRITE_ONLY)
+    @Schema(
+        description = "Producto vendido (solo ID al crear/editar).",
+        example = "{\"id\": 10}",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
     private ProductoModel producto;
 
     @Column(nullable = false)
