@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/ClasificacionController.java
 package com.example.NoLimits.Multimedia.controller;
 
 import com.example.NoLimits.Multimedia.model.ClasificacionModel;
@@ -7,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+// Esta anotación @RequestBody es solo para documentación en Swagger (para los ejemplos).
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,12 +25,29 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+// Esta es la anotación @RequestBody que realmente usa Spring para leer el body del request.
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
 
+/*
+ Controlador REST para manejar las clasificaciones de contenido/edad.
+
+ Aquí centralizo todas las operaciones relacionadas con ClasificacionModel:
+ - Listar todas las clasificaciones.
+ - Buscar por ID.
+ - Crear nuevas clasificaciones.
+ - Actualizar (PUT) y actualizar parcialmente (PATCH).
+ - Eliminar clasificaciones.
+ - Hacer búsquedas por nombre (contiene y exacto).
+ - Listar solo activas o solo inactivas.
+ - Obtener un resumen simplificado.
+
+ Además, uso anotaciones de Swagger/OpenAPI para documentar cada endpoint
+ y que se entienda en la interfaz de Swagger qué hace y qué devuelve.
+*/
 @RestController
 @RequestMapping("/api/v1/clasificaciones")
 @Tag(
@@ -62,6 +81,7 @@ public class ClasificacionController {
     public ResponseEntity<List<ClasificacionModel>> listar() {
         List<ClasificacionModel> lista = clasificacionService.findAll();
         if (lista.isEmpty()) {
+            // Si no hay nada que mostrar, devuelvo 204 (sin contenido).
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(lista);
@@ -86,6 +106,7 @@ public class ClasificacionController {
             @ApiResponse(responseCode = "404", description = "Clasificación no encontrada.")
     })
     public ResponseEntity<ClasificacionModel> buscarPorId(@PathVariable Long id) {
+        // El servicio se encarga de lanzar la excepción si no existe.
         return ResponseEntity.ok(clasificacionService.findById(id));
     }
 
@@ -108,6 +129,7 @@ public class ClasificacionController {
             @ApiResponse(responseCode = "400", description = "Datos inválidos para crear la clasificación.")
     })
     public ResponseEntity<ClasificacionModel> crear(
+            // Esta @RequestBody de Swagger solo describe el contenido y muestra un ejemplo en la documentación.
             @RequestBody(
                     required = true,
                     content = @Content(
@@ -127,6 +149,7 @@ public class ClasificacionController {
                             }
                     )
             )
+            // Esta es la anotación real que Spring usa para mapear el JSON a ClasificacionModel.
             @Valid @org.springframework.web.bind.annotation.RequestBody ClasificacionModel clasificacion
     ) {
         ClasificacionModel nueva = clasificacionService.save(clasificacion);
@@ -218,6 +241,7 @@ public class ClasificacionController {
             )
             @org.springframework.web.bind.annotation.RequestBody Map<String, Object> campos
     ) {
+        // El servicio se encarga de aplicar solo los cambios enviados en el mapa "campos".
         ClasificacionModel actualizada = clasificacionService.patch(id, campos);
         return ResponseEntity.ok(actualizada);
     }
@@ -354,6 +378,7 @@ public class ClasificacionController {
             @ApiResponse(responseCode = "204", description = "No hay clasificaciones para mostrar en el resumen.")
     })
     public ResponseEntity<List<Map<String, Object>>> obtenerResumen() {
+        // El servicio devuelve un listado de mapas con los datos resumidos.
         List<Map<String, Object>> resumen = clasificacionService.obtenerClasificacionesConDatos();
         if (resumen.isEmpty()) {
             return ResponseEntity.noContent().build();

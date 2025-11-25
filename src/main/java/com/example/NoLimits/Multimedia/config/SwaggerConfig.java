@@ -6,23 +6,42 @@ import org.springframework.context.annotation.Configuration;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 
-// Definimos la clase como clase de Configuration.
-// Esta clase va a tener métodos o configuraciones que quiero que Spring cargue al iniciar el proyecto.
+/**
+ * Clase de configuración de Swagger / Springdoc OpenAPI.
+ *
+ * Esta clase define la información general que se mostrará en la interfaz Swagger UI,
+ * como el título, versión y descripción de la API del proyecto NoLimits.
+ *
+ * Swagger permite:
+ * - Visualizar todos los endpoints disponibles
+ * - Probar peticiones directamente desde el navegador
+ * - Documentar la API de forma automática
+ */
 @Configuration
 public class SwaggerConfig {
 
-    // Método que se usa en una clase Configuration para que el objeto pueda ser instanciado desde cualquier parte con @Autowired.
+    /**
+     * Bean que define la configuración principal de OpenAPI.
+     *
+     * Este método crea y personaliza el objeto OpenAPI que será utilizado por
+     * Springdoc para generar la documentación visible en Swagger UI.
+     *
+     * @return configuración personalizada de OpenAPI con información del proyecto.
+     */
     @Bean
-    // Objeto que usa Springdoc para generar el JSON que alimenta el Swagger UI.
     public OpenAPI customOpenAPI() {
 
-        // Crea una instancia y configura sus métodos con info.
-        // Los "servers" ahora los definimos en NoLimitsApplication con @OpenAPIDefinition.
+        // Se crea una nueva instancia de OpenAPI y se le asigna información básica del proyecto
         return new OpenAPI()
             .info(new Info()
-                .title("Controllers 'NoLimits' ")
+                // Título que aparecerá en Swagger
+                .title("Controllers 'NoLimits'")
+
+                // Versión de la API
                 .version("Versión: 1.0")
-                .description("Controllers de 'NoLimits' y Swagger."));
+
+                // Descripción general del propósito de la documentación
+                .description("Documentación de los controllers del sistema NoLimits mediante Swagger."));
     }
 
 }

@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/UsuarioService.java
 package com.example.NoLimits.Multimedia.service;
 
 import java.util.ArrayList;
@@ -18,6 +19,16 @@ import com.example.NoLimits.Multimedia.repository.VentaRepository;
 
 import jakarta.transaction.Transactional;
 
+/*
+ Servicio encargado de la lógica de usuarios.
+
+ Desde aquí se maneja:
+ - CRUD de usuarios.
+ - Búsquedas por nombre/correo.
+ - Validaciones de negocio (correo único, longitud de contraseña, etc.).
+ - Resumen de usuarios.
+ - Cálculo y detalle de compras asociadas a un usuario.
+*/
 @Service
 @Transactional
 public class UsuarioService {
@@ -27,6 +38,8 @@ public class UsuarioService {
 
     @Autowired
     private VentaRepository ventaRepository;
+
+    /* ================= CRUD BÁSICO ================= */
 
     // Obtener todos los usuarios
     public List<UsuarioModel> findAll() {
@@ -40,12 +53,20 @@ public class UsuarioService {
                 HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
     }
 
-    // Guardar un nuevo usuario
+    /*
+     Guardar un nuevo usuario.
+
+     Validaciones:
+     - Contraseña máximo 10 caracteres.
+     - Correo obligatorio.
+     - Correo no duplicado (se normaliza en minúsculas).
+    */
     public UsuarioModel save(UsuarioModel usuario) {
         if (usuario.getPassword() != null && usuario.getPassword().length() > 10) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
         }
+
         if (usuario.getCorreo() == null || usuario.getCorreo().trim().isEmpty()) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "El correo es obligatorio");
@@ -62,12 +83,19 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    // Eliminar un usuario (bloquear si tiene ventas asociadas)
+    /*
+     Eliminar un usuario por ID.
+
+     Regla de negocio:
+     - Si el usuario tiene compras asociadas, se bloquea la eliminación.
+    */
     public void deleteById(Long id) {
+        // Verificar existencia
         usuarioRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
 
+        // Validar que no tenga ventas
         boolean tieneVentas = !ventaRepository.findByUsuarioModel_Id(id).isEmpty();
         if (tieneVentas) {
             throw new ResponseStatusException(
@@ -79,7 +107,14 @@ public class UsuarioService {
         usuarioRepository.deleteById(id);
     }
 
-    // Obtener detalle + total de compras del usuario
+    /*
+     Obtener detalle + total de compras del usuario.
+
+     Devuelve un mapa con:
+     - "usuario": UsuarioModel
+     - "compras": List<VentaModel>
+     - "totalCompras": cantidad de ventas
+    */
     public Map<String, Object> obtenerDetalleUsuario(long usuarioId) {
         UsuarioModel usuario = findById(usuarioId);
 
@@ -94,7 +129,9 @@ public class UsuarioService {
         return respuesta;
     }
 
-    // Buscar por nombre (parcial, sin mayúsculas/minúsculas)
+    /* ================= BÚSQUEDAS ================= */
+
+    // Buscar por nombre (parcial, sin distinguir mayúsculas/minúsculas)
     public List<UsuarioModel> findByNombre(String nombreUsuario) {
         if (nombreUsuario == null) {
             throw new ResponseStatusException(
@@ -103,6 +140,7 @@ public class UsuarioService {
 
         String filtro = nombreUsuario.trim();
         if (filtro.isEmpty()) {
+            // Si viene vacío, devolvemos todos
             return usuarioRepository.findAll();
         }
 
@@ -111,13 +149,25 @@ public class UsuarioService {
 
     // Buscar por correo (404 si no existe)
     public UsuarioModel findByCorreo(String correoUsuario) {
-        String correo = (correoUsuario == null) ? null : correoUsuario.trim().toLowerCase();
+        String correo = (correoUsuario == null)
+                ? null
+                : correoUsuario.trim().toLowerCase();
+
         return usuarioRepository.findByCorreo(correo)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
     }
 
-    // Actualizar un usuario (PUT estricto)
+    /* ================= Actualización (PUT) ================= */
+
+    /*
+     Actualizar un usuario (PUT estricto).
+
+     Reglas:
+     - Todos los campos deben venir informados: nombre, apellidos, correo, teléfono, password.
+     - El correo se normaliza en minúsculas y debe seguir siendo único.
+     - La contraseña máximo 10 caracteres.
+    */
     public UsuarioModel update(long id, UsuarioModel d) {
         UsuarioModel u = findById(id);
 
@@ -130,6 +180,8 @@ public class UsuarioService {
         }
 
         String nuevoCorreo = d.getCorreo().trim().toLowerCase();
+
+        // Si el correo cambia, validar que no exista en otro usuario
         if (!nuevoCorreo.equalsIgnoreCase(u.getCorreo()) &&
             usuarioRepository.existsByCorreo(nuevoCorreo)) {
             throw new ResponseStatusException(
@@ -150,20 +202,39 @@ public class UsuarioService {
         return usuarioRepository.save(u);
     }
 
-    // Actualización parcial (PATCH)
+    /* ================= Actualización parcial (PATCH) ================= */
+
+    /*
+     Actualización parcial del usuario.
+
+     Solo se modifican los campos que vienen no nulos / no vacíos:
+     - nombre
+     - apellidos
+     - correo (validando duplicados)
+     - teléfono
+     - password (máx. 10 caracteres)
+     - rol (usando solo el ID)
+    */
     public UsuarioModel patch(long id, UsuarioModel d) {
         UsuarioModel u = findById(id);
 
+        // Nombre
         if (d.getNombre() != null) {
             String v = d.getNombre().trim();
-            if (!v.isEmpty()) u.setNombre(v);
+            if (!v.isEmpty()) {
+                u.setNombre(v);
+            }
         }
 
+        // Apellidos
         if (d.getApellidos() != null) {
             String v = d.getApellidos().trim();
-            if (!v.isEmpty()) u.setApellidos(v);
+            if (!v.isEmpty()) {
+                u.setApellidos(v);
+            }
         }
 
+        // Correo (normalizado y sin duplicar)
         if (d.getCorreo() != null) {
             String nuevo = d.getCorreo().trim().toLowerCase();
             if (!nuevo.isEmpty() && !nuevo.equalsIgnoreCase(u.getCorreo())) {
@@ -175,10 +246,12 @@ public class UsuarioService {
             }
         }
 
+        // Teléfono
         if (d.getTelefono() != null) {
             u.setTelefono(d.getTelefono());
         }
 
+        // Password (con máximo de caracteres)
         if (d.getPassword() != null) {
             if (d.getPassword().length() > 10) {
                 throw new ResponseStatusException(
@@ -187,6 +260,7 @@ public class UsuarioService {
             u.setPassword(d.getPassword());
         }
 
+        // Rol (solo se toma el ID y se crea una instancia ligera)
         if (d.getRol() != null && d.getRol().getId() != null) {
             RolModel nuevoRol = new RolModel();
             nuevoRol.setId(d.getRol().getId());
@@ -196,27 +270,47 @@ public class UsuarioService {
         return usuarioRepository.save(u);
     }
 
-    // Obtener resumen de usuarios
+    /* ================= Resumen para reportes / admin ================= */
+
+    /*
+     Obtener resumen de usuarios en formato de lista de mapas.
+
+     Cada registro incluye:
+     - ID
+     - Nombre
+     - Apellidos
+     - Correo
+     - Teléfono
+    */
     public List<Map<String, Object>> obtenerUsuariosConDatos() {
         List<Object[]> resultados = usuarioRepository.obtenerUsuariosResumen();
         List<Map<String, Object>> lista = new ArrayList<>();
 
         for (Object[] fila : resultados) {
             Map<String, Object> datos = new HashMap<>();
-            datos.put("ID",       fila[0]);
-            datos.put("Nombre",   fila[1]);
-            datos.put("Apellidos",fila[2]);
-            datos.put("Correo",   fila[3]);
-            datos.put("Teléfono", fila[4]);
+            datos.put("ID",        fila[0]);
+            datos.put("Nombre",    fila[1]);
+            datos.put("Apellidos", fila[2]);
+            datos.put("Correo",    fila[3]);
+            datos.put("Teléfono",  fila[4]);
             lista.add(datos);
         }
         return lista;
     }
 
+    /* ================= Login simple (sin HttpSession) ================= */
+
+    /*
+     Login a nivel de servicio (no crea sesión, solo valida credenciales).
+
+     Se usa:
+     - findByCorreo para buscar el usuario.
+     - Comparación directa de password (si luego usas hashing, se reemplaza aquí).
+    */
     public UsuarioModel login(String correo, String password) {
         UsuarioModel usuario = findByCorreo(correo);
 
-        // Aquí puedes aplicar hashing si lo usas.
+        // Aquí podrías aplicar hashing en vez de comparar texto plano
         if (!usuario.getPassword().equals(password)) {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,

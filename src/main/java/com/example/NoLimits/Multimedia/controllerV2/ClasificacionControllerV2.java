@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/ClasificacionControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2;
 
 import java.util.List;
@@ -39,6 +40,18 @@ import jakarta.validation.Valid;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/*
+ Controlador HATEOAS para las clasificaciones (versión V2).
+
+ En esta versión:
+ - Las respuestas no devuelven solo el JSON del recurso.
+ - También incluyen enlaces (links) para navegar a otras operaciones relacionadas.
+ - Cada clasificación viene envuelta en un EntityModel con sus propios enlaces.
+ - Los listados se devuelven como CollectionModel, también con enlaces propios.
+
+ La idea es que el cliente pueda descubrir qué más puede hacer
+ siguiendo los enlaces que vienen en la respuesta.
+*/
 @RestController
 @RequestMapping(value = "/api/v2/clasificaciones", produces = MediaTypes.HAL_JSON_VALUE)
 @Tag(
@@ -48,14 +61,25 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @Validated
 public class ClasificacionControllerV2 {
 
+    // Servicio que maneja la lógica de negocio de las clasificaciones.
     @Autowired
     private ClasificacionService clasificacionService;
 
+    // Assembler que se encarga de convertir ClasificacionModel a EntityModel<ClasificacionModel>
+    // y agregar los enlaces HATEOAS correspondientes.
     @Autowired
     private ClasificacionModelAssembler clasificacionAssembler;
 
     // ================== GET ALL ==================
 
+    /*
+     Obtener todas las clasificaciones en formato HATEOAS.
+
+     - Se toma la lista normal desde el servicio.
+     - Cada elemento se transforma usando el assembler, para incluir enlaces.
+     - Si la lista está vacía, se responde con 204 (sin contenido).
+     - Si hay datos, se envuelven en un CollectionModel con un enlace "self".
+    */
     @Operation(
             summary = "Obtener todas las clasificaciones (HATEOAS)",
             description = "Devuelve una lista de todas las clasificaciones con enlaces HATEOAS."
@@ -74,14 +98,17 @@ public class ClasificacionControllerV2 {
     )
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<ClasificacionModel>>> getAll() {
+        // Transformar cada ClasificacionModel a EntityModel con enlaces.
         List<EntityModel<ClasificacionModel>> lista = clasificacionService.findAll().stream()
                 .map(clasificacionAssembler::toModel)
                 .collect(Collectors.toList());
 
+        // Si no hay ninguna clasificación, se responde sin contenido.
         if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
+        // Si hay datos, se envuelven en un CollectionModel con un enlace "self".
         return ResponseEntity.ok(
                 CollectionModel.of(
                         lista,
@@ -92,6 +119,13 @@ public class ClasificacionControllerV2 {
 
     // ================== GET BY ID ==================
 
+    /*
+     Obtener una clasificación específica por su ID en formato HATEOAS.
+
+     - Busca la clasificación por ID usando el servicio.
+     - Si se encuentra, se transforma con el assembler para agregar enlaces.
+     - Si el servicio lanza RecursoNoEncontradoException, se responde con 404.
+    */
     @Operation(
             summary = "Obtener una clasificación por ID (HATEOAS)",
             description = "Devuelve una clasificación específica con enlaces HATEOAS."
@@ -122,6 +156,14 @@ public class ClasificacionControllerV2 {
 
     // ================== CREATE ==================
 
+    /*
+     Crear una nueva clasificación y devolverla con enlaces HATEOAS.
+
+     - Se valida el cuerpo recibido.
+     - Se guarda la nueva clasificación con el servicio.
+     - Se transforma en EntityModel usando el assembler.
+     - Se devuelve con código 201 y cabecera Location apuntando al enlace self.
+    */
     @Operation(
             summary = "Crear una nueva clasificación (HATEOAS)",
             description = "Crea una nueva clasificación y devuelve el recurso con enlaces HATEOAS."
@@ -163,9 +205,13 @@ public class ClasificacionControllerV2 {
             )
             @Valid @RequestBody ClasificacionModel clasificacion
     ) {
+        // Guardar la nueva clasificación en la base de datos.
         ClasificacionModel nueva = clasificacionService.save(clasificacion);
+
+        // Transformarla en EntityModel con enlaces HATEOAS.
         EntityModel<ClasificacionModel> entityModel = clasificacionAssembler.toModel(nueva);
 
+        // Devolver 201 con Location apuntando al enlace self del recurso creado.
         return ResponseEntity
                 .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
                 .body(entityModel);
@@ -173,6 +219,13 @@ public class ClasificacionControllerV2 {
 
     // ================== UPDATE (PUT) ==================
 
+    /*
+     Actualizar completamente una clasificación usando PUT, en versión HATEOAS.
+
+     - Se reemplazan los datos de la clasificación con el ID indicado.
+     - Si no existe, se responde con 404.
+     - Si se actualiza bien, se devuelve el recurso actualizado con enlaces.
+    */
     @Operation(
             summary = "Actualizar una clasificación (PUT - HATEOAS)",
             description = "Reemplaza completamente una clasificación existente por los datos enviados."
@@ -225,6 +278,14 @@ public class ClasificacionControllerV2 {
 
     // ================== PATCH (parcial) ==================
 
+    /*
+     Actualizar parcialmente una clasificación usando PATCH, en versión HATEOAS.
+
+     - Se recibe un mapa con los campos a modificar.
+     - El servicio se encarga de aplicar solo esos cambios.
+     - Si la clasificación no existe, se responde con 404.
+     - Si se actualiza, se devuelve el recurso con sus enlaces.
+    */
     @Operation(
             summary = "Actualizar parcialmente una clasificación (PATCH - HATEOAS)",
             description = "Modifica campos específicos de una clasificación existente."
@@ -276,6 +337,12 @@ public class ClasificacionControllerV2 {
 
     // ================== DELETE ==================
 
+    /*
+     Eliminar una clasificación por su ID.
+
+     - Si la eliminación se realiza correctamente, responde con 204 (sin contenido).
+     - Si la clasificación no existe, responde con 404.
+    */
     @Operation(
             summary = "Eliminar una clasificación (HATEOAS)",
             description = "Elimina una clasificación por su ID si existe."

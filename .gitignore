@@ -1,2 +1,24 @@
+# ============================================================
+# IGNORAR CARPETA DE COMPILACIÓN DE MAVEN
+# ============================================================
+
+# /target/
+# Esta carpeta es generada automáticamente por Maven al compilar el proyecto.
+# Contiene archivos compilados (.class), el .jar final y otros recursos temporales.
+# NO debe subirse al repositorio porque:
+# - Se regenera en cada build
+# - Aumenta innecesariamente el tamaño del proyecto
+# - Puede causar conflictos entre entornos
 /target/
+
+
+# ============================================================
+# IGNORAR ARCHIVOS DE LOG
+# ============================================================
+
+# *.log
+# Ignora todos los archivos con extensión .log en cualquier parte del proyecto.
+# Estos archivos son registros generados por la aplicación o el servidor
+# y no son necesarios en el control de versiones.
+# Evita subir información sensible o ruido al repositorio.
 *.log

@@ -1,4 +1,41 @@
+# ============================================================
+# ARCHIVOS Y CARPETAS DE CONTROL DE VERSIONES
+# ============================================================
+
+# .git
+# Carpeta interna donde Git guarda toda la información del repositorio:
+# historial de commits, ramas, configuración, etc.
+# Normalmente NO se versiona dentro de otro repositorio,
+# especialmente si este proyecto está dentro de otra estructura mayor.
 .git
+
+
+# .gitignore
+# Archivo que indica a Git qué archivos o carpetas debe ignorar.
+# Se excluye cuando este proyecto se integra como submódulo
+# o cuando no se desea duplicar reglas de ignorado.
 .gitignore
+
+
+# ============================================================
+# ARCHIVOS GENERADOS AUTOMÁTICAMENTE
+# ============================================================
+
+# target/
+# Carpeta generada por Maven al compilar el proyecto.
+# Contiene clases compiladas, recursos procesados y el JAR final.
+# No debe subirse al repositorio porque se genera automáticamente
+# con cada "mvn clean install" o "mvn package".
 target/
+
+
+# ============================================================
+# DOCUMENTACIÓN Y ARCHIVOS DE TEXTO
+# ============================================================
+
+# *.md
+# Ignora todos los archivos Markdown (.md).
+# Generalmente se usan para documentación como README.md,
+# pero aquí se excluyen para evitar incluir documentación
+# en el control de versiones si no es requerida.
 *.md

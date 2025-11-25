@@ -1,18 +1,32 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<!-- Archivo principal de configuración Maven del proyecto NoLimits -->
+<!-- Define dependencias, versión de Java, plugins y estructura general del proyecto -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<!-- Versión del modelo POM -->
 	<modelVersion>4.0.0</modelVersion>
+
+	<!-- Spring Boot como padre del proyecto -->
+	<!-- Proporciona configuración base y gestión automática de dependencias -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.3.0</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/> <!-- Busca el parent desde repositorio remoto -->
 	</parent>
+
+	<!-- Identificación del proyecto -->
 	<groupId>com.example</groupId>
 	<artifactId>NoLimits</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>NoLimits</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Proyecto backend Spring Boot para sistema NoLimits</description>
+
+	<!-- Metadatos opcionales -->
 	<url/>
 	<licenses>
 		<license/>
@@ -26,46 +40,71 @@
 		<tag/>
 		<url/>
 	</scm>
+
+	<!-- Propiedades globales del proyecto -->
 	<properties>
+		<!-- Versión de Java utilizada en todo el proyecto -->
 		<java.version>17</java.version>
 	</properties>
+
+	<!-- ========================
+	     DEPENDENCIAS DEL PROYECTO
+	========================= -->
 	<dependencies>
+
+		<!-- Actuator: monitoreo y métricas del sistema -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+
+		<!-- Driver PostgreSQL para producción -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- Base de datos H2 para testing -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Validaciones Bean Validation (@NotNull, @Size, etc.) -->
 		<dependency>
     		<groupId>org.springframework.boot</groupId>
     		<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
+
+		<!-- JPA + Hibernate para persistencia -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+
+		<!-- Web REST con Spring MVC -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+
+		<!-- Faker para generación de datos aleatorios -->
 		<dependency>
     		<groupId>net.datafaker</groupId>
     		<artifactId>datafaker</artifactId>
-    		<version>2.3.0</version> <!-- Verifica en Maven Central si hay una más reciente -->
+    		<version>2.3.0</version>
 		</dependency>
+
+		<!-- Mockito para pruebas unitarias -->
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Testing con JUnit y Spring Boot Test -->
 		<dependency>
     		<groupId>org.springframework.boot</groupId>
     		<artifactId>spring-boot-starter-test</artifactId>
@@ -77,30 +116,44 @@
         		</exclusion>
     		</exclusions>
 		</dependency>
+
+		<!-- Driver MySQL (opcional, soporte alternativo) -->
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- Lombok para reducir boilerplate (getters, setters, etc.) -->
 		<dependency>
     		<groupId>org.projectlombok</groupId>
     		<artifactId>lombok</artifactId>
     		<version>1.18.30</version> 
     		<scope>provided</scope>
 		</dependency>
+
+		<!-- Swagger UI para documentación de API -->
 		<dependency> 
 			<groupId>org.springdoc</groupId> 
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId> 
 			<version>2.6.0</version> 
 		</dependency>
+
+		<!-- HATEOAS para respuestas hipermedia -->
 		<dependency>
  			<groupId>org.springframework.boot</groupId>
  			<artifactId>spring-boot-starter-hateoas</artifactId>
-			</dependency>
+		</dependency>
+
 	</dependencies>
 
+	<!-- ========================
+	     CONFIGURACIÓN DE BUILD
+	========================= -->
 	<build>
 		<plugins>
+
+			<!-- Configuración del compilador Java -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -109,6 +162,7 @@
 					<source>17</source>
 					<target>17</target>
 					<annotationProcessorPaths>
+						<!-- Lombok como procesador de anotaciones -->
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
@@ -117,10 +171,13 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+
+			<!-- Plugin de empaquetado Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<!-- Excluye lombok del empaquetado final -->
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
@@ -129,6 +186,7 @@
 					</excludes>
 				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 
