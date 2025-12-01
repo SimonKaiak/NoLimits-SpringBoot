@@ -1,7 +1,10 @@
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
 import com.example.NoLimits.Multimedia.assemblers.catalogos.PlataformaModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.PlataformaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.PlataformaUpdateDTO;
+import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.MediaTypes;
 
 import org.springframework.http.HttpStatus;
@@ -43,7 +47,7 @@ public class PlataformaControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar plataformas (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<PlataformaModel>>> findAll() {
+    public ResponseEntity<CollectionModel<EntityModel<PlataformaResponseDTO>>> findAll() {
         var lista = service.findAll().stream()
                 .map(assembler::toModel)
                 .collect(Collectors.toList());
@@ -57,43 +61,65 @@ public class PlataformaControllerV2 {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener plataforma por ID (HATEOAS)")
-    public EntityModel<PlataformaModel> findById(@PathVariable Long id) {
-        return assembler.toModel(service.findById(id));
+    public ResponseEntity<EntityModel<PlataformaResponseDTO>> findById(@PathVariable Long id) {
+        try {
+            PlataformaResponseDTO dto = service.findById(id);
+            return ResponseEntity.ok(assembler.toModel(dto));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
     @Operation(summary = "Crear plataforma (HATEOAS)")
-    public ResponseEntity<EntityModel<PlataformaModel>> save(
-            @RequestBody PlataformaModel body
+    public ResponseEntity<EntityModel<PlataformaResponseDTO>> save(
+            @RequestBody PlataformaRequestDTO body
     ) {
-        var creada = service.save(body);
+        PlataformaResponseDTO creada = service.save(body);
+        EntityModel<PlataformaResponseDTO> entityModel = assembler.toModel(creada);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(assembler.toModel(creada));
+                .location(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar plataforma (HATEOAS)")
-    public EntityModel<PlataformaModel> update(
+    public ResponseEntity<EntityModel<PlataformaResponseDTO>> update(
             @PathVariable Long id,
-            @RequestBody PlataformaModel body
+            @RequestBody PlataformaUpdateDTO body
     ) {
-        return assembler.toModel(service.update(id, body));
+        try {
+            PlataformaResponseDTO actualizada = service.update(id, body);
+            return ResponseEntity.ok(assembler.toModel(actualizada));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Patch parcial de plataforma (HATEOAS)")
-    public EntityModel<PlataformaModel> patch(
+    public ResponseEntity<EntityModel<PlataformaResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody PlataformaModel body
+            @RequestBody PlataformaUpdateDTO body
     ) {
-        return assembler.toModel(service.patch(id, body));
+        try {
+            PlataformaResponseDTO actualizada = service.patch(id, body);
+            return ResponseEntity.ok(assembler.toModel(actualizada));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar plataforma (HATEOAS)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.deleteById(id);
-        return ResponseEntity.noContent().build();
+        try {
+            service.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

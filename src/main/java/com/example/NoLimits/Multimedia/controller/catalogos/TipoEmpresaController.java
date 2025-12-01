@@ -1,15 +1,10 @@
 package com.example.NoLimits.Multimedia.controller.catalogos;
 
-import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
-import com.example.NoLimits.Multimedia.service.catalogos.TipoEmpresaService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,76 +13,62 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoEmpresaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoEmpresaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoEmpresaUpdateDTO;
+import com.example.NoLimits.Multimedia.service.catalogos.TipoEmpresaService;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/tipos-empresa")
-@Tag(name = "TipoEmpresa-Controller", description = "CRUD de tipos de empresa (TNP).")
+@Tag(name = "TipoEmpresa-Controller", description = "CRUD de tipos de empresa con DTO.")
 public class TipoEmpresaController {
 
     @Autowired
     private TipoEmpresaService tipoEmpresaService;
 
-    // --------------------------------------------------------
-    // GET - Listar
-    // --------------------------------------------------------
     @GetMapping
     @Operation(summary = "Listar todos los tipos de empresa")
-    public List<TipoEmpresaModel> findAll() {
+    public List<TipoEmpresaResponseDTO> findAll() {
         return tipoEmpresaService.findAll();
     }
 
-    // --------------------------------------------------------
-    // GET - Obtener por ID
-    // --------------------------------------------------------
     @GetMapping("/{id}")
     @Operation(summary = "Obtener un tipo de empresa por ID")
-    public TipoEmpresaModel findById(@PathVariable Long id) {
+    public TipoEmpresaResponseDTO findById(@PathVariable Long id) {
         return tipoEmpresaService.findById(id);
     }
 
-    // --------------------------------------------------------
-    // POST - Crear
-    // --------------------------------------------------------
     @PostMapping
     @Operation(summary = "Crear un nuevo tipo de empresa")
-    public ResponseEntity<TipoEmpresaModel> save(@RequestBody TipoEmpresaModel tipo) {
-        TipoEmpresaModel creado = tipoEmpresaService.save(tipo);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    public ResponseEntity<TipoEmpresaResponseDTO> save(@RequestBody TipoEmpresaRequestDTO dto) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(tipoEmpresaService.save(dto));
     }
 
-    // --------------------------------------------------------
-    // PUT - Actualizar completo
-    // --------------------------------------------------------
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar un tipo de empresa existente")
-    public TipoEmpresaModel update(
+    @Operation(summary = "Actualizar un tipo de empresa")
+    public TipoEmpresaResponseDTO update(
             @PathVariable Long id,
-            @RequestBody TipoEmpresaModel tipo
-    ) {
-        return tipoEmpresaService.update(id, tipo);
+            @RequestBody TipoEmpresaRequestDTO dto) {
+        return tipoEmpresaService.update(id, dto);
     }
 
-    // --------------------------------------------------------
-    // PATCH - Actualización parcial
-    // --------------------------------------------------------
     @PatchMapping("/{id}")
-    @Operation(summary = "Actualizar parcialmente un tipo de empresa existente")
-    public ResponseEntity<TipoEmpresaModel> patch(
+    @Operation(summary = "Actualizar parcialmente un tipo de empresa")
+    public TipoEmpresaResponseDTO patch(
             @PathVariable Long id,
-            @RequestBody TipoEmpresaModel cambios
-    ) {
-        TipoEmpresaModel actualizado = tipoEmpresaService.patch(id, cambios);
-        return ResponseEntity.ok(actualizado);
+            @RequestBody TipoEmpresaUpdateDTO dto) {
+        return tipoEmpresaService.patch(id, dto);
     }
 
-    // --------------------------------------------------------
-    // DELETE - Eliminar
-    // --------------------------------------------------------
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un tipo de empresa por ID")
+    @Operation(summary = "Eliminar un tipo de empresa")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tipoEmpresaService.deleteById(id);
         return ResponseEntity.noContent().build();

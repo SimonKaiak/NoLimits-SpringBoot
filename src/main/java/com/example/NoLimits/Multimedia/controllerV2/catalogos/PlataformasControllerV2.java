@@ -1,8 +1,10 @@
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
+import java.util.stream.Collectors;
+
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.PlataformasModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.PlataformasModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformasResponseDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformasService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,10 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(
@@ -43,7 +41,7 @@ public class PlataformasControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar plataformas asociadas a un producto (TP - HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<PlataformasModel>>> listar(
+    public ResponseEntity<CollectionModel<EntityModel<PlataformasResponseDTO>>> listar(
             @PathVariable Long productoId
     ) {
         var lista = service.findByProducto(productoId).stream()
@@ -59,12 +57,12 @@ public class PlataformasControllerV2 {
 
     @PostMapping("/{plataformaId}")
     @Operation(summary = "Vincular Producto ↔ Plataforma (HATEOAS)")
-    public ResponseEntity<EntityModel<PlataformasModel>> link(
+    public ResponseEntity<EntityModel<PlataformasResponseDTO>> link(
             @PathVariable Long productoId,
             @PathVariable Long plataformaId
     ) {
         try {
-            var rel = service.link(productoId, plataformaId);
+            PlataformasResponseDTO rel = service.link(productoId, plataformaId);
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(assembler.toModel(rel));
@@ -76,21 +74,16 @@ public class PlataformasControllerV2 {
 
     @PatchMapping("/{relacionId}")
     @Operation(summary = "Actualizar parcialmente la relación Producto ↔ Plataforma (PATCH - HATEOAS)")
-    public ResponseEntity<EntityModel<PlataformasModel>> patch(
+    public ResponseEntity<EntityModel<PlataformasResponseDTO>> patch(
             @PathVariable Long productoId,
             @PathVariable Long relacionId,
-            @RequestBody PlataformasModel body
+            @RequestBody PlataformasResponseDTO body
     ) {
         try {
-            Long nuevoProductoId = (body.getProducto() != null)
-                    ? body.getProducto().getId()
-                    : null;
+            Long nuevoProductoId = body.getProductoId();
+            Long nuevaPlataformaId = body.getPlataformaId();
 
-            Long nuevaPlataformaId = (body.getPlataforma() != null)
-                    ? body.getPlataforma().getId()
-                    : null;
-
-            var relActualizada =
+            PlataformasResponseDTO relActualizada =
                     service.patch(relacionId, nuevoProductoId, nuevaPlataformaId);
 
             return ResponseEntity.ok(assembler.toModel(relActualizada));

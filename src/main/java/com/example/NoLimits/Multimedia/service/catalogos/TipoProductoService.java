@@ -1,11 +1,15 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoProductoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 
 import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,93 +30,77 @@ public class TipoProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
-    // ================== CRUD BÁSICO ==================
+    // ================== CRUD BÁSICO (DTO) ==================
 
-    public List<TipoProductoModel> findAll() {
-        return tipoProductoRepository.findAll();
+    public List<TipoProductoResponseDTO> findAll() {
+        return tipoProductoRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
 
-    public TipoProductoModel findById(Long idTipoProducto) {
-        return tipoProductoRepository.findById(idTipoProducto)
+    public TipoProductoResponseDTO findById(Long idTipoProducto) {
+        TipoProductoModel model = tipoProductoRepository.findById(idTipoProducto)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Tipo de producto no encontrado con ID: " + idTipoProducto));
+        return toDTO(model);
     }
 
     /**
      * Búsqueda "amigable": contiene, ignore case.
      */
-    public List<TipoProductoModel> findByNombre(String nombre) {
-        return tipoProductoRepository.findByNombreContainingIgnoreCase(nombre);
+    public List<TipoProductoResponseDTO> findByNombre(String nombre) {
+        return tipoProductoRepository.findByNombreContainingIgnoreCase(nombre)
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     /**
      * Búsqueda por nombre exacto (ignore case).
      */
-    public TipoProductoModel findByNombreExactIgnoreCase(String nombre) {
-        return tipoProductoRepository.findByNombreIgnoreCase(nombre)
+    public TipoProductoResponseDTO findByNombreExactIgnoreCase(String nombre) {
+        TipoProductoModel model = tipoProductoRepository.findByNombreIgnoreCase(nombre)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Tipo de producto no encontrado con nombre: " + nombre));
+        return toDTO(model);
     }
 
-    public TipoProductoModel save(TipoProductoModel tipoProducto) {
-        if (tipoProducto.getNombre() == null || tipoProducto.getNombre().isBlank()) {
-            throw new IllegalArgumentException("El nombre del tipo de producto es obligatorio");
-        }
-
-        String nombreNormalizado = tipoProducto.getNombre().trim();
-        if (tipoProductoRepository.existsByNombreIgnoreCase(nombreNormalizado)) {
-            throw new IllegalArgumentException("Ya existe un tipo de producto con el nombre: " + nombreNormalizado);
-        }
-
-        tipoProducto.setNombre(nombreNormalizado);
-
-        // Si activo viene null, lo dejamos en true por defecto
-        if (tipoProducto.getActivo() == null) {
-            tipoProducto.setActivo(true);
-        }
-
-        return tipoProductoRepository.save(tipoProducto);
+    public TipoProductoResponseDTO save(TipoProductoRequestDTO dto) {
+        TipoProductoModel entity = new TipoProductoModel();
+        aplicarDatosRequest(entity, dto, false);
+        TipoProductoModel guardado = tipoProductoRepository.save(entity);
+        return toDTO(guardado);
     }
 
-    public TipoProductoModel update(Long id, TipoProductoModel tipoProductoDetalles) {
-        TipoProductoModel existente = findById(id);
+    public TipoProductoResponseDTO update(Long id, TipoProductoRequestDTO dto) {
+        TipoProductoModel existente = tipoProductoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Tipo de producto no encontrado con ID: " + id));
 
-        // Nombre
-        if (tipoProductoDetalles.getNombre() != null && !tipoProductoDetalles.getNombre().isBlank()) {
-            String nombreNormalizado = tipoProductoDetalles.getNombre().trim();
-
-            // Validar duplicados solo si cambia el nombre
-            if (!nombreNormalizado.equalsIgnoreCase(existente.getNombre())
-                    && tipoProductoRepository.existsByNombreIgnoreCase(nombreNormalizado)) {
-                throw new IllegalArgumentException("Ya existe un tipo de producto con el nombre: " + nombreNormalizado);
-            }
-
-            existente.setNombre(nombreNormalizado);
-        }
-
-        // Descripción
-        if (tipoProductoDetalles.getDescripcion() != null) {
-            existente.setDescripcion(tipoProductoDetalles.getDescripcion());
-        }
-
-        // Activo
-        if (tipoProductoDetalles.getActivo() != null) {
-            existente.setActivo(tipoProductoDetalles.getActivo());
-        }
-
-        return tipoProductoRepository.save(existente);
+        aplicarDatosRequest(existente, dto, false);
+        TipoProductoModel actualizado = tipoProductoRepository.save(existente);
+        return toDTO(actualizado);
     }
 
     /**
-     * PATCH parcial. Reutilizamos la lógica de update para evitar duplicar validaciones.
+     * PATCH parcial. Solo aplica campos no nulos del DTO.
      */
-    public TipoProductoModel patch(Long id, TipoProductoModel tipoProductoParcial) {
-        return update(id, tipoProductoParcial);
+    public TipoProductoResponseDTO patch(Long id, TipoProductoUpdateDTO dto) {
+        TipoProductoModel existente = tipoProductoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Tipo de producto no encontrado con ID: " + id));
+
+        aplicarDatosParciales(existente, dto);
+        TipoProductoModel actualizado = tipoProductoRepository.save(existente);
+        return toDTO(actualizado);
     }
 
     public void deleteById(Long idTipoProducto) {
         // 404 si no existe
-        TipoProductoModel existente = findById(idTipoProducto);
+        TipoProductoModel existente = tipoProductoRepository.findById(idTipoProducto)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Tipo de producto no encontrado con ID: " + idTipoProducto));
 
         // 409 si hay productos asociados a este tipo
         if (productoRepository.existsByTipoProducto_Id(idTipoProducto)) {
@@ -127,12 +115,18 @@ public class TipoProductoService {
 
     // ================== BÚSQUEDAS POR ESTADO ==================
 
-    public List<TipoProductoModel> findActivos() {
-        return tipoProductoRepository.findByActivoTrue();
+    public List<TipoProductoResponseDTO> findActivos() {
+        return tipoProductoRepository.findByActivoTrue()
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
 
-    public List<TipoProductoModel> findInactivos() {
-        return tipoProductoRepository.findByActivoFalse();
+    public List<TipoProductoResponseDTO> findInactivos() {
+        return tipoProductoRepository.findByActivoFalse()
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     // ================== RESUMEN ==================
@@ -151,5 +145,93 @@ public class TipoProductoService {
             lista.add(datos);
         }
         return lista;
+    }
+
+    // ================== HELPERS ==================
+
+    private TipoProductoResponseDTO toDTO(TipoProductoModel model) {
+        if (model == null) {
+            return null;
+        }
+        TipoProductoResponseDTO dto = new TipoProductoResponseDTO();
+        dto.setId(model.getId());
+        dto.setNombre(model.getNombre());
+        dto.setDescripcion(model.getDescripcion());
+        dto.setActivo(model.getActivo());
+        return dto;
+    }
+
+    private void aplicarDatosRequest(TipoProductoModel entity, TipoProductoRequestDTO dto, boolean esPatch) {
+        if (dto == null) {
+            return;
+        }
+
+        // Nombre (obligatorio en create/update)
+        if (dto.getNombre() == null || dto.getNombre().isBlank()) {
+            if (!esPatch) {
+                throw new IllegalArgumentException("El nombre del tipo de producto es obligatorio");
+            }
+        } else {
+            String nombreNormalizado = dto.getNombre().trim();
+
+            // Validar duplicados solo si cambia el nombre
+            if (entity.getId() == null ||
+                    !nombreNormalizado.equalsIgnoreCase(entity.getNombre())) {
+
+                if (tipoProductoRepository.existsByNombreIgnoreCase(nombreNormalizado)) {
+                    throw new IllegalArgumentException(
+                            "Ya existe un tipo de producto con el nombre: " + nombreNormalizado
+                    );
+                }
+            }
+
+            entity.setNombre(nombreNormalizado);
+        }
+
+        // Descripción
+        if (dto.getDescripcion() != null || !esPatch) {
+            entity.setDescripcion(dto.getDescripcion());
+        }
+
+        // Activo
+        if (dto.getActivo() != null) {
+            entity.setActivo(dto.getActivo());
+        } else if (!esPatch && entity.getActivo() == null) {
+            // En create, si viene null, por defecto true
+            entity.setActivo(true);
+        }
+    }
+
+    private void aplicarDatosParciales(TipoProductoModel entity, TipoProductoUpdateDTO dto) {
+        if (dto == null) {
+            return;
+        }
+
+        // Nombre (opcional)
+        if (dto.getNombre() != null) {
+            String nombreNormalizado = dto.getNombre().trim();
+            if (nombreNormalizado.isBlank()) {
+                throw new IllegalArgumentException("El nombre no puede estar vacío");
+            }
+
+            if (!nombreNormalizado.equalsIgnoreCase(entity.getNombre())
+                    && tipoProductoRepository.existsByNombreIgnoreCase(nombreNormalizado)) {
+                throw new IllegalArgumentException(
+                        "Ya existe un tipo de producto con el nombre: " + nombreNormalizado
+                );
+            }
+
+            entity.setNombre(nombreNormalizado);
+        }
+
+        // Descripción (opcional)
+        if (dto.getDescripcion() != null) {
+            entity.setDescripcion(dto.getDescripcion());
+        }
+
+        // Activo (opcional)
+        if (dto.getActivo() != null) {
+            entity.setActivo(dto.getActivo());
+        }
     }
 }

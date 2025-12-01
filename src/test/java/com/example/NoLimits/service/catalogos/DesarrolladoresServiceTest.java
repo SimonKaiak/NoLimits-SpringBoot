@@ -1,7 +1,9 @@
-
 package com.example.NoLimits.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladoresRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladoresResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladoresUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladoresModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
@@ -10,21 +12,23 @@ import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladoresRepos
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.DesarrolladoresService;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,7 +36,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class DesarrolladoresServiceTest {
+class DesarrolladoresServiceTest {
 
     @Autowired
     private DesarrolladoresService desarrolladoresService;
@@ -84,6 +88,20 @@ public class DesarrolladoresServiceTest {
         return rel;
     }
 
+    private DesarrolladoresRequestDTO requestDTO(Long productoId, Long desarrolladorId) {
+        DesarrolladoresRequestDTO dto = new DesarrolladoresRequestDTO();
+        dto.setProductoId(productoId);
+        dto.setDesarrolladorId(desarrolladorId);
+        return dto;
+    }
+
+    private DesarrolladoresUpdateDTO updateDTO(Long productoId, Long desarrolladorId) {
+        DesarrolladoresUpdateDTO dto = new DesarrolladoresUpdateDTO();
+        dto.setProductoId(productoId);
+        dto.setDesarrolladorId(desarrolladorId);
+        return dto;
+    }
+
     // ================== FIND ==================
 
     @Test
@@ -91,11 +109,14 @@ public class DesarrolladoresServiceTest {
         when(desarrolladoresRepository.findByProducto_Id(1L))
                 .thenReturn(List.of(relacion()));
 
-        List<DesarrolladoresModel> lista = desarrolladoresService.findByProducto(1L);
+        List<DesarrolladoresResponseDTO> lista = desarrolladoresService.findByProducto(1L);
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertEquals(1L, lista.get(0).getProducto().getId());
+        DesarrolladoresResponseDTO dto = lista.get(0);
+        assertEquals(100L, dto.getId());
+        assertEquals(1L, dto.getProductoId());
+        assertEquals(10L, dto.getDesarrolladorId());
     }
 
     @Test
@@ -103,17 +124,22 @@ public class DesarrolladoresServiceTest {
         when(desarrolladoresRepository.findByDesarrollador_Id(10L))
                 .thenReturn(List.of(relacion()));
 
-        List<DesarrolladoresModel> lista = desarrolladoresService.findByDesarrollador(10L);
+        List<DesarrolladoresResponseDTO> lista = desarrolladoresService.findByDesarrollador(10L);
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertEquals(10L, lista.get(0).getDesarrollador().getId());
+        DesarrolladoresResponseDTO dto = lista.get(0);
+        assertEquals(100L, dto.getId());
+        assertEquals(1L, dto.getProductoId());
+        assertEquals(10L, dto.getDesarrolladorId());
     }
 
     // ================== LINK ==================
 
     @Test
     void testLink_CreaNuevaRelacion() {
+        DesarrolladoresRequestDTO dto = requestDTO(1L, 10L);
+
         when(productoRepository.findById(1L)).thenReturn(Optional.of(producto()));
         when(desarrolladorRepository.findById(10L)).thenReturn(Optional.of(desarrollador()));
         when(desarrolladoresRepository.existsByProducto_IdAndDesarrollador_Id(1L, 10L))
@@ -126,16 +152,18 @@ public class DesarrolladoresServiceTest {
                     return rel;
                 });
 
-        DesarrolladoresModel result = desarrolladoresService.link(1L, 10L);
+        DesarrolladoresResponseDTO result = desarrolladoresService.link(dto);
 
         assertNotNull(result);
-        assertEquals(1L, result.getProducto().getId());
-        assertEquals(10L, result.getDesarrollador().getId());
+        assertEquals(100L, result.getId());
+        assertEquals(1L, result.getProductoId());
+        assertEquals(10L, result.getDesarrolladorId());
         verify(desarrolladoresRepository, times(1)).save(any(DesarrolladoresModel.class));
     }
 
     @Test
     void testLink_YaExiste_NoDuplica() {
+        DesarrolladoresRequestDTO dto = requestDTO(1L, 10L);
         DesarrolladoresModel existente = relacion();
 
         when(productoRepository.findById(1L)).thenReturn(Optional.of(producto()));
@@ -145,28 +173,37 @@ public class DesarrolladoresServiceTest {
         when(desarrolladoresRepository.findByProducto_Id(1L))
                 .thenReturn(List.of(existente));
 
-        DesarrolladoresModel result = desarrolladoresService.link(1L, 10L);
+        DesarrolladoresResponseDTO result = desarrolladoresService.link(dto);
 
         assertNotNull(result);
         assertEquals(existente.getId(), result.getId());
+        assertEquals(1L, result.getProductoId());
+        assertEquals(10L, result.getDesarrolladorId());
         verify(desarrolladoresRepository, never()).save(any(DesarrolladoresModel.class));
     }
 
     @Test
     void testLink_ProductoNoExiste_Lanza404() {
+        DesarrolladoresRequestDTO dto = requestDTO(1L, 10L);
         when(productoRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-                () -> desarrolladoresService.link(1L, 10L));
+                () -> desarrolladoresService.link(dto));
+
+        verify(desarrolladorRepository, never()).findById(anyLong());
+        verify(desarrolladoresRepository, never()).save(any(DesarrolladoresModel.class));
     }
 
     @Test
     void testLink_DesarrolladorNoExiste_Lanza404() {
+        DesarrolladoresRequestDTO dto = requestDTO(1L, 10L);
         when(productoRepository.findById(1L)).thenReturn(Optional.of(producto()));
         when(desarrolladorRepository.findById(10L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-                () -> desarrolladoresService.link(1L, 10L));
+                () -> desarrolladoresService.link(dto));
+
+        verify(desarrolladoresRepository, never()).save(any(DesarrolladoresModel.class));
     }
 
     // ================== PATCH ==================
@@ -174,11 +211,7 @@ public class DesarrolladoresServiceTest {
     @Test
     void testPatch_CambiaSoloProducto_OK() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        ProductoModel nuevoProd = new ProductoModel();
-        nuevoProd.setId(2L);
-        parciales.setProducto(nuevoProd);
+        DesarrolladoresUpdateDTO parciales = updateDTO(2L, null);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
         when(productoRepository.findById(2L)).thenReturn(Optional.of(producto2()));
@@ -187,21 +220,18 @@ public class DesarrolladoresServiceTest {
         when(desarrolladoresRepository.save(any(DesarrolladoresModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        DesarrolladoresModel result = desarrolladoresService.patch(100L, parciales);
+        DesarrolladoresResponseDTO result = desarrolladoresService.patch(100L, parciales);
 
         assertNotNull(result);
-        assertEquals(2L, result.getProducto().getId());
-        assertEquals(10L, result.getDesarrollador().getId());
+        assertEquals(100L, result.getId());
+        assertEquals(2L, result.getProductoId());
+        assertEquals(10L, result.getDesarrolladorId());
     }
 
     @Test
     void testPatch_CambiaSoloDesarrollador_OK() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        DesarrolladorModel nuevoDev = new DesarrolladorModel();
-        nuevoDev.setId(20L);
-        parciales.setDesarrollador(nuevoDev);
+        DesarrolladoresUpdateDTO parciales = updateDTO(null, 20L);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
         when(desarrolladorRepository.findById(20L)).thenReturn(Optional.of(desarrollador2()));
@@ -210,31 +240,27 @@ public class DesarrolladoresServiceTest {
         when(desarrolladoresRepository.save(any(DesarrolladoresModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        DesarrolladoresModel result = desarrolladoresService.patch(100L, parciales);
+        DesarrolladoresResponseDTO result = desarrolladoresService.patch(100L, parciales);
 
         assertNotNull(result);
-        assertEquals(1L, result.getProducto().getId());
-        assertEquals(20L, result.getDesarrollador().getId());
+        assertEquals(100L, result.getId());
+        assertEquals(1L, result.getProductoId());
+        assertEquals(20L, result.getDesarrolladorId());
     }
 
     @Test
     void testPatch_CambiaAmbos_OK() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        ProductoModel nuevoProd = new ProductoModel();
-        nuevoProd.setId(2L);
-        DesarrolladorModel nuevoDev = new DesarrolladorModel();
-        nuevoDev.setId(20L);
-        parciales.setProducto(nuevoProd);
-        parciales.setDesarrollador(nuevoDev);
+        DesarrolladoresUpdateDTO parciales = updateDTO(2L, 20L);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
-        // para producto
+
+        // primero cambia producto
         when(productoRepository.findById(2L)).thenReturn(Optional.of(producto2()));
         when(desarrolladoresRepository.existsByProducto_IdAndDesarrollador_Id(2L, 10L))
                 .thenReturn(false);
-        // para desarrollador (ojo: ya se actualizó producto en el service)
+
+        // luego cambia desarrollador (producto ya actualizado a 2L)
         when(desarrolladorRepository.findById(20L)).thenReturn(Optional.of(desarrollador2()));
         when(desarrolladoresRepository.existsByProducto_IdAndDesarrollador_Id(2L, 20L))
                 .thenReturn(false);
@@ -242,16 +268,17 @@ public class DesarrolladoresServiceTest {
         when(desarrolladoresRepository.save(any(DesarrolladoresModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        DesarrolladoresModel result = desarrolladoresService.patch(100L, parciales);
+        DesarrolladoresResponseDTO result = desarrolladoresService.patch(100L, parciales);
 
         assertNotNull(result);
-        assertEquals(2L, result.getProducto().getId());
-        assertEquals(20L, result.getDesarrollador().getId());
+        assertEquals(100L, result.getId());
+        assertEquals(2L, result.getProductoId());
+        assertEquals(20L, result.getDesarrolladorId());
     }
 
     @Test
     void testPatch_RelacionNoExiste_Lanza404() {
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
+        DesarrolladoresUpdateDTO parciales = updateDTO(null, null);
         when(desarrolladoresRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
@@ -261,11 +288,7 @@ public class DesarrolladoresServiceTest {
     @Test
     void testPatch_ProductoNuevoNoExiste_Lanza404() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        ProductoModel nuevoProd = new ProductoModel();
-        nuevoProd.setId(2L);
-        parciales.setProducto(nuevoProd);
+        DesarrolladoresUpdateDTO parciales = updateDTO(2L, null);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
         when(productoRepository.findById(2L)).thenReturn(Optional.empty());
@@ -277,11 +300,7 @@ public class DesarrolladoresServiceTest {
     @Test
     void testPatch_DesarrolladorNuevoNoExiste_Lanza404() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        DesarrolladorModel nuevoDev = new DesarrolladorModel();
-        nuevoDev.setId(20L);
-        parciales.setDesarrollador(nuevoDev);
+        DesarrolladoresUpdateDTO parciales = updateDTO(null, 20L);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
         when(desarrolladorRepository.findById(20L)).thenReturn(Optional.empty());
@@ -293,11 +312,7 @@ public class DesarrolladoresServiceTest {
     @Test
     void testPatch_ProductoNuevoGeneraDuplicado_LanzaIllegalState() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        ProductoModel nuevoProd = new ProductoModel();
-        nuevoProd.setId(2L);
-        parciales.setProducto(nuevoProd);
+        DesarrolladoresUpdateDTO parciales = updateDTO(2L, null);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
         when(productoRepository.findById(2L)).thenReturn(Optional.of(producto2()));
@@ -311,11 +326,7 @@ public class DesarrolladoresServiceTest {
     @Test
     void testPatch_DesarrolladorNuevoGeneraDuplicado_LanzaIllegalState() {
         DesarrolladoresModel existente = relacion();
-
-        DesarrolladoresModel parciales = new DesarrolladoresModel();
-        DesarrolladorModel nuevoDev = new DesarrolladorModel();
-        nuevoDev.setId(20L);
-        parciales.setDesarrollador(nuevoDev);
+        DesarrolladoresUpdateDTO parciales = updateDTO(null, 20L);
 
         when(desarrolladoresRepository.findById(100L)).thenReturn(Optional.of(existente));
         when(desarrolladorRepository.findById(20L)).thenReturn(Optional.of(desarrollador2()));

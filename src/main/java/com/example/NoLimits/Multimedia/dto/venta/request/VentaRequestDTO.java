@@ -3,7 +3,7 @@ package com.example.NoLimits.Multimedia.dto.venta.request;
 
 import java.util.List;
 
-import com.example.NoLimits.Multimedia.dto.producto.request.DetalleVentaRequest;
+import com.example.NoLimits.Multimedia.dto.producto.request.DetalleVentaRequestDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -75,5 +75,5 @@ public class VentaRequestDTO {
         description = "Lista de detalles (productos del carrito)",
         requiredMode = Schema.RequiredMode.REQUIRED
     )
-    private List<DetalleVentaRequest> detalles;
+    private List<DetalleVentaRequestDTO> detalles;
 }

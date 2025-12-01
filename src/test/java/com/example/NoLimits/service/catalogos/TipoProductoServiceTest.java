@@ -1,10 +1,17 @@
 package com.example.NoLimits.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoProductoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoProductoService;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +20,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.mockito.ArgumentMatchers.any;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,7 +44,7 @@ public class TipoProductoServiceTest {
     private TipoProductoRepository tipoProductoRepository;
 
     @MockBean
-    private ProductoRepository productoRepository; // necesario para deleteById()
+    private ProductoRepository productoRepository;
 
     // ================== HELPERS ==================
 
@@ -58,7 +63,7 @@ public class TipoProductoServiceTest {
     public void testFindAll() {
         when(tipoProductoRepository.findAll()).thenReturn(List.of(createTipoProducto()));
 
-        List<TipoProductoModel> tipos = tipoProductoService.findAll();
+        List<TipoProductoResponseDTO> tipos = tipoProductoService.findAll();
 
         assertNotNull(tipos);
         assertEquals(1, tipos.size());
@@ -69,7 +74,7 @@ public class TipoProductoServiceTest {
     public void testFindById() {
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(createTipoProducto()));
 
-        TipoProductoModel tipo = tipoProductoService.findById(1L);
+        TipoProductoResponseDTO tipo = tipoProductoService.findById(1L);
 
         assertNotNull(tipo);
         assertEquals("Videojuegos", tipo.getNombre());
@@ -90,7 +95,7 @@ public class TipoProductoServiceTest {
         when(tipoProductoRepository.findByNombreContainingIgnoreCase("video"))
                 .thenReturn(List.of(createTipoProducto()));
 
-        List<TipoProductoModel> tipos = tipoProductoService.findByNombre("video");
+        List<TipoProductoResponseDTO> tipos = tipoProductoService.findByNombre("video");
 
         assertNotNull(tipos);
         assertEquals(1, tipos.size());
@@ -102,7 +107,7 @@ public class TipoProductoServiceTest {
         when(tipoProductoRepository.findByNombreIgnoreCase("Videojuegos"))
                 .thenReturn(Optional.of(createTipoProducto()));
 
-        TipoProductoModel tipo = tipoProductoService.findByNombreExactIgnoreCase("Videojuegos");
+        TipoProductoResponseDTO tipo = tipoProductoService.findByNombreExactIgnoreCase("Videojuegos");
 
         assertNotNull(tipo);
         assertEquals("Videojuegos", tipo.getNombre());
@@ -119,9 +124,9 @@ public class TipoProductoServiceTest {
 
     @Test
     public void testSave_Exito() {
-        TipoProductoModel nuevo = new TipoProductoModel();
-        nuevo.setNombre("Accesorios");
-        nuevo.setDescripcion("Categoría de accesorios");
+        TipoProductoRequestDTO request = new TipoProductoRequestDTO();
+        request.setNombre("Accesorios");
+        request.setDescripcion("Categoría de accesorios");
         // activo null -> el servicio lo debería setear en true
 
         when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorios"))
@@ -133,7 +138,7 @@ public class TipoProductoServiceTest {
                     return t;
                 });
 
-        TipoProductoModel saved = tipoProductoService.save(nuevo);
+        TipoProductoResponseDTO saved = tipoProductoService.save(request);
 
         assertNotNull(saved);
         assertEquals(1L, saved.getId());
@@ -143,7 +148,7 @@ public class TipoProductoServiceTest {
 
     @Test
     public void testSave_NombreObligatorio() {
-        TipoProductoModel sinNombre = new TipoProductoModel();
+        TipoProductoRequestDTO sinNombre = new TipoProductoRequestDTO();
         sinNombre.setNombre("   "); // solo espacios
 
         assertThrows(IllegalArgumentException.class,
@@ -152,31 +157,31 @@ public class TipoProductoServiceTest {
 
     @Test
     public void testSave_NombreDuplicado() {
-        TipoProductoModel tipo = new TipoProductoModel();
-        tipo.setNombre("Videojuegos");
+        TipoProductoRequestDTO request = new TipoProductoRequestDTO();
+        request.setNombre("Videojuegos");
 
         when(tipoProductoRepository.existsByNombreIgnoreCase("Videojuegos"))
                 .thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
-                () -> tipoProductoService.save(tipo));
+                () -> tipoProductoService.save(request));
     }
 
     @Test
     public void testUpdate_Exito() {
         TipoProductoModel existente = createTipoProducto(); // nombre: Videojuegos
-        TipoProductoModel cambios = new TipoProductoModel();
+
+        TipoProductoRequestDTO cambios = new TipoProductoRequestDTO();
         cambios.setNombre("Películas");
         cambios.setDescripcion("Categoría para películas");
         cambios.setActivo(false);
 
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        // No hay duplicado para "Películas"
         when(tipoProductoRepository.existsByNombreIgnoreCase("Películas")).thenReturn(false);
         when(tipoProductoRepository.save(any(TipoProductoModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        TipoProductoModel actualizado = tipoProductoService.update(1L, cambios);
+        TipoProductoResponseDTO actualizado = tipoProductoService.update(1L, cambios);
 
         assertNotNull(actualizado);
         assertEquals("Películas", actualizado.getNombre());
@@ -187,11 +192,11 @@ public class TipoProductoServiceTest {
     @Test
     public void testUpdate_NombreDuplicado() {
         TipoProductoModel existente = createTipoProducto(); // Videojuegos
-        TipoProductoModel cambios = new TipoProductoModel();
+
+        TipoProductoRequestDTO cambios = new TipoProductoRequestDTO();
         cambios.setNombre("Accesorios");
 
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        // Simulamos que ya existe otro tipo con nombre "Accesorios"
         when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorios")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
@@ -199,22 +204,37 @@ public class TipoProductoServiceTest {
     }
 
     @Test
-    public void testPatch_DelegandoEnUpdate() {
+    public void testPatch_CambiaSoloNombre_OK() {
         TipoProductoModel existente = createTipoProducto(); // Videojuegos
-        TipoProductoModel patchData = new TipoProductoModel();
-        patchData.setNombre("Películas"); // solo cambia nombre
+
+        TipoProductoUpdateDTO patchData = new TipoProductoUpdateDTO();
+        patchData.setNombre("Películas");
 
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(tipoProductoRepository.existsByNombreIgnoreCase("Películas")).thenReturn(false);
         when(tipoProductoRepository.save(any(TipoProductoModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        TipoProductoModel patched = tipoProductoService.patch(1L, patchData);
+        TipoProductoResponseDTO patched = tipoProductoService.patch(1L, patchData);
 
         assertNotNull(patched);
         assertEquals("Películas", patched.getNombre());
-        assertEquals(existente.getDescripcion(), patched.getDescripcion()); // se mantiene
-        assertTrue(Boolean.TRUE.equals(patched.getActivo()));              // se mantiene
+        assertEquals("Categoría para videojuegos", patched.getDescripcion());
+        assertTrue(Boolean.TRUE.equals(patched.getActivo()));
+    }
+
+    @Test
+    public void testPatch_NombreDuplicado_LanzaIllegalArgument() {
+        TipoProductoModel existente = createTipoProducto(); // Videojuegos
+
+        TipoProductoUpdateDTO patchData = new TipoProductoUpdateDTO();
+        patchData.setNombre("Accesorios");
+
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorios")).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> tipoProductoService.patch(1L, patchData));
     }
 
     @Test
@@ -256,7 +276,7 @@ public class TipoProductoServiceTest {
     public void testFindActivos() {
         when(tipoProductoRepository.findByActivoTrue()).thenReturn(List.of(createTipoProducto()));
 
-        List<TipoProductoModel> activos = tipoProductoService.findActivos();
+        List<TipoProductoResponseDTO> activos = tipoProductoService.findActivos();
 
         assertNotNull(activos);
         assertEquals(1, activos.size());
@@ -270,7 +290,7 @@ public class TipoProductoServiceTest {
 
         when(tipoProductoRepository.findByActivoFalse()).thenReturn(List.of(inactivo));
 
-        List<TipoProductoModel> inactivos = tipoProductoService.findInactivos();
+        List<TipoProductoResponseDTO> inactivos = tipoProductoService.findInactivos();
 
         assertNotNull(inactivos);
         assertEquals(1, inactivos.size());
@@ -279,7 +299,6 @@ public class TipoProductoServiceTest {
 
     @Test
     public void testObtenerTipoProductoConNombres() {
-        // Fila simulando: id, nombre, descripcion, activo
         Object[] fila = new Object[]{
                 1L,
                 "Videojuegos",

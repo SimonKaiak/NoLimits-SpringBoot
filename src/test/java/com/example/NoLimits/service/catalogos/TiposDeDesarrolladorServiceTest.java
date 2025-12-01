@@ -1,6 +1,8 @@
 package com.example.NoLimits.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TiposDeDesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TiposDeDesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
 import com.example.NoLimits.Multimedia.model.catalogos.TiposDeDesarrolladorModel;
@@ -10,6 +12,7 @@ import com.example.NoLimits.Multimedia.repository.catalogos.TiposDeDesarrollador
 import com.example.NoLimits.Multimedia.service.catalogos.TiposDeDesarrolladorService;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -21,7 +24,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -43,82 +47,101 @@ public class TiposDeDesarrolladorServiceTest {
     @MockBean
     private TipoDeDesarrolladorRepository tipoDeDesarrolladorRepository;
 
-    private DesarrolladorModel dev() {
+    // ================= HELPERS ==================
+
+    private DesarrolladorModel dev(Long id) {
         DesarrolladorModel d = new DesarrolladorModel();
-        d.setId(1L);
-        d.setNombre("FromSoftware");
+        d.setId(id);
+        d.setNombre("Dev-" + id);
         return d;
     }
 
-    private TipoDeDesarrolladorModel tipo() {
+    private TipoDeDesarrolladorModel tipo(Long id) {
         TipoDeDesarrolladorModel t = new TipoDeDesarrolladorModel();
-        t.setId(10L);
-        t.setNombre("Estudio");
+        t.setId(id);
+        t.setNombre("Tipo-" + id);
         return t;
     }
 
-    private TiposDeDesarrolladorModel link() {
+    private TiposDeDesarrolladorModel link(Long idRel, Long devId, Long tipoId) {
         TiposDeDesarrolladorModel rel = new TiposDeDesarrolladorModel();
-        rel.setId(100L);
-        rel.setDesarrollador(dev());
-        rel.setTipoDeDesarrollador(tipo());
+        rel.setId(idRel);
+        rel.setDesarrollador(dev(devId));
+        rel.setTipoDeDesarrollador(tipo(tipoId));
         return rel;
     }
 
-    @Test
-    void testFindAll() {
-        when(tiposRepo.findAll()).thenReturn(List.of(link()));
+    // ================== FIND BY DESARROLLADOR ==================
 
-        List<TiposDeDesarrolladorModel> lista = service.findAll();
+    @Test
+    void testFindByDesarrollador() {
+        when(tiposRepo.findByDesarrollador_Id(1L))
+                .thenReturn(List.of(link(100L, 1L, 10L)));
+
+        List<TiposDeDesarrolladorResponseDTO> lista =
+                service.findByDesarrollador(1L);
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
+        assertEquals(1L, lista.get(0).getDesarrolladorId());
+        assertEquals(10L, lista.get(0).getTipoDeDesarrolladorId());
     }
+
+    // ================== FIND BY TIPO ==================
+
+    @Test
+    void testFindByTipo() {
+        when(tiposRepo.findByTipoDeDesarrollador_Id(10L))
+                .thenReturn(List.of(link(200L, 2L, 10L)));
+
+        List<TiposDeDesarrolladorResponseDTO> lista =
+                service.findByTipo(10L);
+
+        assertNotNull(lista);
+        assertEquals(1, lista.size());
+        assertEquals(2L, lista.get(0).getDesarrolladorId());
+        assertEquals(10L, lista.get(0).getTipoDeDesarrolladorId());
+    }
+
+    // ================== LINK ==================
 
     @Test
     void testLink_Ok() {
-        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
-        when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.of(tipo()));
-        when(tiposRepo.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L))
-                .thenReturn(false);
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev(1L)));
+        when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.of(tipo(10L)));
+        when(tiposRepo.findByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L)).thenReturn(Optional.empty());
+
         when(tiposRepo.save(any(TiposDeDesarrolladorModel.class)))
                 .thenAnswer(invocation -> {
-                    TiposDeDesarrolladorModel rel = invocation.getArgument(0);
-                    rel.setId(100L);
-                    return rel;
+                    TiposDeDesarrolladorModel r = invocation.getArgument(0);
+                    r.setId(100L);
+                    return r;
                 });
 
-        TiposDeDesarrolladorModel result = service.link(1L, 10L);
+        TiposDeDesarrolladorResponseDTO dto = service.link(1L, 10L);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getDesarrollador().getId());
-        assertEquals(10L, result.getTipoDeDesarrollador().getId());
-        verify(tiposRepo, times(1)).save(any(TiposDeDesarrolladorModel.class));
+        assertNotNull(dto);
+        assertEquals(100L, dto.getId());
+        assertEquals(1L, dto.getDesarrolladorId());
+        assertEquals(10L, dto.getTipoDeDesarrolladorId());
     }
 
     @Test
     void testLink_Duplicado_LanzaIllegalState() {
-        // Mock: desarrollador existe
-        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev(1L)));
+        when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.of(tipo(10L)));
 
-        // Mock: tipo existe
-        when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.of(tipo()));
-
-        // Mock: ya existe la relación
-        TiposDeDesarrolladorModel existente = link();
         when(tiposRepo.findByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L))
-                .thenReturn(Optional.of(existente));
+                .thenReturn(Optional.of(link(100L, 1L, 10L)));
 
-        // Como ya existe → debe lanzar IllegalStateException
         assertThrows(IllegalStateException.class,
                 () -> service.link(1L, 10L));
 
-        // No se debe intentar guardar
         verify(tiposRepo, never()).save(any(TiposDeDesarrolladorModel.class));
     }
 
     @Test
-    void testLink_DevNoExiste_Lanza404() {
+    void testLink_DevNoExiste() {
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
@@ -126,17 +149,19 @@ public class TiposDeDesarrolladorServiceTest {
     }
 
     @Test
-    void testLink_TipoNoExiste_Lanza404() {
-        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
+    void testLink_TipoNoExiste() {
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev(1L)));
         when(tipoDeDesarrolladorRepository.findById(10L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> service.link(1L, 10L));
     }
 
+    // ================== UNLINK ==================
+
     @Test
     void testUnlink_OK() {
-        TiposDeDesarrolladorModel existente = link();
+        TiposDeDesarrolladorModel existente = link(100L, 1L, 10L);
 
         when(tiposRepo.findByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L))
                 .thenReturn(Optional.of(existente));
@@ -147,11 +172,109 @@ public class TiposDeDesarrolladorServiceTest {
     }
 
     @Test
-    void testUnlink_NoExiste_Lanza404() {
+    void testUnlink_NoExiste() {
         when(tiposRepo.findByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 10L))
                 .thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> service.unlink(1L, 10L));
+    }
+
+    // ================== PATCH ==================
+
+    @Test
+    void testPatch_CambiaDesarrollador() {
+        TiposDeDesarrolladorModel existente = link(100L, 1L, 10L);
+
+        when(tiposRepo.findById(100L)).thenReturn(Optional.of(existente));
+
+        when(desarrolladorRepository.findById(2L))
+                .thenReturn(Optional.of(dev(2L)));
+
+        when(tiposRepo.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(2L, 10L))
+                .thenReturn(false);
+
+        when(tiposRepo.save(any(TiposDeDesarrolladorModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TiposDeDesarrolladorUpdateDTO dto = new TiposDeDesarrolladorUpdateDTO();
+        dto.setDesarrolladorId(2L);
+
+        TiposDeDesarrolladorResponseDTO out = service.patch(100L, dto);
+
+        assertEquals(2L, out.getDesarrolladorId());
+        assertEquals(10L, out.getTipoDeDesarrolladorId());
+    }
+
+    @Test
+    void testPatch_CambiaTipo() {
+        TiposDeDesarrolladorModel existente = link(100L, 1L, 10L);
+
+        when(tiposRepo.findById(100L)).thenReturn(Optional.of(existente));
+        when(tipoDeDesarrolladorRepository.findById(20L))
+                .thenReturn(Optional.of(tipo(20L)));
+
+        when(tiposRepo.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 20L))
+                .thenReturn(false);
+
+        when(tiposRepo.save(any(TiposDeDesarrolladorModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TiposDeDesarrolladorUpdateDTO dto = new TiposDeDesarrolladorUpdateDTO();
+        dto.setTipoDeDesarrolladorId(20L);
+
+        TiposDeDesarrolladorResponseDTO out = service.patch(100L, dto);
+
+        assertEquals(1L, out.getDesarrolladorId());
+        assertEquals(20L, out.getTipoDeDesarrolladorId());
+    }
+
+    @Test
+    void testPatch_RelacionNoExiste() {
+        when(tiposRepo.findById(100L)).thenReturn(Optional.empty());
+
+        TiposDeDesarrolladorUpdateDTO dto = new TiposDeDesarrolladorUpdateDTO();
+        dto.setDesarrolladorId(2L);
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> service.patch(100L, dto));
+    }
+
+    @Test
+    void testPatch_CambiarDev_Duplicado() {
+        TiposDeDesarrolladorModel existente = link(100L, 1L, 10L);
+
+        when(tiposRepo.findById(100L)).thenReturn(Optional.of(existente));
+
+        when(desarrolladorRepository.findById(2L))
+                .thenReturn(Optional.of(dev(2L)));
+
+        when(tiposRepo.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(2L, 10L))
+                .thenReturn(true);
+
+        TiposDeDesarrolladorUpdateDTO dto = new TiposDeDesarrolladorUpdateDTO();
+        dto.setDesarrolladorId(2L);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.patch(100L, dto));
+    }
+
+    @Test
+    void testPatch_CambiarTipo_Duplicado() {
+        TiposDeDesarrolladorModel existente = link(100L, 1L, 10L);
+
+        when(tiposRepo.findById(100L)).thenReturn(Optional.of(existente));
+
+        when(tipoDeDesarrolladorRepository.findById(20L))
+                .thenReturn(Optional.of(tipo(20L)));
+
+        when(tiposRepo.existsByDesarrollador_IdAndTipoDeDesarrollador_Id(1L, 20L))
+                .thenReturn(true);
+
+        TiposDeDesarrolladorUpdateDTO dto = new TiposDeDesarrolladorUpdateDTO();
+        dto.setTipoDeDesarrolladorId(20L);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.patch(100L, dto));
     }
 }

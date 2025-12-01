@@ -8,13 +8,13 @@ import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.GeneroControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.GeneroResponseDTO;
 
 @Component
-public class GeneroModelAssembler implements RepresentationModelAssembler<GeneroModel, EntityModel<GeneroModel>> {
+public class GeneroModelAssembler implements RepresentationModelAssembler<GeneroResponseDTO, EntityModel<GeneroResponseDTO>> {
 
     @Override
-    public EntityModel<GeneroModel> toModel(GeneroModel genero) {
+    public EntityModel<GeneroResponseDTO> toModel(GeneroResponseDTO genero) {
         return EntityModel.of(
                 genero,
                 // self

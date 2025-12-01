@@ -1,65 +1,72 @@
 package com.example.NoLimits.Multimedia.assemblers.catalogos;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
+import com.example.NoLimits.Multimedia.controllerV2.catalogos.GeneroControllerV2;
+import com.example.NoLimits.Multimedia.controllerV2.catalogos.GenerosControllerV2;
+import com.example.NoLimits.Multimedia.controllerV2.producto.ProductoControllerV2;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.GenerosResponseDTO;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
-import com.example.NoLimits.Multimedia.controllerV2.catalogos.GeneroControllerV2;
-import com.example.NoLimits.Multimedia.controllerV2.catalogos.GenerosControllerV2;
-import com.example.NoLimits.Multimedia.controllerV2.producto.ProductoControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.GenerosModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * Assembler HATEOAS para envolver GenerosResponseDTO en EntityModel,
+ * agregando enlaces relacionados (self, desvincular, etc.).
+ */
 @Component
-public class GenerosModelAssembler implements RepresentationModelAssembler<GenerosModel, EntityModel<GenerosModel>> {
+public class GenerosModelAssembler implements RepresentationModelAssembler<GenerosResponseDTO, EntityModel<GenerosResponseDTO>> {
 
     @Override
-    public EntityModel<GenerosModel> toModel(GenerosModel rel) {
+    public EntityModel<GenerosResponseDTO> toModel(GenerosResponseDTO dto) {
 
-        EntityModel<GenerosModel> model = EntityModel.of(rel,
-                // No tenemos endpoint getById(relId) en GenerosControllerV2, así que el self será el vínculo lógico
-                // producto-genero (POST/DELETE path):
-                linkTo(methodOn(GenerosControllerV2.class)
-                        .vincular(rel.getProducto().getId(), rel.getGenero().getId()))
-                        .withSelfRel(),
+        // Modelo base con los datos del DTO
+        EntityModel<GenerosResponseDTO> model = EntityModel.of(dto);
 
-                // Desvincular
-                linkTo(methodOn(GenerosControllerV2.class)
-                        .desvincular(rel.getProducto().getId(), rel.getGenero().getId()))
-                        .withRel("desvincular"),
+        // Solo generamos enlaces si tenemos productoId y generoId
+        if (dto.getProductoId() != null && dto.getGeneroId() != null) {
 
-                // Ver todas las relaciones de ese producto
-                linkTo(methodOn(GenerosControllerV2.class)
-                        .obtenerPorProducto(rel.getProducto().getId()))
-                        .withRel("generos_del_producto"),
-
-                // Ver todas las relaciones de ese género
-                linkTo(methodOn(GenerosControllerV2.class)
-                        .obtenerPorGenero(rel.getGenero().getId()))
-                        .withRel("productos_del_genero"),
-
-                // Resumen filtrable
-                linkTo(methodOn(GenerosControllerV2.class)
-                        .resumen(rel.getProducto().getId(), rel.getGenero().getId()))
-                        .withRel("resumen")
-        );
-
-        // Enlaces directos al recurso Producto y Género (si existen IDs)
-        if (rel.getProducto() != null && rel.getProducto().getId() != null) {
+            // Self: vínculo lógico producto–género (misma operación de vincular)
             model.add(
-                linkTo(methodOn(ProductoControllerV2.class)
-                        .getById(rel.getProducto().getId()))
-                        .withRel("producto")
+                    linkTo(methodOn(GenerosControllerV2.class)
+                            .vincular(dto.getProductoId(), dto.getGeneroId()))
+                            .withSelfRel()
             );
-        }
 
-        if (rel.getGenero() != null && rel.getGenero().getId() != null) {
+            // Desvincular producto–género
             model.add(
-                linkTo(methodOn(GeneroControllerV2.class)
-                        .getById(rel.getGenero().getId()))
-                        .withRel("genero")
+                    linkTo(methodOn(GenerosControllerV2.class)
+                            .desvincular(dto.getProductoId(), dto.getGeneroId()))
+                            .withRel("desvincular")
+            );
+
+            // Todas las relaciones de ese producto
+            model.add(
+                    linkTo(methodOn(GenerosControllerV2.class)
+                            .obtenerPorProducto(dto.getProductoId()))
+                            .withRel("generos_del_producto")
+            );
+
+            // Todas las relaciones de ese género
+            model.add(
+                    linkTo(methodOn(GenerosControllerV2.class)
+                            .obtenerPorGenero(dto.getGeneroId()))
+                            .withRel("productos_del_genero")
+            );
+
+            // Enlace directo al recurso Producto
+            model.add(
+                    linkTo(methodOn(ProductoControllerV2.class)
+                            .getById(dto.getProductoId()))
+                            .withRel("producto")
+            );
+
+            // Enlace directo al recurso Género
+            model.add(
+                    linkTo(methodOn(GeneroControllerV2.class)
+                            .getById(dto.getGeneroId()))
+                            .withRel("genero")
             );
         }
 

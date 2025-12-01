@@ -2,7 +2,9 @@ package com.example.NoLimits.Multimedia.controllerV2.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.producto.ImagenesModelAssembler;
-import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
+import com.example.NoLimits.Multimedia.dto.producto.request.ImagenesRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ImagenesResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.update.ImagenesUpdateDTO;
 import com.example.NoLimits.Multimedia.service.producto.ImagenesService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,13 +66,13 @@ public class ImagenesControllerV2 {
             description = "Lista de imágenes obtenida correctamente.",
             content = @Content(
                 mediaType = "application/hal+json",
-                array = @ArraySchema(schema = @Schema(implementation = ImagenesModel.class))
+                array = @ArraySchema(schema = @Schema(implementation = ImagenesResponseDTO.class))
             )
         ),
         @ApiResponse(responseCode = "204", description = "No hay imágenes registradas.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ImagenesModel>>> getAll() {
-        List<EntityModel<ImagenesModel>> imagenes = imagenesService.findAll().stream()
+    public ResponseEntity<CollectionModel<EntityModel<ImagenesResponseDTO>>> getAll() {
+        List<EntityModel<ImagenesResponseDTO>> imagenes = imagenesService.findAll().stream()
                 .map(imagenesAssembler::toModel)
                 .collect(Collectors.toList());
 
@@ -97,14 +99,14 @@ public class ImagenesControllerV2 {
             description = "Imagen encontrada.",
             content = @Content(
                 mediaType = "application/hal+json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Imagen no encontrada.")
     })
-    public ResponseEntity<EntityModel<ImagenesModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<ImagenesResponseDTO>> getById(@PathVariable Long id) {
         try {
-            ImagenesModel img = imagenesService.findById(id);
+            ImagenesResponseDTO img = imagenesService.findById(id);
             return ResponseEntity.ok(imagenesAssembler.toModel(img));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -122,13 +124,13 @@ public class ImagenesControllerV2 {
             description = "Imágenes encontradas.",
             content = @Content(
                 mediaType = "application/hal+json",
-                array = @ArraySchema(schema = @Schema(implementation = ImagenesModel.class))
+                array = @ArraySchema(schema = @Schema(implementation = ImagenesResponseDTO.class))
             )
         ),
         @ApiResponse(responseCode = "204", description = "El producto no tiene imágenes asociadas.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ImagenesModel>>> getByProducto(@PathVariable Long productoId) {
-        List<EntityModel<ImagenesModel>> imagenes = imagenesService.findByProducto(productoId).stream()
+    public ResponseEntity<CollectionModel<EntityModel<ImagenesResponseDTO>>> getByProducto(@PathVariable Long productoId) {
+        List<EntityModel<ImagenesResponseDTO>> imagenes = imagenesService.findByProducto(productoId).stream()
                 .map(imagenesAssembler::toModel)
                 .collect(Collectors.toList());
 
@@ -154,6 +156,7 @@ public class ImagenesControllerV2 {
             required = true,
             content = @Content(
                 mediaType = "application/json",
+                schema = @Schema(implementation = ImagenesRequestDTO.class),
                 examples = {
                     @ExampleObject(
                         name = "Imagen mínima",
@@ -162,7 +165,7 @@ public class ImagenesControllerV2 {
                         {
                           "ruta": "/assets/img/Peliculas/spiderman.webp",
                           "altText": "Spider-Man posando",
-                          "producto": { "id": 10 }
+                          "productoId": 10
                         }
                         """
                     )
@@ -173,14 +176,16 @@ public class ImagenesControllerV2 {
     @ApiResponse(
         responseCode = "201",
         description = "Imagen creada correctamente.",
-        content = @Content(mediaType = "application/hal+json",
-            schema = @Schema(implementation = ImagenesModel.class))
+        content = @Content(
+            mediaType = "application/hal+json",
+            schema = @Schema(implementation = ImagenesResponseDTO.class)
+        )
     )
-    public ResponseEntity<EntityModel<ImagenesModel>> create(
-            @Valid @RequestBody ImagenesModel body) {
+    public ResponseEntity<EntityModel<ImagenesResponseDTO>> create(
+            @Valid @RequestBody ImagenesRequestDTO body) {
 
-        ImagenesModel nueva = imagenesService.save(body);
-        EntityModel<ImagenesModel> entity = imagenesAssembler.toModel(nueva);
+        ImagenesResponseDTO nueva = imagenesService.save(body);
+        EntityModel<ImagenesResponseDTO> entity = imagenesAssembler.toModel(nueva);
 
         return ResponseEntity
                 .created(entity.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -204,17 +209,17 @@ public class ImagenesControllerV2 {
             description = "Imagen actualizada correctamente.",
             content = @Content(
                 mediaType = "application/hal+json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Imagen no encontrada.")
     })
-    public ResponseEntity<EntityModel<ImagenesModel>> update(
+    public ResponseEntity<EntityModel<ImagenesResponseDTO>> update(
             @PathVariable Long id,
-            @RequestBody ImagenesModel detalles) {
+            @Valid @RequestBody ImagenesUpdateDTO detalles) {
 
         try {
-            ImagenesModel actualizada = imagenesService.update(id, detalles);
+            ImagenesResponseDTO actualizada = imagenesService.update(id, detalles);
             return ResponseEntity.ok(imagenesAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -233,6 +238,7 @@ public class ImagenesControllerV2 {
             required = true,
             content = @Content(
                 mediaType = "application/json",
+                schema = @Schema(implementation = ImagenesUpdateDTO.class),
                 examples = @ExampleObject(
                     name = "PATCH ejemplo",
                     description = "Solo modifica la ruta.",
@@ -251,17 +257,17 @@ public class ImagenesControllerV2 {
             description = "Imagen actualizada parcialmente.",
             content = @Content(
                 mediaType = "application/hal+json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Imagen no encontrada.")
     })
-    public ResponseEntity<EntityModel<ImagenesModel>> patch(
+    public ResponseEntity<EntityModel<ImagenesResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody ImagenesModel detalles) {
+            @Valid @RequestBody ImagenesUpdateDTO detalles) {
 
         try {
-            ImagenesModel actualizada = imagenesService.update(id, detalles);
+            ImagenesResponseDTO actualizada = imagenesService.patch(id, detalles);
             return ResponseEntity.ok(imagenesAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();

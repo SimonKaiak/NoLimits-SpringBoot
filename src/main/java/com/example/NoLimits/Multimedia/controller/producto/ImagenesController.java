@@ -3,7 +3,9 @@ package com.example.NoLimits.Multimedia.controller.producto;
 import java.util.List;
 import java.util.Map;
 
-import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
+import com.example.NoLimits.Multimedia.dto.producto.request.ImagenesRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ImagenesResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.update.ImagenesUpdateDTO;
 import com.example.NoLimits.Multimedia.service.producto.ImagenesService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,13 +56,13 @@ public class ImagenesController {
             description = "Lista de imágenes obtenida correctamente.",
             content = @Content(
                 mediaType = "application/json",
-                array = @ArraySchema(schema = @Schema(implementation = ImagenesModel.class))
+                array = @ArraySchema(schema = @Schema(implementation = ImagenesResponseDTO.class))
             )
         ),
         @ApiResponse(responseCode = "204", description = "No hay imágenes registradas.")
     })
-    public ResponseEntity<List<ImagenesModel>> listarImagenes() {
-        List<ImagenesModel> imagenes = imagenesService.findAll();
+    public ResponseEntity<List<ImagenesResponseDTO>> listarImagenes() {
+        List<ImagenesResponseDTO> imagenes = imagenesService.findAll();
         if (imagenes.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -78,12 +80,12 @@ public class ImagenesController {
             description = "Imagen encontrada.",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Imagen no encontrada.")
     })
-    public ResponseEntity<ImagenesModel> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ImagenesResponseDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(imagenesService.findById(id));
     }
 
@@ -98,13 +100,13 @@ public class ImagenesController {
             description = "Imágenes encontradas.",
             content = @Content(
                 mediaType = "application/json",
-                array = @ArraySchema(schema = @Schema(implementation = ImagenesModel.class))
+                array = @ArraySchema(schema = @Schema(implementation = ImagenesResponseDTO.class))
             )
         ),
         @ApiResponse(responseCode = "204", description = "El producto no tiene imágenes asociadas.")
     })
-    public ResponseEntity<List<ImagenesModel>> obtenerPorProducto(@PathVariable Long productoId) {
-        List<ImagenesModel> imagenes = imagenesService.findByProducto(productoId);
+    public ResponseEntity<List<ImagenesResponseDTO>> obtenerPorProducto(@PathVariable Long productoId) {
+        List<ImagenesResponseDTO> imagenes = imagenesService.findByProducto(productoId);
         if (imagenes.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -122,13 +124,13 @@ public class ImagenesController {
             description = "Imágenes encontradas.",
             content = @Content(
                 mediaType = "application/json",
-                array = @ArraySchema(schema = @Schema(implementation = ImagenesModel.class))
+                array = @ArraySchema(schema = @Schema(implementation = ImagenesResponseDTO.class))
             )
         ),
         @ApiResponse(responseCode = "204", description = "No se encontraron imágenes que coincidan.")
     })
-    public ResponseEntity<List<ImagenesModel>> buscarPorRuta(@RequestParam("ruta") String ruta) {
-        List<ImagenesModel> imagenes = imagenesService.findByRutaContainingIgnoreCase(ruta);
+    public ResponseEntity<List<ImagenesResponseDTO>> buscarPorRuta(@RequestParam("ruta") String ruta) {
+        List<ImagenesResponseDTO> imagenes = imagenesService.findByRutaContainingIgnoreCase(ruta);
         if (imagenes.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -169,6 +171,7 @@ public class ImagenesController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
+                schema = @Schema(implementation = ImagenesRequestDTO.class),
                 examples = {
                     @ExampleObject(
                         name = "Imagen mínima",
@@ -177,7 +180,7 @@ public class ImagenesController {
                         {
                           "ruta": "/assets/img/Peliculas/spiderman.webp",
                           "altText": "Spider-Man posando",
-                          "producto": { "id": 10 }
+                          "productoId": 10
                         }
                         """
                     )
@@ -191,13 +194,15 @@ public class ImagenesController {
             description = "Imagen creada correctamente.",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "400", description = "Datos inválidos.")
     })
-    public ResponseEntity<ImagenesModel> crearImagen(@Valid @RequestBody ImagenesModel imagen) {
-        ImagenesModel nueva = imagenesService.save(imagen);
+    public ResponseEntity<ImagenesResponseDTO> crearImagen(
+            @Valid @RequestBody ImagenesRequestDTO imagen) {
+
+        ImagenesResponseDTO nueva = imagenesService.save(imagen);
         return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
     }
 
@@ -214,16 +219,16 @@ public class ImagenesController {
             description = "Imagen actualizada correctamente.",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Imagen no encontrada.")
     })
-    public ResponseEntity<ImagenesModel> actualizarImagen(
+    public ResponseEntity<ImagenesResponseDTO> actualizarImagen(
             @PathVariable Long id,
-            @RequestBody ImagenesModel detalles) {
+            @Valid @RequestBody ImagenesUpdateDTO detalles) {
 
-        ImagenesModel actualizada = imagenesService.update(id, detalles);
+        ImagenesResponseDTO actualizada = imagenesService.update(id, detalles);
         return ResponseEntity.ok(actualizada);
     }
 
@@ -238,16 +243,16 @@ public class ImagenesController {
             description = "Imagen actualizada parcialmente.",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = ImagenesModel.class)
+                schema = @Schema(implementation = ImagenesResponseDTO.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Imagen no encontrada.")
     })
-    public ResponseEntity<ImagenesModel> editarParcialmente(
+    public ResponseEntity<ImagenesResponseDTO> editarParcialmente(
             @PathVariable Long id,
-            @RequestBody ImagenesModel detalles) {
+            @Valid @RequestBody ImagenesUpdateDTO detalles) {
 
-        ImagenesModel actualizada = imagenesService.update(id, detalles);
+        ImagenesResponseDTO actualizada = imagenesService.patch(id, detalles);
         return ResponseEntity.ok(actualizada);
     }
 

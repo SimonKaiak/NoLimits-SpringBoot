@@ -1,6 +1,10 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformasResponseDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformasModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
@@ -12,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
-import java.util.List;
 
 @Service
 @Transactional
@@ -27,32 +30,54 @@ public class PlataformasService {
     @Autowired
     private PlataformaRepository plataformaRepository;
 
-    public List<PlataformasModel> findByProducto(Long productoId) {
-        return plataformasRepository.findByProducto_Id(productoId);
+    // ================== CONSULTAS BÁSICAS ==================
+
+    public List<PlataformasResponseDTO> findByProducto(Long productoId) {
+        return plataformasRepository.findByProducto_Id(productoId)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<PlataformasModel> findByPlataforma(Long plataformaId) {
-        return plataformasRepository.findByPlataforma_Id(plataformaId);
+    public List<PlataformasResponseDTO> findByPlataforma(Long plataformaId) {
+        return plataformasRepository.findByPlataforma_Id(plataformaId)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    /** Crea el vínculo Producto ↔ Plataforma si no existe. */
-    public PlataformasModel link(Long productoId, Long plataformaId) {
+    // ================== VÍNCULO PRODUCTO ↔ PLATAFORMA ==================
+
+    /**
+     * Crea el vínculo Producto ↔ Plataforma si no existe.
+     */
+    public PlataformasResponseDTO link(Long productoId, Long plataformaId) {
         ProductoModel p = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+
         PlataformaModel pl = plataformaRepository.findById(plataformaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + plataformaId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + plataformaId));
 
         if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(productoId, plataformaId)) {
-            return plantasExisting(productoId, plataformaId, p, pl);
+            PlataformasModel existente = plantasExisting(productoId, plataformaId, p, pl);
+            return toResponseDTO(existente);
         }
 
         PlataformasModel rel = new PlataformasModel();
         rel.setProducto(p);
         rel.setPlataforma(pl);
-        return plataformasRepository.save(rel);
+
+        PlataformasModel guardado = plataformasRepository.save(rel);
+        return toResponseDTO(guardado);
     }
 
-    private PlataformasModel plantasExisting(Long productoId, Long plataformaId, ProductoModel p, PlataformaModel pl) {
+    private PlataformasModel plantasExisting(Long productoId,
+                                             Long plataformaId,
+                                             ProductoModel p,
+                                             PlataformaModel pl) {
+
         return plataformasRepository.findByProducto_Id(productoId).stream()
                 .filter(r -> r.getPlataforma().getId().equals(plataformaId))
                 .findFirst()
@@ -64,12 +89,17 @@ public class PlataformasService {
                 });
     }
 
-    /** Elimina el vínculo Producto ↔ Plataforma. */
+    /**
+     * Elimina el vínculo Producto ↔ Plataforma (idempotente).
+     */
     public void unlink(Long productoId, Long plataformaId) {
         productoRepository.findById(productoId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+
         plataformaRepository.findById(plataformaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + plataformaId));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + plataformaId));
 
         if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(productoId, plataformaId)) {
             plataformasRepository.deleteByProducto_IdAndPlataforma_Id(productoId, plataformaId);
@@ -78,38 +108,70 @@ public class PlataformasService {
 
     /**
      * PATCH: Actualiza parcialmente la relación Producto–Plataforma.
-     * Se puede cambiar el producto o la plataforma asociados.
+     * Se puede cambiar el producto y/o la plataforma asociados.
      */
-    public PlataformasModel patch(Long relacionId, Long nuevoProductoId, Long nuevaPlataformaId) {
+    public PlataformasResponseDTO patch(Long relacionId,
+                                        Long nuevoProductoId,
+                                        Long nuevaPlataformaId) {
 
         PlataformasModel rel = plataformasRepository.findById(relacionId)
                 .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Relación Producto–Plataforma no encontrada con ID: " + relacionId));
+                        new RecursoNoEncontradoException(
+                                "Relación Producto–Plataforma no encontrada con ID: " + relacionId));
 
+        // Cambiar producto
         if (nuevoProductoId != null) {
             ProductoModel nuevoProducto = productoRepository.findById(nuevoProductoId)
                     .orElseThrow(() ->
                             new RecursoNoEncontradoException("Producto no encontrado con ID: " + nuevoProductoId));
 
-            if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(nuevoProductoId, rel.getPlataforma().getId())) {
-                throw new IllegalArgumentException("Ya existe una relación con ese producto y plataforma");
+            if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(
+                    nuevoProductoId, rel.getPlataforma().getId())) {
+                throw new IllegalArgumentException(
+                        "Ya existe una relación con ese producto y plataforma");
             }
 
             rel.setProducto(nuevoProducto);
         }
 
+        // Cambiar plataforma
         if (nuevaPlataformaId != null) {
             PlataformaModel nuevaPlataforma = plataformaRepository.findById(nuevaPlataformaId)
                     .orElseThrow(() ->
-                            new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + nuevaPlataformaId));
+                            new RecursoNoEncontradoException(
+                                    "Plataforma no encontrada con ID: " + nuevaPlataformaId));
 
-            if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(rel.getProducto().getId(), nuevaPlataformaId)) {
-                throw new IllegalArgumentException("Ya existe una relación con ese producto y plataforma");
+            if (plataformasRepository.existsByProducto_IdAndPlataforma_Id(
+                    rel.getProducto().getId(), nuevaPlataformaId)) {
+                throw new IllegalArgumentException(
+                        "Ya existe una relación con ese producto y plataforma");
             }
 
             rel.setPlataforma(nuevaPlataforma);
         }
 
-        return plataformasRepository.save(rel);
+        PlataformasModel guardado = plataformasRepository.save(rel);
+        return toResponseDTO(guardado);
+    }
+
+    // ================== MAPPER ENTITY → DTO ==================
+
+    private PlataformasResponseDTO toResponseDTO(PlataformasModel rel) {
+        if (rel == null) {
+            return null;
+        }
+
+        PlataformasResponseDTO dto = new PlataformasResponseDTO();
+        dto.setId(rel.getId());
+        dto.setProductoId(
+                rel.getProducto() != null ? rel.getProducto().getId() : null
+        );
+        dto.setPlataformaId(
+                rel.getPlataforma() != null ? rel.getPlataforma().getId() : null
+        );
+        dto.setPlataformaNombre(
+                rel.getPlataforma() != null ? rel.getPlataforma().getNombre() : null
+        );
+        return dto;
     }
 }

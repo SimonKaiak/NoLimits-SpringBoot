@@ -1,8 +1,13 @@
 // Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/ClasificacionController.java
 package com.example.NoLimits.Multimedia.controller.catalogos;
 
-import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.ClasificacionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.ClasificacionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.ClasificacionUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.ClasificacionService;
+
+// DTOs de entrada/salida para clasificaciones
+
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -74,13 +79,13 @@ public class ClasificacionController {
                     description = "Lista de clasificaciones obtenida exitosamente.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay clasificaciones registradas.")
     })
-    public ResponseEntity<List<ClasificacionModel>> listar() {
-        List<ClasificacionModel> lista = clasificacionService.findAll();
+    public ResponseEntity<List<ClasificacionResponseDTO>> listar() {
+        List<ClasificacionResponseDTO> lista = clasificacionService.findAll();
         if (lista.isEmpty()) {
             // Si no hay nada que mostrar, devuelvo 204 (sin contenido).
             return ResponseEntity.noContent().build();
@@ -101,12 +106,12 @@ public class ClasificacionController {
                     description = "Clasificación encontrada.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Clasificación no encontrada.")
     })
-    public ResponseEntity<ClasificacionModel> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ClasificacionResponseDTO> buscarPorId(@PathVariable Long id) {
         // El servicio se encarga de lanzar la excepción si no existe.
         return ResponseEntity.ok(clasificacionService.findById(id));
     }
@@ -124,17 +129,18 @@ public class ClasificacionController {
                     description = "Clasificación creada exitosamente.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Datos inválidos para crear la clasificación.")
     })
-    public ResponseEntity<ClasificacionModel> crear(
+    public ResponseEntity<ClasificacionResponseDTO> crear(
             // Esta @RequestBody de Swagger solo describe el contenido y muestra un ejemplo en la documentación.
             @RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Clasificación básica",
@@ -150,10 +156,10 @@ public class ClasificacionController {
                             }
                     )
             )
-            // Esta es la anotación real que Spring usa para mapear el JSON a ClasificacionModel.
-            @Valid @org.springframework.web.bind.annotation.RequestBody ClasificacionModel clasificacion
+            // Esta es la anotación real que Spring usa para mapear el JSON al DTO de request.
+            @Valid @org.springframework.web.bind.annotation.RequestBody ClasificacionRequestDTO clasificacionRequest
     ) {
-        ClasificacionModel nueva = clasificacionService.save(clasificacion);
+        ClasificacionResponseDTO nueva = clasificacionService.create(clasificacionRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
     }
 
@@ -170,17 +176,18 @@ public class ClasificacionController {
                     description = "Clasificación actualizada exitosamente.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Clasificación no encontrada.")
     })
-    public ResponseEntity<ClasificacionModel> actualizar(
+    public ResponseEntity<ClasificacionResponseDTO> actualizar(
             @PathVariable Long id,
             @RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "PUT ejemplo",
@@ -196,9 +203,9 @@ public class ClasificacionController {
                             }
                     )
             )
-            @Valid @org.springframework.web.bind.annotation.RequestBody ClasificacionModel detalles
+            @Valid @org.springframework.web.bind.annotation.RequestBody ClasificacionRequestDTO detalles
     ) {
-        ClasificacionModel actualizada = clasificacionService.update(id, detalles);
+        ClasificacionResponseDTO actualizada = clasificacionService.update(id, detalles);
         return ResponseEntity.ok(actualizada);
     }
 
@@ -215,17 +222,18 @@ public class ClasificacionController {
                     description = "Clasificación actualizada parcialmente.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Clasificación no encontrada.")
     })
-    public ResponseEntity<ClasificacionModel> actualizarParcial(
+    public ResponseEntity<ClasificacionResponseDTO> actualizarParcial(
             @PathVariable Long id,
             @RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionUpdateDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "PATCH ejemplo",
@@ -240,10 +248,10 @@ public class ClasificacionController {
                             }
                     )
             )
-            @org.springframework.web.bind.annotation.RequestBody Map<String, Object> campos
+            @org.springframework.web.bind.annotation.RequestBody ClasificacionUpdateDTO campos
     ) {
-        // El servicio se encarga de aplicar solo los cambios enviados en el mapa "campos".
-        ClasificacionModel actualizada = clasificacionService.patch(id, campos);
+        // El servicio se encarga de aplicar solo los cambios enviados en el DTO de actualización.
+        ClasificacionResponseDTO actualizada = clasificacionService.patch(id, campos);
         return ResponseEntity.ok(actualizada);
     }
 
@@ -276,15 +284,15 @@ public class ClasificacionController {
                     description = "Clasificaciones encontradas.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron clasificaciones para ese criterio.")
     })
-    public ResponseEntity<List<ClasificacionModel>> buscarPorNombre(
+    public ResponseEntity<List<ClasificacionResponseDTO>> buscarPorNombre(
             @RequestParam("nombre") String nombre) {
 
-        List<ClasificacionModel> lista = clasificacionService.findByNombreContainingIgnoreCase(nombre);
+        List<ClasificacionResponseDTO> lista = clasificacionService.findByNombreContainingIgnoreCase(nombre);
 
         if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -303,15 +311,15 @@ public class ClasificacionController {
                     description = "Clasificación encontrada.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Clasificación no encontrada.")
     })
-    public ResponseEntity<ClasificacionModel> buscarPorNombreExacto(
+    public ResponseEntity<ClasificacionResponseDTO> buscarPorNombreExacto(
             @RequestParam("nombre") String nombre) {
 
-        ClasificacionModel clasificacion = clasificacionService.findByNombreExactIgnoreCase(nombre);
+        ClasificacionResponseDTO clasificacion = clasificacionService.findByNombreExactIgnoreCase(nombre);
         return ResponseEntity.ok(clasificacion);
     }
 
@@ -326,13 +334,13 @@ public class ClasificacionController {
                     description = "Clasificaciones activas encontradas.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay clasificaciones activas.")
     })
-    public ResponseEntity<List<ClasificacionModel>> listarActivas() {
-        List<ClasificacionModel> lista = clasificacionService.findActivas();
+    public ResponseEntity<List<ClasificacionResponseDTO>> listarActivas() {
+        List<ClasificacionResponseDTO> lista = clasificacionService.findActivas();
         if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -350,13 +358,13 @@ public class ClasificacionController {
                     description = "Clasificaciones inactivas encontradas.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = ClasificacionResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay clasificaciones inactivas.")
     })
-    public ResponseEntity<List<ClasificacionModel>> listarInactivas() {
-        List<ClasificacionModel> lista = clasificacionService.findInactivas();
+    public ResponseEntity<List<ClasificacionResponseDTO>> listarInactivas() {
+        List<ClasificacionResponseDTO> lista = clasificacionService.findInactivas();
         if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

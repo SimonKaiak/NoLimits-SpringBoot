@@ -8,22 +8,18 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.NoLimits.Multimedia.assemblers.catalogos.EmpresaModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.EmpresaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.EmpresaUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.EmpresaService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(
@@ -39,9 +35,11 @@ public class EmpresaControllerV2 {
     @Autowired
     private EmpresaModelAssembler assembler;
 
+    // ================== LISTAR ==================
     @GetMapping
     @Operation(summary = "Listar empresas (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<EmpresaModel>>> findAll() {
+    public ResponseEntity<CollectionModel<EntityModel<EmpresaResponseDTO>>> findAll() {
+
         var lista = service.findAll().stream()
                 .map(assembler::toModel)
                 .collect(Collectors.toList());
@@ -49,43 +47,51 @@ public class EmpresaControllerV2 {
         if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+
         return ResponseEntity.ok(CollectionModel.of(lista));
     }
 
+    // ================== OBTENER POR ID ==================
     @GetMapping("/{id}")
     @Operation(summary = "Obtener empresa por ID (HATEOAS)")
-    public EntityModel<EmpresaModel> findById(@PathVariable Long id) {
+    public EntityModel<EmpresaResponseDTO> findById(@PathVariable Long id) {
         return assembler.toModel(service.findById(id));
     }
 
+    // ================== CREAR ==================
     @PostMapping
     @Operation(summary = "Crear empresa (HATEOAS)")
-    public ResponseEntity<EntityModel<EmpresaModel>> save(@RequestBody EmpresaModel empresa) {
-        var creada = service.save(empresa);
+    public ResponseEntity<EntityModel<EmpresaResponseDTO>> save(
+            @Valid @RequestBody EmpresaRequestDTO dto
+    ) {
+        var creada = service.create(dto); // ⬅️ antes: save(dto)
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(assembler.toModel(creada));
     }
 
+    // ================== ACTUALIZAR (PUT) ==================
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar empresa (HATEOAS)")
-    public EntityModel<EmpresaModel> update(
+    public EntityModel<EmpresaResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody EmpresaModel empresa
+            @Valid @RequestBody EmpresaRequestDTO dto // ⬅️ antes: EmpresaUpdateDTO
     ) {
-        return assembler.toModel(service.update(id, empresa));
+        return assembler.toModel(service.update(id, dto));
     }
 
+    // ================== PATCH ==================
     @PatchMapping("/{id}")
     @Operation(summary = "Actualizar parcialmente empresa (HATEOAS)")
-    public ResponseEntity<EntityModel<EmpresaModel>> patch(
+    public ResponseEntity<EntityModel<EmpresaResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody EmpresaModel cambios
+            @RequestBody EmpresaUpdateDTO dto
     ) {
-        var actualizada = service.patch(id, cambios);
+        var actualizada = service.patch(id, dto);
         return ResponseEntity.ok(assembler.toModel(actualizada));
     }
 
+    // ================== ELIMINAR ==================
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar empresa (HATEOAS)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

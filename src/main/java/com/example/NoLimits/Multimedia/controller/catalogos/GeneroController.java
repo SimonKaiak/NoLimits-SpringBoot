@@ -3,7 +3,9 @@ package com.example.NoLimits.Multimedia.controller.catalogos;
 import java.util.List;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
-import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.GeneroRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.GeneroResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.GeneroUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.GeneroService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/v1/generos")
 @Tag(name = "Genero-Controller", description = "Catálogo de géneros (Acción, Terror, etc.).")
@@ -39,11 +43,11 @@ public class GeneroController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de géneros obtenida exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = GeneroModel.class))),
+                            schema = @Schema(implementation = GeneroResponseDTO.class))),
             @ApiResponse(responseCode = "204", description = "No hay géneros disponibles.")
     })
-    public ResponseEntity<List<GeneroModel>> listarGeneros() {
-        List<GeneroModel> generos = generoService.findAll();
+    public ResponseEntity<List<GeneroResponseDTO>> listarGeneros() {
+        List<GeneroResponseDTO> generos = generoService.findAll();
         if (generos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -55,10 +59,10 @@ public class GeneroController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Género encontrado.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = GeneroModel.class))),
+                            schema = @Schema(implementation = GeneroResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Género no encontrado.")
     })
-    public ResponseEntity<GeneroModel> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<GeneroResponseDTO> buscarPorId(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(generoService.findById(id));
         } catch (RecursoNoEncontradoException e) {
@@ -71,11 +75,11 @@ public class GeneroController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Géneros encontrados.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = GeneroModel.class))),
+                            schema = @Schema(implementation = GeneroResponseDTO.class))),
             @ApiResponse(responseCode = "204", description = "No se encontraron géneros con ese nombre.")
     })
-    public ResponseEntity<List<GeneroModel>> buscarPorNombre(@PathVariable String nombre) {
-        List<GeneroModel> generos = generoService.findByNombreContaining(nombre);
+    public ResponseEntity<List<GeneroResponseDTO>> buscarPorNombre(@PathVariable String nombre) {
+        List<GeneroResponseDTO> generos = generoService.findByNombreContaining(nombre);
         if (generos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -87,11 +91,11 @@ public class GeneroController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Género creado exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = GeneroModel.class))),
+                            schema = @Schema(implementation = GeneroResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "Datos inválidos.")
     })
-    public ResponseEntity<GeneroModel> crearGenero(@RequestBody GeneroModel genero) {
-        GeneroModel nuevo = generoService.save(genero);
+    public ResponseEntity<GeneroResponseDTO> crearGenero(@Valid @RequestBody GeneroRequestDTO genero) {
+        GeneroResponseDTO nuevo = generoService.save(genero);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
     }
 
@@ -100,10 +104,12 @@ public class GeneroController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Género actualizado exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = GeneroModel.class))),
+                            schema = @Schema(implementation = GeneroResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Género no encontrado.")
     })
-    public ResponseEntity<GeneroModel> actualizarGenero(@PathVariable Long id, @RequestBody GeneroModel detalles) {
+    public ResponseEntity<GeneroResponseDTO> actualizarGenero(
+            @PathVariable Long id,
+            @RequestBody GeneroUpdateDTO detalles) {
         try {
             return ResponseEntity.ok(generoService.update(id, detalles));
         } catch (RecursoNoEncontradoException e) {
@@ -116,13 +122,14 @@ public class GeneroController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Género actualizado parcialmente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = GeneroModel.class))),
+                            schema = @Schema(implementation = GeneroResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Género no encontrado.")
     })
-    public ResponseEntity<GeneroModel> editarGenero(@PathVariable Long id, @RequestBody GeneroModel detalles) {
+    public ResponseEntity<GeneroResponseDTO> editarGenero(
+            @PathVariable Long id,
+            @RequestBody GeneroUpdateDTO detalles) {
         try {
-            // update ya es parcial en el service
-            return ResponseEntity.ok(generoService.update(id, detalles));
+            return ResponseEntity.ok(generoService.patch(id, detalles));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
         }

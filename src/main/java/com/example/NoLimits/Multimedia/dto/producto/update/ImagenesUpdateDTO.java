@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "DTO para actualizar una imagen asociada a un producto.")
-public class ImagenUpdateDTO {
+public class ImagenesUpdateDTO {
 
     @Schema(
         description = "Ruta o URL de la imagen",

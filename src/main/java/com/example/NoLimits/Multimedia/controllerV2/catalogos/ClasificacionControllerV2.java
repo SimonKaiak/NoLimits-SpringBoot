@@ -1,8 +1,6 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/ClasificacionControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.ClasificacionModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
+// Ahora usamos DTOs en lugar de la entidad directamente.
+import com.example.NoLimits.Multimedia.dto.catalogos.request.ClasificacionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.ClasificacionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.ClasificacionUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.ClasificacionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,7 +66,7 @@ public class ClasificacionControllerV2 {
     @Autowired
     private ClasificacionService clasificacionService;
 
-    // Assembler que se encarga de convertir ClasificacionModel a EntityModel<ClasificacionModel>
+    // Assembler que se encarga de convertir ClasificacionResponseDTO a EntityModel<ClasificacionResponseDTO>
     // y agregar los enlaces HATEOAS correspondientes.
     @Autowired
     private ClasificacionModelAssembler clasificacionAssembler;
@@ -89,7 +90,7 @@ public class ClasificacionControllerV2 {
             description = "Clasificaciones obtenidas exitosamente.",
             content = @Content(
                     mediaType = "application/hal+json",
-                    schema = @Schema(implementation = ClasificacionModel.class)
+                    schema = @Schema(implementation = ClasificacionResponseDTO.class)
             )
     )
     @ApiResponse(
@@ -97,9 +98,9 @@ public class ClasificacionControllerV2 {
             description = "No hay clasificaciones registradas."
     )
     @GetMapping
-    public ResponseEntity<CollectionModel<EntityModel<ClasificacionModel>>> getAll() {
-        // Transformar cada ClasificacionModel a EntityModel con enlaces.
-        List<EntityModel<ClasificacionModel>> lista = clasificacionService.findAll().stream()
+    public ResponseEntity<CollectionModel<EntityModel<ClasificacionResponseDTO>>> getAll() {
+        // Transformar cada ClasificacionResponseDTO a EntityModel con enlaces.
+        List<EntityModel<ClasificacionResponseDTO>> lista = clasificacionService.findAll().stream()
                 .map(clasificacionAssembler::toModel)
                 .collect(Collectors.toList());
 
@@ -136,7 +137,7 @@ public class ClasificacionControllerV2 {
                     description = "Clasificación encontrada.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(
@@ -145,9 +146,9 @@ public class ClasificacionControllerV2 {
             )
     })
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<ClasificacionModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<ClasificacionResponseDTO>> getById(@PathVariable Long id) {
         try {
-            ClasificacionModel clasificacion = clasificacionService.findById(id);
+            ClasificacionResponseDTO clasificacion = clasificacionService.findById(id);
             return ResponseEntity.ok(clasificacionAssembler.toModel(clasificacion));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -174,7 +175,7 @@ public class ClasificacionControllerV2 {
                     description = "Clasificación creada correctamente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(
@@ -183,11 +184,12 @@ public class ClasificacionControllerV2 {
             )
     })
     @PostMapping(consumes = "application/json", produces = "application/hal+json")
-    public ResponseEntity<EntityModel<ClasificacionModel>> create(
+    public ResponseEntity<EntityModel<ClasificacionResponseDTO>> create(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Clasificación básica",
@@ -203,13 +205,13 @@ public class ClasificacionControllerV2 {
                             }
                     )
             )
-            @Valid @RequestBody ClasificacionModel clasificacion
+            @Valid @RequestBody ClasificacionRequestDTO clasificacionRequest
     ) {
         // Guardar la nueva clasificación en la base de datos.
-        ClasificacionModel nueva = clasificacionService.save(clasificacion);
+        ClasificacionResponseDTO nueva = clasificacionService.create(clasificacionRequest);
 
         // Transformarla en EntityModel con enlaces HATEOAS.
-        EntityModel<ClasificacionModel> entityModel = clasificacionAssembler.toModel(nueva);
+        EntityModel<ClasificacionResponseDTO> entityModel = clasificacionAssembler.toModel(nueva);
 
         // Devolver 201 con Location apuntando al enlace self del recurso creado.
         return ResponseEntity
@@ -236,7 +238,7 @@ public class ClasificacionControllerV2 {
                     description = "Clasificación actualizada correctamente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(
@@ -245,12 +247,13 @@ public class ClasificacionControllerV2 {
             )
     })
     @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/hal+json")
-    public ResponseEntity<EntityModel<ClasificacionModel>> update(
+    public ResponseEntity<EntityModel<ClasificacionResponseDTO>> update(
             @PathVariable Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "PUT ejemplo",
@@ -266,10 +269,10 @@ public class ClasificacionControllerV2 {
                             }
                     )
             )
-            @Valid @RequestBody ClasificacionModel detalles
+            @Valid @RequestBody ClasificacionRequestDTO detalles
     ) {
         try {
-            ClasificacionModel actualizada = clasificacionService.update(id, detalles);
+            ClasificacionResponseDTO actualizada = clasificacionService.update(id, detalles);
             return ResponseEntity.ok(clasificacionAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -281,7 +284,7 @@ public class ClasificacionControllerV2 {
     /*
      Actualizar parcialmente una clasificación usando PATCH, en versión HATEOAS.
 
-     - Se recibe un mapa con los campos a modificar.
+     - Se recibe un DTO con los campos a modificar.
      - El servicio se encarga de aplicar solo esos cambios.
      - Si la clasificación no existe, se responde con 404.
      - Si se actualiza, se devuelve el recurso con sus enlaces.
@@ -296,7 +299,7 @@ public class ClasificacionControllerV2 {
                     description = "Clasificación actualizada correctamente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ClasificacionModel.class)
+                            schema = @Schema(implementation = ClasificacionResponseDTO.class)
                     )
             ),
             @ApiResponse(
@@ -305,12 +308,13 @@ public class ClasificacionControllerV2 {
             )
     })
     @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/hal+json")
-    public ResponseEntity<EntityModel<ClasificacionModel>> patch(
+    public ResponseEntity<EntityModel<ClasificacionResponseDTO>> patch(
             @PathVariable Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ClasificacionUpdateDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "PATCH ejemplo",
@@ -325,10 +329,10 @@ public class ClasificacionControllerV2 {
                             }
                     )
             )
-            @RequestBody Map<String, Object> campos
+            @RequestBody ClasificacionUpdateDTO campos
     ) {
         try {
-            ClasificacionModel actualizada = clasificacionService.patch(id, campos);
+            ClasificacionResponseDTO actualizada = clasificacionService.patch(id, campos);
             return ResponseEntity.ok(clasificacionAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();

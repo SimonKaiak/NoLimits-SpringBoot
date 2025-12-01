@@ -8,15 +8,15 @@ import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.producto.ImagenesControllerV2;
-import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
+import com.example.NoLimits.Multimedia.dto.producto.response.ImagenesResponseDTO;
 
 @Component
-public class ImagenesModelAssembler implements RepresentationModelAssembler<ImagenesModel, EntityModel<ImagenesModel>> {
+public class ImagenesModelAssembler implements RepresentationModelAssembler<ImagenesResponseDTO, EntityModel<ImagenesResponseDTO>> {
 
     @Override
-    public EntityModel<ImagenesModel> toModel(ImagenesModel imagen) {
+    public EntityModel<ImagenesResponseDTO> toModel(ImagenesResponseDTO imagen) {
 
-        EntityModel<ImagenesModel> model = EntityModel.of(
+        EntityModel<ImagenesResponseDTO> model = EntityModel.of(
                 imagen,
                 // self
                 linkTo(methodOn(ImagenesControllerV2.class).getById(imagen.getId())).withSelfRel(),
@@ -32,16 +32,16 @@ public class ImagenesModelAssembler implements RepresentationModelAssembler<Imag
                 linkTo(methodOn(ImagenesControllerV2.class).create(null)).withRel("crear")
         );
 
-        // Si la imagen tiene producto, agregamos link al recurso por producto
-        if (imagen.getProducto() != null && imagen.getProducto().getId() != null) {
+        // Si la imagen tiene producto, agregamos links relacionados
+        if (imagen.getProductoId() != null) {
             model.add(
                 linkTo(methodOn(ImagenesControllerV2.class)
-                        .getByProducto(imagen.getProducto().getId()))
+                        .getByProducto(imagen.getProductoId()))
                         .withRel("imagenes_del_producto")
             );
             model.add(
                 linkTo(methodOn(ImagenesControllerV2.class)
-                        .deleteByProducto(imagen.getProducto().getId()))
+                        .deleteByProducto(imagen.getProductoId()))
                         .withRel("eliminar_todas_del_producto")
             );
         }

@@ -6,18 +6,18 @@ import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.producto.DetalleVentaControllerV2;
 import com.example.NoLimits.Multimedia.controllerV2.venta.VentaControllerV2;
-import com.example.NoLimits.Multimedia.model.venta.VentaModel;
+import com.example.NoLimits.Multimedia.dto.venta.response.VentaResponseDTO;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class VentaModelAssembler implements RepresentationModelAssembler<VentaModel, EntityModel<VentaModel>> {
+public class VentaModelAssembler implements RepresentationModelAssembler<VentaResponseDTO, EntityModel<VentaResponseDTO>> {
 
     @Override
-    public EntityModel<VentaModel> toModel(VentaModel venta) {
+    public EntityModel<VentaResponseDTO> toModel(VentaResponseDTO venta) {
 
-        EntityModel<VentaModel> entityModel = EntityModel.of(
+        EntityModel<VentaResponseDTO> entityModel = EntityModel.of(
             venta,
             // self
             linkTo(methodOn(VentaControllerV2.class).getById(venta.getId())).withSelfRel(),
@@ -27,17 +27,17 @@ public class VentaModelAssembler implements RepresentationModelAssembler<VentaMo
             linkTo(methodOn(VentaControllerV2.class).create(null)).withRel("crear"),
             // actualizar (PUT)
             linkTo(methodOn(VentaControllerV2.class).update(venta.getId(), null)).withRel("actualizar"),
-            // actualizar parcial (PATCH) – ojo: usa patchVentaModel en el controller
+            // actualizar parcial (PATCH)
             linkTo(methodOn(VentaControllerV2.class).patch(venta.getId(), null)).withRel("actualizar_parcial"),
             // eliminar
             linkTo(methodOn(VentaControllerV2.class).delete(venta.getId())).withRel("eliminar")
         );
 
         // Link a ventas filtradas por el mismo método de pago (si existe)
-        if (venta.getMetodoPagoModel() != null && venta.getMetodoPagoModel().getId() != null) {
+        if (venta.getMetodoPagoId() != null) {
             entityModel.add(
                 linkTo(methodOn(VentaControllerV2.class)
-                        .byMetodoPago(venta.getMetodoPagoModel().getId()))
+                        .byMetodoPago(venta.getMetodoPagoId()))
                     .withRel("por-metodo-pago")
             );
         }

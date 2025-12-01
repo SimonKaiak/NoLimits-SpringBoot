@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
-import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoProductoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoProductoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,13 +55,13 @@ public class TipoProductoController {
                     description = "Lista de tipos de producto obtenida exitosamente.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay tipos de productos registrados.")
     })
-    public ResponseEntity<List<TipoProductoModel>> getAllTiposProductos() {
-        List<TipoProductoModel> tipos = tipoProductoService.findAll();
+    public ResponseEntity<List<TipoProductoResponseDTO>> getAllTiposProductos() {
+        List<TipoProductoResponseDTO> tipos = tipoProductoService.findAll();
         return tipos.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(tipos);
@@ -78,12 +80,12 @@ public class TipoProductoController {
                     description = "Tipo de producto encontrado.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Tipo de producto no encontrado.")
     })
-    public ResponseEntity<TipoProductoModel> getTipoProductoById(@PathVariable Long id) {
+    public ResponseEntity<TipoProductoResponseDTO> getTipoProductoById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(tipoProductoService.findById(id));
         } catch (RecursoNoEncontradoException e) {
@@ -104,15 +106,15 @@ public class TipoProductoController {
                     description = "Tipos de producto encontrados.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron tipos de producto para ese criterio.")
     })
-    public ResponseEntity<List<TipoProductoModel>> getTipoProductoByNombreLike(
+    public ResponseEntity<List<TipoProductoResponseDTO>> getTipoProductoByNombreLike(
             @RequestParam("nombre") String nombre) {
 
-        List<TipoProductoModel> tipos = tipoProductoService.findByNombre(nombre);
+        List<TipoProductoResponseDTO> tipos = tipoProductoService.findByNombre(nombre);
         return tipos.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(tipos);
@@ -131,16 +133,16 @@ public class TipoProductoController {
                     description = "Tipo de producto encontrado.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Tipo de producto no encontrado.")
     })
-    public ResponseEntity<TipoProductoModel> getTipoProductoByNombreExacto(
+    public ResponseEntity<TipoProductoResponseDTO> getTipoProductoByNombreExacto(
             @RequestParam("nombre") String nombre) {
 
         try {
-            TipoProductoModel tipo = tipoProductoService.findByNombreExactIgnoreCase(nombre);
+            TipoProductoResponseDTO tipo = tipoProductoService.findByNombreExactIgnoreCase(nombre);
             return ResponseEntity.ok(tipo);
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -160,12 +162,12 @@ public class TipoProductoController {
                     description = "Tipo de producto creado exitosamente.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Datos inválidos para crear el tipo de producto.")
     })
-    public ResponseEntity<TipoProductoModel> createTipoProducto(
+    public ResponseEntity<TipoProductoResponseDTO> createTipoProducto(
             @RequestBody(
                     required = true,
                     content = @Content(
@@ -185,9 +187,9 @@ public class TipoProductoController {
                             }
                     )
             )
-            @Valid @org.springframework.web.bind.annotation.RequestBody TipoProductoModel tipoProducto
+            @Valid @org.springframework.web.bind.annotation.RequestBody TipoProductoRequestDTO tipoProducto
     ) {
-        TipoProductoModel nuevoTipo = tipoProductoService.save(tipoProducto);
+        TipoProductoResponseDTO nuevoTipo = tipoProductoService.save(tipoProducto);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoTipo);
     }
 
@@ -204,12 +206,12 @@ public class TipoProductoController {
                     description = "Tipo de producto actualizado correctamente.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Tipo de producto no encontrado.")
     })
-    public ResponseEntity<TipoProductoModel> updateTipoProducto(
+    public ResponseEntity<TipoProductoResponseDTO> updateTipoProducto(
             @PathVariable Long id,
             @RequestBody(
                     required = true,
@@ -230,10 +232,10 @@ public class TipoProductoController {
                             }
                     )
             )
-            @Valid @org.springframework.web.bind.annotation.RequestBody TipoProductoModel detalles
+            @Valid @org.springframework.web.bind.annotation.RequestBody TipoProductoRequestDTO detalles
     ) {
         try {
-            TipoProductoModel actualizado = tipoProductoService.update(id, detalles);
+            TipoProductoResponseDTO actualizado = tipoProductoService.update(id, detalles);
             return ResponseEntity.ok(actualizado);
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -253,12 +255,12 @@ public class TipoProductoController {
                     description = "Tipo de producto actualizado parcialmente.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Tipo de producto no encontrado.")
     })
-    public ResponseEntity<TipoProductoModel> patchTipoProducto(
+    public ResponseEntity<TipoProductoResponseDTO> patchTipoProducto(
             @PathVariable Long id,
             @RequestBody(
                     required = true,
@@ -278,10 +280,10 @@ public class TipoProductoController {
                             }
                     )
             )
-            @org.springframework.web.bind.annotation.RequestBody TipoProductoModel detalles
+            @org.springframework.web.bind.annotation.RequestBody TipoProductoUpdateDTO detalles
     ) {
         try {
-            TipoProductoModel actualizado = tipoProductoService.patch(id, detalles);
+            TipoProductoResponseDTO actualizado = tipoProductoService.patch(id, detalles);
             return ResponseEntity.ok(actualizado);
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -318,13 +320,13 @@ public class TipoProductoController {
                     description = "Tipos de producto activos encontrados.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay tipos de producto activos.")
     })
-    public ResponseEntity<List<TipoProductoModel>> listarActivos() {
-        List<TipoProductoModel> tipos = tipoProductoService.findActivos();
+    public ResponseEntity<List<TipoProductoResponseDTO>> listarActivos() {
+        List<TipoProductoResponseDTO> tipos = tipoProductoService.findActivos();
         return tipos.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(tipos);
@@ -341,13 +343,13 @@ public class TipoProductoController {
                     description = "Tipos de producto inactivos encontrados.",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoModel.class))
+                            array = @ArraySchema(schema = @Schema(implementation = TipoProductoResponseDTO.class))
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay tipos de producto inactivos.")
     })
-    public ResponseEntity<List<TipoProductoModel>> listarInactivos() {
-        List<TipoProductoModel> tipos = tipoProductoService.findInactivos();
+    public ResponseEntity<List<TipoProductoResponseDTO>> listarInactivos() {
+        List<TipoProductoResponseDTO> tipos = tipoProductoService.findInactivos();
         return tipos.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(tipos);

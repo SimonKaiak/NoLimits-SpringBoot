@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/producto/DetalleVentaControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2.producto;
 
 import java.util.List;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.producto.DetalleVentaModelAssembler;
-import com.example.NoLimits.Multimedia.model.producto.DetalleVentaModel;
+import com.example.NoLimits.Multimedia.dto.producto.request.DetalleVentaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.DetalleVentaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.update.DetalleVentaUpdateDTO;
 import com.example.NoLimits.Multimedia.service.producto.DetalleVentaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,10 +55,10 @@ public class DetalleVentaControllerV2 {
     @Operation(summary = "Listar detalles de venta (HATEOAS)")
     @ApiResponse(responseCode = "200", description = "OK",
         content = @Content(mediaType = "application/hal+json",
-            schema = @Schema(implementation = DetalleVentaModel.class)))
+            schema = @Schema(implementation = DetalleVentaResponseDTO.class)))
     @ApiResponse(responseCode = "204", description = "Sin contenido")
-    public ResponseEntity<CollectionModel<EntityModel<DetalleVentaModel>>> getAll() {
-        List<EntityModel<DetalleVentaModel>> detalles = detalleVentaService.findAll().stream()
+    public ResponseEntity<CollectionModel<EntityModel<DetalleVentaResponseDTO>>> getAll() {
+        List<EntityModel<DetalleVentaResponseDTO>> detalles = detalleVentaService.findAll().stream()
             .map(detalleVentaAssembler::toModel)
             .collect(Collectors.toList());
 
@@ -73,11 +76,11 @@ public class DetalleVentaControllerV2 {
     @Operation(summary = "Obtener detalle de venta por ID (HATEOAS)")
     @ApiResponse(responseCode = "200", description = "OK",
         content = @Content(mediaType = "application/hal+json",
-            schema = @Schema(implementation = DetalleVentaModel.class)))
+            schema = @Schema(implementation = DetalleVentaResponseDTO.class)))
     @ApiResponse(responseCode = "404", description = "No encontrado")
-    public ResponseEntity<EntityModel<DetalleVentaModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<DetalleVentaResponseDTO>> getById(@PathVariable Long id) {
         try {
-            DetalleVentaModel detalle = detalleVentaService.findById(id);
+            DetalleVentaResponseDTO detalle = detalleVentaService.findById(id);
             return ResponseEntity.ok(detalleVentaAssembler.toModel(detalle));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
@@ -86,8 +89,8 @@ public class DetalleVentaControllerV2 {
 
     @GetMapping("/venta/{ventaId}")
     @Operation(summary = "Listar detalles de una venta (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<DetalleVentaModel>>> getByVenta(@PathVariable Long ventaId) {
-        List<EntityModel<DetalleVentaModel>> detalles = detalleVentaService.findByVenta(ventaId).stream()
+    public ResponseEntity<CollectionModel<EntityModel<DetalleVentaResponseDTO>>> getByVenta(@PathVariable Long ventaId) {
+        List<EntityModel<DetalleVentaResponseDTO>> detalles = detalleVentaService.findByVenta(ventaId).stream()
             .map(detalleVentaAssembler::toModel)
             .collect(Collectors.toList());
 
@@ -111,8 +114,7 @@ public class DetalleVentaControllerV2 {
                     name = "Detalle mínimo",
                     value = """
                     {
-                      "venta": { "id": 1 },
-                      "producto": { "id": 10 },
+                      "productoId": 10,
                       "cantidad": 2,
                       "precioUnitario": 12990
                     }
@@ -122,9 +124,12 @@ public class DetalleVentaControllerV2 {
         )
     )
     @ApiResponse(responseCode = "201", description = "Creado")
-    public ResponseEntity<EntityModel<DetalleVentaModel>> create(@Valid @RequestBody DetalleVentaModel body) {
-        DetalleVentaModel nuevo = detalleVentaService.save(body);
-        EntityModel<DetalleVentaModel> entityModel = detalleVentaAssembler.toModel(nuevo);
+    public ResponseEntity<EntityModel<DetalleVentaResponseDTO>> create(
+            @Valid @RequestBody DetalleVentaRequestDTO body) {
+
+        DetalleVentaResponseDTO nuevo = detalleVentaService.save(body);
+        EntityModel<DetalleVentaResponseDTO> entityModel = detalleVentaAssembler.toModel(nuevo);
+
         return ResponseEntity
             .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
             .body(entityModel);
@@ -148,11 +153,11 @@ public class DetalleVentaControllerV2 {
             )
         )
     )
-    public ResponseEntity<EntityModel<DetalleVentaModel>> patch(
+    public ResponseEntity<EntityModel<DetalleVentaResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody DetalleVentaModel parcial) {
+            @RequestBody DetalleVentaUpdateDTO parcial) {
         try {
-            DetalleVentaModel actualizado = detalleVentaService.patch(id, parcial);
+            DetalleVentaResponseDTO actualizado = detalleVentaService.patch(id, parcial);
             return ResponseEntity.ok(detalleVentaAssembler.toModel(actualizado));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();

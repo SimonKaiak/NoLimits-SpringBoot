@@ -1,18 +1,21 @@
 package com.example.NoLimits.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.ClasificacionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.ClasificacionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.ClasificacionUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.ClasificacionService;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -38,6 +42,8 @@ public class ClasificacionServiceTest {
     @MockBean
     private ClasificacionRepository clasificacionRepository;
 
+    // ================== HELPERS ==================
+
     private ClasificacionModel createClasificacion() {
         ClasificacionModel c = new ClasificacionModel();
         c.setId(1L);
@@ -47,11 +53,29 @@ public class ClasificacionServiceTest {
         return c;
     }
 
+    private ClasificacionRequestDTO createRequestDTO() {
+        ClasificacionRequestDTO dto = new ClasificacionRequestDTO();
+        dto.setNombre("T");
+        dto.setDescripcion("Contenido apto para adolescentes.");
+        dto.setActivo(true);
+        return dto;
+    }
+
+    private ClasificacionUpdateDTO createUpdateDTO() {
+        ClasificacionUpdateDTO dto = new ClasificacionUpdateDTO();
+        dto.setNombre("M");
+        dto.setDescripcion("Solo para adultos.");
+        dto.setActivo(false);
+        return dto;
+    }
+
+    // ================== TESTS CRUD BÁSICO ==================
+
     @Test
     public void testFindAll() {
         when(clasificacionRepository.findAll()).thenReturn(List.of(createClasificacion()));
 
-        List<ClasificacionModel> lista = clasificacionService.findAll();
+        List<ClasificacionResponseDTO> lista = clasificacionService.findAll();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
@@ -59,14 +83,14 @@ public class ClasificacionServiceTest {
     }
 
     @Test
-    public void testFindById() {
+    public void testFindById_Exito() {
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(createClasificacion()));
 
-        ClasificacionModel c = clasificacionService.findById(1L);
+        ClasificacionResponseDTO dto = clasificacionService.findById(1L);
 
-        assertNotNull(c);
-        assertEquals(1L, c.getId());
-        assertEquals("T", c.getNombre());
+        assertNotNull(dto);
+        assertEquals(1L, dto.getId());
+        assertEquals("T", dto.getNombre());
     }
 
     @Test
@@ -78,49 +102,62 @@ public class ClasificacionServiceTest {
     }
 
     @Test
-    public void testSave_Exito() {
-        ClasificacionModel nueva = new ClasificacionModel();
-        nueva.setNombre("E");
-        nueva.setDescripcion("Para todo público.");
-        nueva.setActivo(true);
+    public void testCreate_Exito() {
+        ClasificacionRequestDTO request = new ClasificacionRequestDTO();
+        request.setNombre("  E  ");
+        request.setDescripcion("Para todo público.");
+        // activo null → se usa el valor por defecto del modelo
 
         when(clasificacionRepository.existsByNombreIgnoreCase("E")).thenReturn(false);
         when(clasificacionRepository.save(any(ClasificacionModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+                .thenAnswer(inv -> {
+                    ClasificacionModel m = inv.getArgument(0);
+                    m.setId(1L);
+                    return m;
+                });
 
-        ClasificacionModel guardada = clasificacionService.save(nueva);
+        ClasificacionResponseDTO respuesta = clasificacionService.create(request);
 
-        assertNotNull(guardada);
-        assertEquals("E", guardada.getNombre());
-        assertTrue(guardada.isActivo());
+        assertNotNull(respuesta);
+        assertEquals(1L, respuesta.getId());
+        assertEquals("E", respuesta.getNombre()); // nombre normalizado
+        assertEquals("Para todo público.", respuesta.getDescripcion());
     }
 
     @Test
-    public void testSave_NombreVacio() {
-        ClasificacionModel c = new ClasificacionModel();
-        c.setNombre("  "); // blanco
+    public void testCreate_NombreNull() {
+        ClasificacionRequestDTO request = new ClasificacionRequestDTO();
+        request.setNombre(null);
 
         assertThrows(IllegalArgumentException.class,
-                () -> clasificacionService.save(c));
+                () -> clasificacionService.create(request));
     }
 
     @Test
-    public void testSave_NombreDuplicado() {
-        ClasificacionModel c = new ClasificacionModel();
-        c.setNombre("T");
-
-        when(clasificacionRepository.existsByNombreIgnoreCase("T"))
-                .thenReturn(true);
+    public void testCreate_NombreVacio() {
+        ClasificacionRequestDTO request = new ClasificacionRequestDTO();
+        request.setNombre("   ");
 
         assertThrows(IllegalArgumentException.class,
-                () -> clasificacionService.save(c));
+                () -> clasificacionService.create(request));
     }
 
     @Test
-    public void testUpdate() {
+    public void testCreate_NombreDuplicado() {
+        ClasificacionRequestDTO request = new ClasificacionRequestDTO();
+        request.setNombre("T");
+
+        when(clasificacionRepository.existsByNombreIgnoreCase("T")).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> clasificacionService.create(request));
+    }
+
+    @Test
+    public void testUpdate_Exito() {
         ClasificacionModel existente = createClasificacion();
 
-        ClasificacionModel cambios = new ClasificacionModel();
+        ClasificacionRequestDTO cambios = new ClasificacionRequestDTO();
         cambios.setNombre("M");
         cambios.setDescripcion("Solo para adultos.");
         cambios.setActivo(false);
@@ -130,25 +167,40 @@ public class ClasificacionServiceTest {
         when(clasificacionRepository.save(any(ClasificacionModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ClasificacionModel actualizada = clasificacionService.update(1L, cambios);
+        ClasificacionResponseDTO actualizada = clasificacionService.update(1L, cambios);
 
         assertNotNull(actualizada);
         assertEquals("M", actualizada.getNombre());
         assertEquals("Solo para adultos.", actualizada.getDescripcion());
-        assertFalse(actualizada.isActivo());
+        assertFalse(actualizada.getActivo());
     }
 
     @Test
     public void testUpdate_NombreDuplicado() {
         ClasificacionModel existente = createClasificacion(); // nombre T
 
-        ClasificacionModel cambios = new ClasificacionModel();
-        cambios.setNombre("E"); // nuevo nombre que ya existe
+        ClasificacionRequestDTO cambios = new ClasificacionRequestDTO();
+        cambios.setNombre("E");
         cambios.setDescripcion("Otra");
         cambios.setActivo(true);
 
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(clasificacionRepository.existsByNombreIgnoreCase("E")).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> clasificacionService.update(1L, cambios));
+    }
+
+    @Test
+    public void testUpdate_ActivoObligatorio() {
+        ClasificacionModel existente = createClasificacion();
+
+        ClasificacionRequestDTO cambios = new ClasificacionRequestDTO();
+        cambios.setNombre("M");
+        cambios.setDescripcion("Solo para adultos.");
+        cambios.setActivo(null); // en PUT es obligatorio
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
 
         assertThrows(IllegalArgumentException.class,
                 () -> clasificacionService.update(1L, cambios));
@@ -166,12 +218,14 @@ public class ClasificacionServiceTest {
         verify(clasificacionRepository, times(1)).delete(existente);
     }
 
+    // ================== TESTS BÚSQUEDAS ESPECÍFICAS ==================
+
     @Test
     public void testFindByNombreContainingIgnoreCase() {
         when(clasificacionRepository.findByNombreContainingIgnoreCase("t"))
                 .thenReturn(List.of(createClasificacion()));
 
-        List<ClasificacionModel> lista =
+        List<ClasificacionResponseDTO> lista =
                 clasificacionService.findByNombreContainingIgnoreCase("t");
 
         assertNotNull(lista);
@@ -184,10 +238,10 @@ public class ClasificacionServiceTest {
         when(clasificacionRepository.findByNombreIgnoreCase("t"))
                 .thenReturn(Optional.of(createClasificacion()));
 
-        ClasificacionModel c = clasificacionService.findByNombreExactIgnoreCase("t");
+        ClasificacionResponseDTO dto = clasificacionService.findByNombreExactIgnoreCase("t");
 
-        assertNotNull(c);
-        assertEquals("T", c.getNombre());
+        assertNotNull(dto);
+        assertEquals("T", dto.getNombre());
     }
 
     @Test
@@ -204,11 +258,11 @@ public class ClasificacionServiceTest {
         when(clasificacionRepository.findByActivoTrue())
                 .thenReturn(List.of(createClasificacion()));
 
-        List<ClasificacionModel> lista = clasificacionService.findActivas();
+        List<ClasificacionResponseDTO> lista = clasificacionService.findActivas();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertTrue(lista.get(0).isActivo());
+        assertTrue(lista.get(0).getActivo());
     }
 
     @Test
@@ -219,12 +273,14 @@ public class ClasificacionServiceTest {
         when(clasificacionRepository.findByActivoFalse())
                 .thenReturn(List.of(inactiva));
 
-        List<ClasificacionModel> lista = clasificacionService.findInactivas();
+        List<ClasificacionResponseDTO> lista = clasificacionService.findInactivas();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertFalse(lista.get(0).isActivo());
+        assertFalse(lista.get(0).getActivo());
     }
+
+    // ================== TEST RESUMEN ==================
 
     @Test
     public void testObtenerClasificacionesConDatos() {
@@ -244,103 +300,90 @@ public class ClasificacionServiceTest {
         assertNotNull(resumen);
         assertEquals(1, resumen.size());
 
-        var item = resumen.get(0);
+        Map<String, Object> item = resumen.get(0);
         assertEquals(1L, item.get("ID"));
         assertEquals("T", item.get("Nombre"));
         assertEquals("Contenido apto para adolescentes.", item.get("Descripcion"));
         assertEquals(true, item.get("Activo"));
     }
 
-    // ================== TESTS PATCH ==================
+    // ================== TESTS PATCH (DTO) ==================
 
     @Test
     public void testPatch_DescripcionYActivo() {
         ClasificacionModel existente = createClasificacion();
 
-        Map<String, Object> campos = new HashMap<>();
-        campos.put("descripcion", "Actualizada: solo para adultos.");
-        campos.put("activo", false);
+        ClasificacionUpdateDTO cambios = new ClasificacionUpdateDTO();
+        cambios.setDescripcion("Actualizada: solo para adultos.");
+        cambios.setActivo(false);
 
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(clasificacionRepository.save(any(ClasificacionModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ClasificacionModel actualizada = clasificacionService.patch(1L, campos);
+        ClasificacionResponseDTO actualizada = clasificacionService.patch(1L, cambios);
 
         assertNotNull(actualizada);
         assertEquals("T", actualizada.getNombre()); // nombre se mantiene
         assertEquals("Actualizada: solo para adultos.", actualizada.getDescripcion());
-        assertFalse(actualizada.isActivo());
+        assertFalse(actualizada.getActivo());
     }
 
     @Test
     public void testPatch_CambiaNombre_Exito() {
         ClasificacionModel existente = createClasificacion();
 
-        Map<String, Object> campos = new HashMap<>();
-        campos.put("nombre", "M");
+        ClasificacionUpdateDTO cambios = new ClasificacionUpdateDTO();
+        cambios.setNombre("M");
 
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(clasificacionRepository.existsByNombreIgnoreCase("M")).thenReturn(false);
         when(clasificacionRepository.save(any(ClasificacionModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ClasificacionModel actualizada = clasificacionService.patch(1L, campos);
+        ClasificacionResponseDTO actualizada = clasificacionService.patch(1L, cambios);
 
         assertNotNull(actualizada);
         assertEquals("M", actualizada.getNombre());
         assertEquals("Contenido apto para adolescentes.", actualizada.getDescripcion());
-        assertTrue(actualizada.isActivo());
+        assertTrue(actualizada.getActivo());
     }
 
     @Test
     public void testPatch_NombreDuplicado() {
         ClasificacionModel existente = createClasificacion();
 
-        Map<String, Object> campos = new HashMap<>();
-        campos.put("nombre", "E");
+        ClasificacionUpdateDTO cambios = new ClasificacionUpdateDTO();
+        cambios.setNombre("E");
 
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(clasificacionRepository.existsByNombreIgnoreCase("E")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
-                () -> clasificacionService.patch(1L, campos));
+                () -> clasificacionService.patch(1L, cambios));
     }
 
     @Test
     public void testPatch_NombreVacio() {
         ClasificacionModel existente = createClasificacion();
 
-        Map<String, Object> campos = new HashMap<>();
-        campos.put("nombre", "  "); // blanco
+        ClasificacionUpdateDTO cambios = new ClasificacionUpdateDTO();
+        cambios.setNombre("   "); // blanco
 
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
 
         assertThrows(IllegalArgumentException.class,
-                () -> clasificacionService.patch(1L, campos));
-    }
-
-    @Test
-    public void testPatch_ActivoTipoIncorrecto() {
-        ClasificacionModel existente = createClasificacion();
-
-        Map<String, Object> campos = new HashMap<>();
-        campos.put("activo", "si"); // no boolean
-
-        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> clasificacionService.patch(1L, campos));
+                () -> clasificacionService.patch(1L, cambios));
     }
 
     @Test
     public void testPatch_IdNoExiste() {
-        Map<String, Object> campos = new HashMap<>();
-        campos.put("descripcion", "No importa");
+        ClasificacionUpdateDTO cambios = new ClasificacionUpdateDTO();
+        cambios.setDescripcion("No importa");
 
         when(clasificacionRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-                () -> clasificacionService.patch(99L, campos));
+                () -> clasificacionService.patch(99L, cambios));
     }
 }

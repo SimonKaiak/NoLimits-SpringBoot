@@ -2,65 +2,80 @@ package com.example.NoLimits.Multimedia.controller.usuario;
 
 import java.util.List;
 
-import com.example.NoLimits.Multimedia.model.usuario.RolModel;
+import com.example.NoLimits.Multimedia.dto.usuario.request.RolRequestDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.response.RolResponseDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.RolUpdateDTO;
 import com.example.NoLimits.Multimedia.service.usuario.RolService;
 
 import jakarta.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/api/v1/roles")
 public class RolController {
 
     @Autowired
     private RolService rolService;
 
+    /**
+     * GET — Listar todos los roles
+     */
     @GetMapping
-    public List<RolModel> getAll() {
-        return rolService.findAll();
+    public ResponseEntity<List<RolResponseDTO>> getAll() {
+        List<RolResponseDTO> roles = rolService.findAll();
+        return roles.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(roles);
     }
 
+    /**
+     * GET — Buscar rol por ID
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<RolModel> getById(@PathVariable Long id) {
-        RolModel rol = rolService.findById(id);
-        return ResponseEntity.ok(rol);
+    public ResponseEntity<RolResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(rolService.findById(id));
     }
 
+    /**
+     * POST — Crear un rol
+     */
     @PostMapping
-    public ResponseEntity<RolModel> create(@Valid @RequestBody RolModel rol) {
-        RolModel creado = rolService.save(rol);
+    public ResponseEntity<RolResponseDTO> create(
+            @Valid @RequestBody RolRequestDTO dto) {
+
+        RolResponseDTO creado = rolService.save(dto);
         return ResponseEntity.status(201).body(creado);
     }
 
+    /**
+     * PUT — Actualizar completamente un rol
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<RolModel> update(
+    public ResponseEntity<RolResponseDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody RolModel in) {
+            @Valid @RequestBody RolUpdateDTO dto) {
 
-        RolModel actualizado = rolService.update(id, in);
+        RolResponseDTO actualizado = rolService.update(id, dto);
         return ResponseEntity.ok(actualizado);
     }
 
+    /**
+     * PATCH — Actualización parcial
+     */
     @PatchMapping("/{id}")
-    public ResponseEntity<RolModel> patch(
+    public ResponseEntity<RolResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody RolModel in) {
+            @RequestBody RolUpdateDTO dto) {
 
-        RolModel actualizado = rolService.patch(id, in);
+        RolResponseDTO actualizado = rolService.patch(id, dto);
         return ResponseEntity.ok(actualizado);
     }
 
+    /**
+     * DELETE — Eliminar un rol por ID
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         rolService.deleteById(id);

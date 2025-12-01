@@ -24,7 +24,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.venta.VentaModelAssembler;
-import com.example.NoLimits.Multimedia.model.venta.VentaModel;
+import com.example.NoLimits.Multimedia.dto.venta.request.VentaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.venta.response.VentaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.venta.update.VentaUpdateDTO;
 import com.example.NoLimits.Multimedia.service.venta.VentaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,15 +38,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
-
 @RestController
 @RequestMapping(value = "/api/v2/ventas", produces = MediaTypes.HAL_JSON_VALUE)
 @Tag(name = "Venta-Controller-V2", description = "Operaciones relacionadas con las ventas (HATEOAS).")
 @Validated
 public class VentaControllerV2 {
 
-    @Autowired private VentaService ventaService;
-    @Autowired private VentaModelAssembler ventaAssembler;
+    @Autowired
+    private VentaService ventaService;
+
+    @Autowired
+    private VentaModelAssembler ventaAssembler;
 
     @Operation(summary = "Listar ventas (HATEOAS)")
     @ApiResponses({
@@ -52,10 +56,20 @@ public class VentaControllerV2 {
         @ApiResponse(responseCode = "204", description = "Sin contenido")
     })
     @GetMapping
-    public ResponseEntity<CollectionModel<EntityModel<VentaModel>>> getAll() {
-        var ventas = ventaService.findAll().stream().map(ventaAssembler::toModel).collect(Collectors.toList());
-        return ventas.isEmpty()? ResponseEntity.noContent().build()
-                               : ResponseEntity.ok(CollectionModel.of(ventas, linkTo(methodOn(VentaControllerV2.class).getAll()).withSelfRel()));
+    public ResponseEntity<CollectionModel<EntityModel<VentaResponseDTO>>> getAll() {
+        var ventas = ventaService.findAll()
+                .stream()
+                .map(ventaAssembler::toModel)
+                .collect(Collectors.toList());
+
+        return ventas.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(
+                        CollectionModel.of(
+                                ventas,
+                                linkTo(methodOn(VentaControllerV2.class).getAll()).withSelfRel()
+                        )
+                );
     }
 
     @Operation(summary = "Obtener venta por ID (HATEOAS)")
@@ -64,9 +78,10 @@ public class VentaControllerV2 {
         @ApiResponse(responseCode = "404", description = "No encontrada")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<VentaModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<VentaResponseDTO>> getById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(ventaAssembler.toModel(ventaService.findById(id)));
+            VentaResponseDTO venta = ventaService.findById(id);
+            return ResponseEntity.ok(ventaAssembler.toModel(venta));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
         }
@@ -82,10 +97,17 @@ public class VentaControllerV2 {
                     name = "Venta mínima",
                     value = """
                     {
-                      "usuarioModel": { "id": 1 },
-                      "metodoPagoModel": { "id": 2 },
-                      "metodoEnvioModel": { "id": 1 },
-                      "estado": { "id": 1 }
+                      "usuarioId": 1,
+                      "metodoPagoId": 2,
+                      "metodoEnvioId": 1,
+                      "estadoId": 1,
+                      "detalles": [
+                        {
+                          "productoId": 10,
+                          "cantidad": 2,
+                          "precioUnitario": 12990
+                        }
+                      ]
                     }
                     """
                 )
@@ -93,17 +115,28 @@ public class VentaControllerV2 {
         )
     )
     @ApiResponses(@ApiResponse(responseCode = "201", description = "Creada"))
-    public ResponseEntity<EntityModel<VentaModel>> create(@Valid @RequestBody VentaModel venta) {
-        var nueva = ventaService.save(venta);
-        var entityModel = ventaAssembler.toModel(nueva);
-        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
+    public ResponseEntity<EntityModel<VentaResponseDTO>> create(@Valid @RequestBody VentaRequestDTO ventaRequest) {
+
+        // Para este endpoint HATEOAS asumimos que el usuario viene en el propio DTO.
+        VentaResponseDTO nueva = ventaService.crearVentaDesdeRequest(
+                ventaRequest,
+                ventaRequest.getUsuarioId()
+        );
+
+        EntityModel<VentaResponseDTO> entityModel = ventaAssembler.toModel(nueva);
+
+        return ResponseEntity.created(
+                        entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json")
     @Operation(summary = "Actualizar venta (PUT - HATEOAS)")
-    public ResponseEntity<EntityModel<VentaModel>> update(@PathVariable Long id, @Valid @RequestBody VentaModel detalles) {
+    public ResponseEntity<EntityModel<VentaResponseDTO>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody VentaUpdateDTO detalles) {
         try {
-            var actualizada = ventaService.update(id, detalles);
+            VentaResponseDTO actualizada = ventaService.update(id, detalles);
             return ResponseEntity.ok(ventaAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
@@ -112,9 +145,11 @@ public class VentaControllerV2 {
 
     @PatchMapping(value = "/{id}", consumes = "application/json")
     @Operation(summary = "Actualizar parcialmente venta (PATCH - HATEOAS)")
-    public ResponseEntity<EntityModel<VentaModel>> patch(@PathVariable Long id, @RequestBody VentaModel detalles) {
+    public ResponseEntity<EntityModel<VentaResponseDTO>> patch(
+            @PathVariable Long id,
+            @RequestBody VentaUpdateDTO detalles) {
         try {
-            var actualizada = ventaService.patch(id, detalles);
+            VentaResponseDTO actualizada = ventaService.patch(id, detalles);
             return ResponseEntity.ok(ventaAssembler.toModel(actualizada));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
@@ -138,9 +173,19 @@ public class VentaControllerV2 {
 
     @GetMapping("/metodopago/{metodoPagoId}")
     @Operation(summary = "Ventas por método de pago (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<VentaModel>>> byMetodoPago(@PathVariable Long metodoPagoId) {
-        var ventas = ventaService.findByMetodoPago(metodoPagoId).stream().map(ventaAssembler::toModel).collect(Collectors.toList());
-        return ventas.isEmpty()? ResponseEntity.noContent().build()
-                               : ResponseEntity.ok(CollectionModel.of(ventas, linkTo(methodOn(VentaControllerV2.class).byMetodoPago(metodoPagoId)).withSelfRel()));
+    public ResponseEntity<CollectionModel<EntityModel<VentaResponseDTO>>> byMetodoPago(@PathVariable Long metodoPagoId) {
+        var ventas = ventaService.findByMetodoPago(metodoPagoId)
+                .stream()
+                .map(ventaAssembler::toModel)
+                .collect(Collectors.toList());
+
+        return ventas.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(
+                        CollectionModel.of(
+                                ventas,
+                                linkTo(methodOn(VentaControllerV2.class).byMetodoPago(metodoPagoId)).withSelfRel()
+                        )
+                );
     }
 }

@@ -7,55 +7,44 @@ import org.springframework.stereotype.Component;
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.EmpresaControllerV2;
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.TipoEmpresaControllerV2;
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.TiposEmpresaControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
-import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
-import com.example.NoLimits.Multimedia.model.catalogos.TiposEmpresaModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TiposEmpresaResponseDTO;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class TiposEmpresaModelAssembler implements RepresentationModelAssembler<TiposEmpresaModel, EntityModel<TiposEmpresaModel>> {
+public class TiposEmpresaModelAssembler implements RepresentationModelAssembler<TiposEmpresaResponseDTO, EntityModel<TiposEmpresaResponseDTO>> {
 
     @Override
-    public EntityModel<TiposEmpresaModel> toModel(TiposEmpresaModel rel) {
-        EntityModel<TiposEmpresaModel> model = EntityModel.of(rel);
+    public EntityModel<TiposEmpresaResponseDTO> toModel(TiposEmpresaResponseDTO rel) {
 
-        EmpresaModel empresa = rel.getEmpresa();
-        TipoEmpresaModel tipoEmpresa = rel.getTipoEmpresa();
+        EntityModel<TiposEmpresaResponseDTO> model = EntityModel.of(rel);
 
-        Long empresaId = empresa != null ? empresa.getId() : null;
-        Long tipoId = tipoEmpresa != null ? tipoEmpresa.getId() : null;
+        Long empresaId = rel.getEmpresaId();
+        Long tipoId = rel.getTipoEmpresaId();
 
-        // self: usamos la lista de tipos de una empresa como referencia
         if (empresaId != null) {
             model.add(
-                    linkTo(methodOn(TiposEmpresaControllerV2.class).listar(empresaId))
-                            .withSelfRel()
+                linkTo(methodOn(TiposEmpresaControllerV2.class).listar(empresaId))
+                    .withSelfRel()
+            );
+            model.add(
+                linkTo(methodOn(EmpresaControllerV2.class).findById(empresaId))
+                    .withRel("empresa")
             );
         }
 
-        // Link a la Empresa
-        if (empresaId != null) {
-            model.add(
-                    linkTo(methodOn(EmpresaControllerV2.class).findById(empresaId))
-                            .withRel("empresa")
-            );
-        }
-
-        // Link al TipoEmpresa
         if (tipoId != null) {
             model.add(
-                    linkTo(methodOn(TipoEmpresaControllerV2.class).findById(tipoId))
-                            .withRel("tipo-empresa")
+                linkTo(methodOn(TipoEmpresaControllerV2.class).findById(tipoId))
+                    .withRel("tipo-empresa")
             );
         }
 
-        // Link para desvincular Empresa ↔ TipoEmpresa
         if (empresaId != null && tipoId != null) {
             model.add(
-                    linkTo(methodOn(TiposEmpresaControllerV2.class).unlink(empresaId, tipoId))
-                            .withRel("desvincular")
+                linkTo(methodOn(TiposEmpresaControllerV2.class).unlink(empresaId, tipoId))
+                    .withRel("desvincular")
             );
         }
 

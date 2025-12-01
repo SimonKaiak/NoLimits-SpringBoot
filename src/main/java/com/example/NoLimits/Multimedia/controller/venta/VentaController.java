@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/VentaController.java
 package com.example.NoLimits.Multimedia.controller.venta;
 
 import java.util.List;
@@ -19,7 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia.dto.venta.request.VentaRequestDTO;
-import com.example.NoLimits.Multimedia.model.venta.VentaModel;
+import com.example.NoLimits.Multimedia.dto.venta.response.VentaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.venta.update.VentaUpdateDTO;
 import com.example.NoLimits.Multimedia.service.venta.VentaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +31,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 /*
@@ -74,11 +75,11 @@ public class VentaController {
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "OK",
             content = @Content(mediaType = "application/json",
-            array = @ArraySchema(schema = @Schema(implementation = VentaModel.class)))),
+                array = @ArraySchema(schema = @Schema(implementation = VentaResponseDTO.class)))),
         @ApiResponse(responseCode = "204", description = "Sin contenido")
     })
-    public ResponseEntity<List<VentaModel>> listarVentas() {
-        List<VentaModel> ventas = ventaService.findAll();
+    public ResponseEntity<List<VentaResponseDTO>> listarVentas() {
+        List<VentaResponseDTO> ventas = ventaService.findAll();
         return ventas.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(ventas);
@@ -93,10 +94,10 @@ public class VentaController {
     @Operation(summary = "Buscar venta por ID", description = "Obtiene una venta por su ID")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "OK",
-            content = @Content(schema = @Schema(implementation = VentaModel.class))),
+            content = @Content(schema = @Schema(implementation = VentaResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "No encontrada")
     })
-    public ResponseEntity<VentaModel> buscarVentaPorId(@PathVariable Long id) {
+    public ResponseEntity<VentaResponseDTO> buscarVentaPorId(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.findById(id));
     }
 
@@ -104,7 +105,7 @@ public class VentaController {
      REGISTRAR VENTA REAL
 
      Este endpoint se usa cuando el usuario finaliza la compra desde el frontend.
-     - Recibe un VentaRequest con los datos de la venta y sus detalles (productos del carrito).
+     - Recibe un VentaRequestDTO con los datos de la venta y sus detalles (productos del carrito).
      - Recupera el usuario autenticado desde la sesión (usuarioId).
      - Llama al servicio para crear la venta completa en la base de datos.
 
@@ -112,9 +113,15 @@ public class VentaController {
      se lanza un error 401 (no autorizado).
     */
     @PostMapping("/registrar")
-    public ResponseEntity<VentaModel> registrarVenta(
+    @Operation(summary = "Registrar una venta real desde el frontend")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Venta registrada correctamente",
+            content = @Content(schema = @Schema(implementation = VentaResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Usuario no autenticado")
+    })
+    public ResponseEntity<VentaResponseDTO> registrarVenta(
             @RequestBody VentaRequestDTO request,
-            jakarta.servlet.http.HttpSession session) {
+            HttpSession session) {
 
         // Obtenemos el ID del usuario desde la sesión creada en el login.
         Long usuarioId = (Long) session.getAttribute("usuarioId");
@@ -128,16 +135,15 @@ public class VentaController {
         }
 
         // Se delega al servicio la creación de la venta a partir del DTO y el usuario autenticado.
-        return ResponseEntity.ok(
-            ventaService.crearVentaDesdeRequest(request, usuarioId)
-        );
+        VentaResponseDTO creada = ventaService.crearVentaDesdeRequest(request, usuarioId);
+        return ResponseEntity.ok(creada);
     }
 
     /*
      Actualiza una venta usando PUT.
 
-     Se espera que el cuerpo contenga todos los datos necesarios de la venta
-     y se reemplace el registro completo en la base de datos.
+     Se espera que el cuerpo contenga los datos necesarios de la venta
+     (fecha, hora y FKs por ID) y se reemplace el registro en la base de datos.
     */
     @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
     @Operation(
@@ -151,21 +157,20 @@ public class VentaController {
                     {
                       "fechaCompra": "2025-08-08",
                       "horaCompra": "12:00:00",
-                      "usuarioModel": { "id": 1 },
-                      "metodoPagoModel": { "id": 2 },
-                      "metodoEnvioModel": { "id": 1 },
-                      "estado": { "id": 2 }
+                      "metodoPagoId": 2,
+                      "metodoEnvioId": 1,
+                      "estadoId": 2
                     }
                     """
                 )
             )
         )
     )
-    public ResponseEntity<VentaModel> actualizarVenta(
+    public ResponseEntity<VentaResponseDTO> actualizarVenta(
             @PathVariable Long id,
-            @Valid @RequestBody VentaModel venta) {
+            @Valid @RequestBody VentaUpdateDTO body) {
 
-        return ResponseEntity.ok(ventaService.update(id, venta));
+        return ResponseEntity.ok(ventaService.update(id, body));
     }
 
     /*
@@ -186,18 +191,18 @@ public class VentaController {
                     {
                       "fechaCompra": "2025-08-09",
                       "horaCompra": "18:30:00",
-                      "estado": { "id": 3 }
+                      "estadoId": 3
                     }
                     """
                 )
             )
         )
     )
-    public ResponseEntity<VentaModel> editarVenta(
+    public ResponseEntity<VentaResponseDTO> editarVenta(
             @PathVariable Long id,
-            @RequestBody VentaModel venta) {
+            @RequestBody VentaUpdateDTO body) {
 
-        return ResponseEntity.ok(ventaService.patch(id, venta));
+        return ResponseEntity.ok(ventaService.patch(id, body));
     }
 
     /*
@@ -224,8 +229,8 @@ public class VentaController {
     */
     @GetMapping("/metodopago/{metodoPagoId}")
     @Operation(summary = "Buscar ventas por método de pago")
-    public ResponseEntity<List<VentaModel>> buscarVentasPorMetodoPago(@PathVariable Long metodoPagoId) {
-        List<VentaModel> ventas = ventaService.findByMetodoPago(metodoPagoId);
+    public ResponseEntity<List<VentaResponseDTO>> buscarVentasPorMetodoPago(@PathVariable Long metodoPagoId) {
+        List<VentaResponseDTO> ventas = ventaService.findByMetodoPago(metodoPagoId);
         return ventas.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(ventas);

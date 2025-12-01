@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.controller.catalogos;
 
-import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
+import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoDeDesarrolladorRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoDeDesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoDeDesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoDeDesarrolladorService;
 
 import jakarta.validation.Valid;
@@ -8,6 +11,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,38 +31,64 @@ public class TipoDeDesarrolladorController {
     private TipoDeDesarrolladorService service;
 
     @GetMapping
-    public List<TipoDeDesarrolladorModel> findAll() {
-        return service.findAll();
+    public ResponseEntity<List<TipoDeDesarrolladorResponseDTO>> findAll() {
+        List<TipoDeDesarrolladorResponseDTO> lista = service.findAll();
+        if (lista.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/{id}")
-    public TipoDeDesarrolladorModel findById(@PathVariable Long id) {
-        return service.findById(id);
+    public ResponseEntity<TipoDeDesarrolladorResponseDTO> findById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(service.findById(id));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
-    public TipoDeDesarrolladorModel save(@Valid @RequestBody TipoDeDesarrolladorModel in) {
-        return service.save(in);
+    public ResponseEntity<TipoDeDesarrolladorResponseDTO> save(
+            @Valid @RequestBody TipoDeDesarrolladorRequestDTO in) {
+        TipoDeDesarrolladorResponseDTO creado = service.save(in);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
-    public TipoDeDesarrolladorModel update(
+    public ResponseEntity<TipoDeDesarrolladorResponseDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody TipoDeDesarrolladorModel in
+            @Valid @RequestBody TipoDeDesarrolladorUpdateDTO in
     ) {
-        return service.update(id, in);
+        try {
+            return ResponseEntity.ok(service.update(id, in));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PatchMapping("/{id}")
-    public TipoDeDesarrolladorModel patch(
+    public ResponseEntity<TipoDeDesarrolladorResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody TipoDeDesarrolladorModel in
+            @RequestBody TipoDeDesarrolladorUpdateDTO in
     ) {
-        return service.patch(id, in);
+        try {
+            return ResponseEntity.ok(service.patch(id, in));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        service.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        try {
+            service.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException ex) {
+            // Hay relaciones en tipos_de_desarrollador
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

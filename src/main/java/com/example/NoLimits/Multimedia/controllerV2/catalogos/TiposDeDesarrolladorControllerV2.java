@@ -2,7 +2,8 @@ package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.TiposDeDesarrolladorModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.TiposDeDesarrolladorModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TiposDeDesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TiposDeDesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.TiposDeDesarrolladorService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +15,7 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,13 +46,10 @@ public class TiposDeDesarrolladorControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar tipos asociados a un desarrollador (TP - HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<TiposDeDesarrolladorModel>>> listar(
+    public ResponseEntity<CollectionModel<EntityModel<TiposDeDesarrolladorResponseDTO>>> listar(
             @PathVariable Long desarrolladorId
     ) {
-        var lista = service.findAll().stream()
-                .filter(rel -> rel.getDesarrollador() != null
-                        && rel.getDesarrollador().getId() != null
-                        && rel.getDesarrollador().getId().equals(desarrolladorId))
+        var lista = service.findByDesarrollador(desarrolladorId).stream()
                 .map(assembler::toModel)
                 .collect(Collectors.toList());
 
@@ -69,7 +67,7 @@ public class TiposDeDesarrolladorControllerV2 {
 
     @PostMapping("/{tipoId}")
     @Operation(summary = "Vincular Desarrollador ↔ TipoDeDesarrollador (HATEOAS)")
-    public ResponseEntity<EntityModel<TiposDeDesarrolladorModel>> link(
+    public ResponseEntity<EntityModel<TiposDeDesarrolladorResponseDTO>> link(
             @PathVariable Long desarrolladorId,
             @PathVariable Long tipoId
     ) {
@@ -94,22 +92,22 @@ public class TiposDeDesarrolladorControllerV2 {
     @PatchMapping("/{relacionId}")
     @Operation(
             summary = "Actualizar parcialmente la relación Desarrollador–Tipo (HATEOAS)",
-            description = "Permite cambiar el desarrollador y/o el tipo asociados a la relación. "
-                        + "Puedes enviar solo nuevoDesarrolladorId, solo nuevoTipoId o ambos."
+            description = "Permite cambiar el desarrollador y/o el tipo asociados a la relación."
     )
-    public ResponseEntity<EntityModel<TiposDeDesarrolladorModel>> patch(
+    public ResponseEntity<EntityModel<TiposDeDesarrolladorResponseDTO>> patch(
             @PathVariable Long desarrolladorId,
             @PathVariable Long relacionId,
-            @RequestParam(required = false) Long nuevoDesarrolladorId,
-            @RequestParam(required = false) Long nuevoTipoId
+            @RequestBody TiposDeDesarrolladorUpdateDTO body
     ) {
         try {
-            TiposDeDesarrolladorModel relActualizada =
-                    service.patch(relacionId, nuevoDesarrolladorId, nuevoTipoId);
+            TiposDeDesarrolladorResponseDTO relActualizada =
+                    service.patch(relacionId, body);
 
             return ResponseEntity.ok(assembler.toModel(relActualizada));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
         }
     }
 

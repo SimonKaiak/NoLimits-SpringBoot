@@ -1,11 +1,12 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/MetodoPagoService.java
 package com.example.NoLimits.Multimedia.service.catalogos;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoPagoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoPagoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoPagoUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoPagoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.MetodoPagoRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -28,76 +30,116 @@ public class MetodoPagoService {
     @Autowired
     private VentaRepository ventaRepository;
 
-    // Obtener todos los métodos de pago
-    public List<MetodoPagoModel> findAll() {
-        return metodoPagoRepository.findAll();
+    // ================== HELPERS INTERNOS ==================
+
+    private MetodoPagoModel getEntityById(Long id) {
+        return metodoPagoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Método de pago no encontrado con ID: " + id));
     }
 
-    // Obtener un método de pago por ID
-    public MetodoPagoModel findById(Long id) {
-        return metodoPagoRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Método de pago no encontrado con ID: " + id));
+    private String normalizar(String s) {
+        return s == null ? null : s.trim();
+    }
+
+    private MetodoPagoResponseDTO toResponse(MetodoPagoModel model) {
+        MetodoPagoResponseDTO dto = new MetodoPagoResponseDTO();
+        dto.setId(model.getId());
+        dto.setNombre(model.getNombre());
+        dto.setActivo(model.getActivo());
+        return dto;
+    }
+
+    // ================== CRUD BÁSICO (DTOs) ==================
+
+    public List<MetodoPagoResponseDTO> findAll() {
+        return metodoPagoRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public MetodoPagoResponseDTO findById(Long id) {
+        return toResponse(getEntityById(id));
     }
 
     // Guardar un nuevo método de pago (valida nombre y duplicados)
-    public MetodoPagoModel save(MetodoPagoModel metodoPago) {
-        String nombre = normalizar(metodoPago.getNombre());
+    public MetodoPagoResponseDTO save(MetodoPagoRequestDTO request) {
+        String nombre = normalizar(request.getNombre());
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
+
         if (metodoPagoRepository.existsByNombreIgnoreCase(nombre)) {
             throw new IllegalArgumentException("Ya existe un método de pago con ese nombre");
         }
-        metodoPago.setNombre(nombre);
-        if (metodoPago.getActivo() == null) {
-            metodoPago.setActivo(true);
+
+        MetodoPagoModel entity = new MetodoPagoModel();
+        entity.setNombre(nombre);
+        // Si no viene definido, por defecto true
+        if (request.getActivo() == null) {
+            entity.setActivo(true);
+        } else {
+            entity.setActivo(request.getActivo());
         }
-        return metodoPagoRepository.save(metodoPago);
+
+        MetodoPagoModel guardado = metodoPagoRepository.save(entity);
+        return toResponse(guardado);
     }
 
-    public MetodoPagoModel update(Long id, MetodoPagoModel metodoPagoDetails) {
-        MetodoPagoModel existente = findById(id);
+    public MetodoPagoResponseDTO update(Long id, MetodoPagoRequestDTO request) {
+        MetodoPagoModel existente = getEntityById(id);
 
-        String nuevoNombre = normalizar(metodoPagoDetails.getNombre());
+        String nuevoNombre = normalizar(request.getNombre());
         if (nuevoNombre == null || nuevoNombre.isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
+
+        // Validar duplicado con otro registro
         if (!nuevoNombre.equalsIgnoreCase(existente.getNombre())
                 && metodoPagoRepository.existsByNombreIgnoreCase(nuevoNombre)) {
             throw new IllegalArgumentException("Ya existe un método de pago con ese nombre");
         }
 
         existente.setNombre(nuevoNombre);
-        if (metodoPagoDetails.getActivo() != null) {
-            existente.setActivo(metodoPagoDetails.getActivo());
+
+        if (request.getActivo() != null) {
+            existente.setActivo(request.getActivo());
         }
-        return metodoPagoRepository.save(existente);
+
+        MetodoPagoModel actualizado = metodoPagoRepository.save(existente);
+        return toResponse(actualizado);
     }
 
-    public MetodoPagoModel patch(Long id, MetodoPagoModel metodoPagoDetails) {
-        MetodoPagoModel existente = findById(id);
+    public MetodoPagoResponseDTO patch(Long id, MetodoPagoUpdateDTO request) {
+        MetodoPagoModel existente = getEntityById(id);
 
-        if (metodoPagoDetails.getNombre() != null) {
-            String nuevoNombre = normalizar(metodoPagoDetails.getNombre());
+        // nombre opcional
+        if (request.getNombre() != null) {
+            String nuevoNombre = normalizar(request.getNombre());
             if (nuevoNombre.isBlank()) {
                 throw new IllegalArgumentException("El nombre no puede estar vacío");
             }
+
             if (!nuevoNombre.equalsIgnoreCase(existente.getNombre())
                     && metodoPagoRepository.existsByNombreIgnoreCase(nuevoNombre)) {
                 throw new IllegalArgumentException("Ya existe un método de pago con ese nombre");
             }
+
             existente.setNombre(nuevoNombre);
         }
 
-        if (metodoPagoDetails.getActivo() != null) {
-            existente.setActivo(metodoPagoDetails.getActivo());
+        // activo opcional
+        if (request.getActivo() != null) {
+            existente.setActivo(request.getActivo());
         }
 
-        return metodoPagoRepository.save(existente);
+        MetodoPagoModel actualizado = metodoPagoRepository.save(existente);
+        return toResponse(actualizado);
     }
 
     public void deleteById(Long id) {
-        findById(id);
+        MetodoPagoModel existente = getEntityById(id);
 
         boolean enUso = !ventaRepository.findByMetodoPagoModel_Id(id).isEmpty();
         if (enUso) {
@@ -106,11 +148,13 @@ public class MetodoPagoService {
             );
         }
 
-        metodoPagoRepository.deleteById(id);
+        metodoPagoRepository.delete(existente);
     }
 
+    // ================== CONSULTAS ADICIONALES ==================
+
     // Buscar por nombre (para el endpoint /buscar/{nombre})
-    public Optional<MetodoPagoModel> findByNombre(String nombre) {
+    public Optional<MetodoPagoResponseDTO> findByNombre(String nombre) {
         if (nombre == null) {
             return Optional.empty();
         }
@@ -120,7 +164,8 @@ public class MetodoPagoService {
             return Optional.empty();
         }
 
-        return metodoPagoRepository.findByNombreIgnoreCase(normalizado);
+        return metodoPagoRepository.findByNombreIgnoreCase(normalizado)
+                .map(this::toResponse);
     }
 
     // Resumen (IDs, nombre, [activo si está en el SELECT])
@@ -138,10 +183,5 @@ public class MetodoPagoService {
             lista.add(datos);
         }
         return lista;
-    }
-
-    // Helpers
-    private String normalizar(String s) {
-        return s == null ? null : s.trim();
     }
 }

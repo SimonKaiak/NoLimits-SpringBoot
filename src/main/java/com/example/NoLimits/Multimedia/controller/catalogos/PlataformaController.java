@@ -2,7 +2,10 @@ package com.example.NoLimits.Multimedia.controller.catalogos;
 
 import java.util.List;
 
-import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
+import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.PlataformaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.PlataformaUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/v1/plataformas")
 @Tag(name = "Plataforma-Controller", description = "CRUD básico de plataformas (TNP).")
@@ -31,45 +36,65 @@ public class PlataformaController {
 
     @GetMapping
     @Operation(summary = "Listar todas las plataformas")
-    public List<PlataformaModel> findAll() {
-        return plataformaService.findAll();
+    public ResponseEntity<List<PlataformaResponseDTO>> findAll() {
+        List<PlataformaResponseDTO> lista = plataformaService.findAll();
+        if (lista.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una plataforma por ID")
-    public PlataformaModel findById(@PathVariable Long id) {
-        return plataformaService.findById(id);
+    public ResponseEntity<PlataformaResponseDTO> findById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(plataformaService.findById(id));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
     @Operation(summary = "Crear una nueva plataforma")
-    public ResponseEntity<PlataformaModel> save(@RequestBody PlataformaModel plataforma) {
-        PlataformaModel creada = plataformaService.save(plataforma);
+    public ResponseEntity<PlataformaResponseDTO> save(@Valid @RequestBody PlataformaRequestDTO plataforma) {
+        PlataformaResponseDTO creada = plataformaService.save(plataforma);
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar una plataforma existente")
-    public PlataformaModel update(
+    @Operation(summary = "Actualizar una plataforma existente (PUT)")
+    public ResponseEntity<PlataformaResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody PlataformaModel plataforma
+            @RequestBody PlataformaUpdateDTO plataforma
     ) {
-        return plataformaService.update(id, plataforma);
+        try {
+            return ResponseEntity.ok(plataformaService.update(id, plataforma));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Actualizar parcialmente una plataforma (PATCH)")
-    public PlataformaModel patch(
+    public ResponseEntity<PlataformaResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody PlataformaModel plataforma
+            @RequestBody PlataformaUpdateDTO plataforma
     ) {
-        return plataformaService.patch(id, plataforma);
+        try {
+            return ResponseEntity.ok(plataformaService.patch(id, plataforma));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar una plataforma por ID")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        plataformaService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        try {
+            plataformaService.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

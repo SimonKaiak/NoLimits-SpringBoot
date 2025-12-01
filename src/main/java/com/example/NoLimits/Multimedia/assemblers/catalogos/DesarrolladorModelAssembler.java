@@ -1,7 +1,7 @@
 package com.example.NoLimits.Multimedia.assemblers.catalogos;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.DesarrolladorControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladorResponseDTO;
 
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
@@ -11,13 +11,13 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class DesarrolladorModelAssembler implements RepresentationModelAssembler<DesarrolladorModel, EntityModel<DesarrolladorModel>> {
+public class DesarrolladorModelAssembler implements RepresentationModelAssembler<DesarrolladorResponseDTO, EntityModel<DesarrolladorResponseDTO>> {
 
     @Override
-    public EntityModel<DesarrolladorModel> toModel(DesarrolladorModel entity) {
+    public EntityModel<DesarrolladorResponseDTO> toModel(DesarrolladorResponseDTO dto) {
         return EntityModel.of(
-                entity,
-                linkTo(methodOn(DesarrolladorControllerV2.class).getById(entity.getId())).withSelfRel(),
+                dto,
+                linkTo(methodOn(DesarrolladorControllerV2.class).getById(dto.getId())).withSelfRel(),
                 linkTo(methodOn(DesarrolladorControllerV2.class).getAll()).withRel("desarrolladores")
         );
     }

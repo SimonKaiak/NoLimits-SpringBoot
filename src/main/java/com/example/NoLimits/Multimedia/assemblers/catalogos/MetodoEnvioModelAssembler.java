@@ -5,31 +5,27 @@ import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.MetodoEnvioControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class MetodoEnvioModelAssembler implements RepresentationModelAssembler<MetodoEnvioModel, EntityModel<MetodoEnvioModel>> {
+public class MetodoEnvioModelAssembler implements RepresentationModelAssembler<MetodoEnvioResponseDTO, EntityModel<MetodoEnvioResponseDTO>> {
 
     @Override
-    public EntityModel<MetodoEnvioModel> toModel(MetodoEnvioModel metodoEnvio) {
+    public EntityModel<MetodoEnvioResponseDTO> toModel(MetodoEnvioResponseDTO metodoEnvio) {
+
+        Long id = metodoEnvio.getId();
 
         return EntityModel.of(
             metodoEnvio,
-            // self
-            linkTo(methodOn(MetodoEnvioControllerV2.class).getById(metodoEnvio.getId())).withSelfRel(),
-            // colección
+            linkTo(methodOn(MetodoEnvioControllerV2.class).getById(id)).withSelfRel(),
             linkTo(methodOn(MetodoEnvioControllerV2.class).getAll()).withRel("metodos-envio"),
-            // crear
             linkTo(methodOn(MetodoEnvioControllerV2.class).create(null)).withRel("crear"),
-            // actualizar (PUT)
-            linkTo(methodOn(MetodoEnvioControllerV2.class).update(metodoEnvio.getId(), null)).withRel("actualizar"),
-            // actualizar parcial (PATCH)
-            linkTo(methodOn(MetodoEnvioControllerV2.class).patch(metodoEnvio.getId(), null)).withRel("actualizar_parcial"),
-            // eliminar
-            linkTo(methodOn(MetodoEnvioControllerV2.class).delete(metodoEnvio.getId())).withRel("eliminar")
+            linkTo(methodOn(MetodoEnvioControllerV2.class).update(id, null)).withRel("actualizar"),
+            linkTo(methodOn(MetodoEnvioControllerV2.class).patch(id, null)).withRel("actualizar_parcial"),
+            linkTo(methodOn(MetodoEnvioControllerV2.class).delete(id)).withRel("eliminar")
         );
     }
 }

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Schema(description = "DTO de salida que representa una imagen asociada a un producto.")
-public class ImagenResponseDTO {
+public class ImagenesResponseDTO {
 
     @Schema(description = "ID único de la imagen", example = "1")
     private Long id;

@@ -1,7 +1,9 @@
-// Ruta: src/test/java/com/example/NoLimits/service/RegionServiceTest.java
 package com.example.NoLimits.service.ubicacion;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.RegionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.response.RegionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.update.RegionUpdateDTO;
 import com.example.NoLimits.Multimedia.model.ubicacion.RegionModel;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.RegionRepository;
@@ -13,21 +15,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.never;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -42,6 +36,8 @@ public class RegionServiceTest {
     @MockBean
     private ComunaRepository comunaRepository;
 
+    // ============ HELPER ============
+
     private RegionModel crearRegion() {
         RegionModel r = new RegionModel();
         r.setId(1L);
@@ -49,25 +45,32 @@ public class RegionServiceTest {
         return r;
     }
 
+    // ============ FIND ============
+
     @Test
     public void testFindAll() {
-        when(regionRepository.findAll()).thenReturn(Arrays.asList(crearRegion()));
+        when(regionRepository.findAll()).thenReturn(List.of(crearRegion()));
 
-        List<RegionModel> result = regionService.findAll();
+        List<RegionResponseDTO> result = regionService.findAll();
 
         assertNotNull(result);
         assertEquals(1, result.size());
+
+        RegionResponseDTO dto = result.get(0);
+        assertEquals(1L, dto.getId());
+        assertEquals("Región Metropolitana", dto.getNombre());
+
         verify(regionRepository, times(1)).findAll();
     }
 
     @Test
     public void testFindById_Existe() {
-        RegionModel r = crearRegion();
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(r));
+        when(regionRepository.findById(1L)).thenReturn(Optional.of(crearRegion()));
 
-        RegionModel result = regionService.findById(1L);
+        RegionResponseDTO result = regionService.findById(1L);
 
         assertNotNull(result);
+        assertEquals(1L, result.getId());
         assertEquals("Región Metropolitana", result.getNombre());
     }
 
@@ -79,13 +82,15 @@ public class RegionServiceTest {
                 () -> regionService.findById(99L));
     }
 
+    // ============ SAVE ============
+
     @Test
     public void testSave_NombreVacio_LanzaIllegalArgumentException() {
-        RegionModel r = new RegionModel();
-        r.setNombre("   ");
+        RegionRequestDTO dto = new RegionRequestDTO();
+        dto.setNombre("   "); // solo espacios
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> regionService.save(r));
+                () -> regionService.save(dto));
 
         assertTrue(ex.getMessage().contains("nombre de la región es obligatorio"));
         verify(regionRepository, never()).save(any(RegionModel.class));
@@ -93,30 +98,76 @@ public class RegionServiceTest {
 
     @Test
     public void testSave_OK() {
-        RegionModel entrada = new RegionModel();
-        entrada.setNombre("  Región X  ");
+        RegionRequestDTO dto = new RegionRequestDTO();
+        dto.setNombre("  Región X  ");
 
-        when(regionRepository.save(any(RegionModel.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(regionRepository.save(any(RegionModel.class)))
+                .thenAnswer(inv -> {
+                    RegionModel r = inv.getArgument(0);
+                    r.setId(5L);
+                    return r;
+                });
 
-        RegionModel result = regionService.save(entrada);
+        RegionResponseDTO result = regionService.save(dto);
 
+        assertNotNull(result);
+        assertEquals(5L, result.getId());
         assertEquals("Región X", result.getNombre());
     }
+
+    // ============ UPDATE / PATCH ============
 
     @Test
     public void testUpdate_CambiaNombre() {
         RegionModel existente = crearRegion();
 
-        RegionModel in = new RegionModel();
+        RegionUpdateDTO in = new RegionUpdateDTO();
         in.setNombre("  Nueva Región  ");
 
         when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(regionRepository.save(any(RegionModel.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(regionRepository.save(any(RegionModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
-        RegionModel result = regionService.update(1L, in);
+        RegionResponseDTO result = regionService.update(1L, in);
 
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
         assertEquals("Nueva Región", result.getNombre());
     }
+
+    @Test
+    public void testPatch_CambiaNombre() {
+        RegionModel existente = crearRegion();
+
+        RegionUpdateDTO in = new RegionUpdateDTO();
+        in.setNombre("  Región Patch  ");
+
+        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(regionRepository.save(any(RegionModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        RegionResponseDTO result = regionService.patch(1L, in);
+
+        assertNotNull(result);
+        assertEquals("Región Patch", result.getNombre());
+    }
+
+    @Test
+    public void testPatch_NombreVacio_LanzaIllegalArgumentException() {
+        RegionModel existente = crearRegion();
+
+        RegionUpdateDTO in = new RegionUpdateDTO();
+        in.setNombre("   ");
+
+        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> regionService.patch(1L, in));
+
+        verify(regionRepository, never()).save(any(RegionModel.class));
+    }
+
+    // ============ DELETE ============
 
     @Test
     public void testDeleteById_ConComunas_LanzaIllegalStateException() {

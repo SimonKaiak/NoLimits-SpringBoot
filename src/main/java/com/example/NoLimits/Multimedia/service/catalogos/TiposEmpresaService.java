@@ -1,6 +1,14 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TiposEmpresaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TiposEmpresaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
 import com.example.NoLimits.Multimedia.model.catalogos.TiposEmpresaModel;
@@ -9,25 +17,29 @@ import com.example.NoLimits.Multimedia.repository.catalogos.TipoEmpresaRepositor
 import com.example.NoLimits.Multimedia.repository.catalogos.TiposEmpresaRepository;
 
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @Transactional
 public class TiposEmpresaService {
 
-    @Autowired private TiposEmpresaRepository tiposEmpresaRepository;
-    @Autowired private EmpresaRepository empresaRepository;
-    @Autowired private TipoEmpresaRepository tipoEmpresaRepository;
+    @Autowired
+    private TiposEmpresaRepository tiposEmpresaRepository;
 
-    public List<TiposEmpresaModel> findAll() {
-        return tiposEmpresaRepository.findAll();
+    @Autowired
+    private EmpresaRepository empresaRepository;
+
+    @Autowired
+    private TipoEmpresaRepository tipoEmpresaRepository;
+
+    public List<TiposEmpresaResponseDTO> findAllByEmpresa(Long empresaId) {
+        return tiposEmpresaRepository.findAll().stream()
+                .filter(rel -> rel.getEmpresa() != null
+                        && rel.getEmpresa().getId().equals(empresaId))
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    /** Crea el vínculo Empresa ↔ TipoEmpresa */
-    public TiposEmpresaModel link(Long empresaId, Long tipoId) {
+    public TiposEmpresaResponseDTO link(Long empresaId, Long tipoId) {
         EmpresaModel emp = empresaRepository.findById(empresaId)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Empresa no encontrada: " + empresaId));
@@ -44,10 +56,9 @@ public class TiposEmpresaService {
         link.setEmpresa(emp);
         link.setTipoEmpresa(tipo);
 
-        return tiposEmpresaRepository.save(link);
+        return toResponseDTO(tiposEmpresaRepository.save(link));
     }
 
-    /** Elimina el vínculo */
     public void unlink(Long empresaId, Long tipoId) {
         TiposEmpresaModel link = tiposEmpresaRepository
                 .findByEmpresa_IdAndTipoEmpresa_Id(empresaId, tipoId)
@@ -57,42 +68,53 @@ public class TiposEmpresaService {
         tiposEmpresaRepository.delete(link);
     }
 
-    /**
-     * PATCH: Actualiza parcialmente la relación Empresa–TipoEmpresa.
-     * Permite cambiar la empresa asociada o el tipo asociado.
-     */
-    public TiposEmpresaModel patch(Long relacionId, Long nuevaEmpresaId, Long nuevoTipoId) {
+    public TiposEmpresaResponseDTO patch(Long relacionId, TiposEmpresaUpdateDTO dto) {
 
         TiposEmpresaModel rel = tiposEmpresaRepository.findById(relacionId)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Relación no encontrada con ID: " + relacionId));
 
-        if (nuevaEmpresaId != null) {
-            EmpresaModel nuevaEmpresa = empresaRepository.findById(nuevaEmpresaId)
+        if (dto.getEmpresaId() != null) {
+            EmpresaModel nuevaEmpresa = empresaRepository.findById(dto.getEmpresaId())
                     .orElseThrow(() ->
-                            new RecursoNoEncontradoException("Empresa no encontrada: " + nuevaEmpresaId));
+                            new RecursoNoEncontradoException("Empresa no encontrada: " + dto.getEmpresaId()));
 
             if (tiposEmpresaRepository.existsByEmpresa_IdAndTipoEmpresa_Id(
-                    nuevaEmpresaId, rel.getTipoEmpresa().getId())) {
+                    dto.getEmpresaId(), rel.getTipoEmpresa().getId())) {
                 throw new IllegalArgumentException("Ya existe una relación con esa empresa y ese tipo");
             }
 
             rel.setEmpresa(nuevaEmpresa);
         }
 
-        if (nuevoTipoId != null) {
-            TipoEmpresaModel nuevoTipo = tipoEmpresaRepository.findById(nuevoTipoId)
+        if (dto.getTipoEmpresaId() != null) {
+            TipoEmpresaModel nuevoTipo = tipoEmpresaRepository.findById(dto.getTipoEmpresaId())
                     .orElseThrow(() ->
-                            new RecursoNoEncontradoException("Tipo de empresa no encontrado: " + nuevoTipoId));
+                            new RecursoNoEncontradoException("Tipo de empresa no encontrado: " + dto.getTipoEmpresaId()));
 
             if (tiposEmpresaRepository.existsByEmpresa_IdAndTipoEmpresa_Id(
-                    rel.getEmpresa().getId(), nuevoTipoId)) {
+                    rel.getEmpresa().getId(), dto.getTipoEmpresaId())) {
                 throw new IllegalArgumentException("Ya existe una relación con ese tipo y esa empresa");
             }
 
             rel.setTipoEmpresa(nuevoTipo);
         }
 
-        return tiposEmpresaRepository.save(rel);
+        return toResponseDTO(tiposEmpresaRepository.save(rel));
+    }
+
+    private TiposEmpresaResponseDTO toResponseDTO(TiposEmpresaModel model) {
+        TiposEmpresaResponseDTO dto = new TiposEmpresaResponseDTO();
+        dto.setId(model.getId());
+        dto.setEmpresaId(
+                model.getEmpresa() != null ? model.getEmpresa().getId() : null
+        );
+        dto.setTipoEmpresaId(
+                model.getTipoEmpresa() != null ? model.getTipoEmpresa().getId() : null
+        );
+        dto.setTipoEmpresaNombre(
+                model.getTipoEmpresa() != null ? model.getTipoEmpresa().getNombre() : null
+        );
+        return dto;
     }
 }

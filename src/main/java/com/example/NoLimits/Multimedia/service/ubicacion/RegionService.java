@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.ubicacion;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.RegionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.response.RegionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.update.RegionUpdateDTO;
 import com.example.NoLimits.Multimedia.model.ubicacion.RegionModel;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.RegionRepository;
@@ -10,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -21,58 +25,57 @@ public class RegionService {
     @Autowired
     private ComunaRepository comunaRepository;
 
-    public List<RegionModel> findAll() {
-        return regionRepository.findAll();
+    /* ======================== BÁSICOS ======================== */
+
+    public List<RegionResponseDTO> findAll() {
+        return regionRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public RegionModel findById(Long id) {
-        return regionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Región no encontrada con ID: " + id));
+    public RegionResponseDTO findById(Long id) {
+        RegionModel region = getRegionOrThrow(id);
+        return toResponseDTO(region);
     }
 
-    public RegionModel save(RegionModel r) {
-        if (r.getNombre() == null || r.getNombre().trim().isEmpty()) {
+    /* ======================== CREAR ======================== */
+
+    public RegionResponseDTO save(RegionRequestDTO dto) {
+        if (dto.getNombre() == null || dto.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la región es obligatorio");
         }
 
-        r.setNombre(r.getNombre().trim());
-        return regionRepository.save(r);
+        RegionModel r = new RegionModel();
+        r.setNombre(dto.getNombre().trim());
+
+        RegionModel guardada = regionRepository.save(r);
+        return toResponseDTO(guardada);
     }
 
-    public RegionModel update(Long id, RegionModel in) {
-        RegionModel r = findById(id);
+    /* ======================== ACTUALIZAR (PUT) ======================== */
 
-        if (in.getNombre() != null) {
-            String v = in.getNombre().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            r.setNombre(v);
-        }
-
-        return regionRepository.save(r);
+    public RegionResponseDTO update(Long id, RegionUpdateDTO in) {
+        RegionModel r = getRegionOrThrow(id);
+        aplicarCambiosDesdeUpdateDTO(in, r);
+        RegionModel actualizada = regionRepository.save(r);
+        return toResponseDTO(actualizada);
     }
 
     /* ======================== PATCH ======================== */
 
-    public RegionModel patch(Long id, RegionModel in) {
-        RegionModel r = findById(id);
-
-        if (in.getNombre() != null) {
-            String v = in.getNombre().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            r.setNombre(v);
-        }
-
-        return regionRepository.save(r);
+    public RegionResponseDTO patch(Long id, RegionUpdateDTO in) {
+        RegionModel r = getRegionOrThrow(id);
+        aplicarCambiosDesdeUpdateDTO(in, r);
+        RegionModel actualizada = regionRepository.save(r);
+        return toResponseDTO(actualizada);
     }
+
+    /* ======================== ELIMINAR ======================== */
 
     public void deleteById(Long id) {
         // Verifica que exista
-        findById(id);
+        getRegionOrThrow(id);
 
         // Bloquea si tiene comunas asociadas
         if (comunaRepository.existsByRegion_Id(id)) {
@@ -82,5 +85,30 @@ public class RegionService {
         }
 
         regionRepository.deleteById(id);
+    }
+
+    /* ======================== PRIVADOS ======================== */
+
+    private RegionModel getRegionOrThrow(Long id) {
+        return regionRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Región no encontrada con ID: " + id));
+    }
+
+    private RegionResponseDTO toResponseDTO(RegionModel entity) {
+        RegionResponseDTO dto = new RegionResponseDTO();
+        dto.setId(entity.getId());
+        dto.setNombre(entity.getNombre());
+        return dto;
+    }
+
+    private void aplicarCambiosDesdeUpdateDTO(RegionUpdateDTO in, RegionModel r) {
+        if (in.getNombre() != null) {
+            String v = in.getNombre().trim();
+            if (v.isEmpty()) {
+                throw new IllegalArgumentException("El nombre no puede estar vacío");
+            }
+            r.setNombre(v);
+        }
     }
 }

@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.GeneroRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.GeneroResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.GeneroUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.GeneroRepository;
 
@@ -17,31 +20,42 @@ public class GeneroService {
     @Autowired
     private GeneroRepository generoRepository;
 
-    public List<GeneroModel> findAll() {
-        return generoRepository.findAll();
+    public List<GeneroResponseDTO> findAll() {
+        return generoRepository.findAll().stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    public GeneroModel findById(Long id) {
-        return generoRepository.findById(id)
+    public GeneroResponseDTO findById(Long id) {
+        GeneroModel g = generoRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Género no encontrado con ID: " + id));
+        return toResponseDTO(g);
     }
 
-    public List<GeneroModel> findByNombreContaining(String nombre) {
-        return generoRepository.findByNombreContainingIgnoreCase(nombre);
+    public List<GeneroResponseDTO> findByNombreContaining(String nombre) {
+        return generoRepository.findByNombreContainingIgnoreCase(nombre).stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    public GeneroModel save(GeneroModel g) {
-        if (g.getNombre() == null || g.getNombre().trim().isEmpty()) {
+    public GeneroResponseDTO save(GeneroRequestDTO dto) {
+        if (dto.getNombre() == null || dto.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del género es obligatorio");
         }
-        String nombre = g.getNombre().trim();
+        String nombre = dto.getNombre().trim();
+
+        GeneroModel g = new GeneroModel();
         g.setNombre(nombre);
-        return generoRepository.save(g);
+
+        GeneroModel guardado = generoRepository.save(g);
+        return toResponseDTO(guardado);
     }
 
-    public GeneroModel update(Long id, GeneroModel in) {
-        GeneroModel g = findById(id);
+    public GeneroResponseDTO update(Long id, GeneroUpdateDTO in) {
+        GeneroModel g = generoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Género no encontrado con ID: " + id));
 
         if (in.getNombre() != null) {
             String nuevo = in.getNombre().trim();
@@ -51,29 +65,32 @@ public class GeneroService {
             g.setNombre(nuevo);
         }
 
-        return generoRepository.save(g);
+        GeneroModel actualizado = generoRepository.save(g);
+        return toResponseDTO(actualizado);
     }
 
-    public GeneroModel patch(Long id, GeneroModel in) {
-        GeneroModel g = findById(id);
-
-        if (in.getNombre() != null) {
-            String nuevo = in.getNombre().trim();
-            if (nuevo.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            g.setNombre(nuevo);
-        }
-
-        return generoRepository.save(g);
+    public GeneroResponseDTO patch(Long id, GeneroUpdateDTO in) {
+        // mismo comportamiento que update, pero lo dejamos separado por semántica
+        return update(id, in);
     }
 
     public void deleteById(Long id) {
-        findById(id);
+        generoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Género no encontrado con ID: " + id));
         generoRepository.deleteById(id);
     }
 
     public List<Object[]> obtenerGenerosResumen() {
         return generoRepository.obtenerGenerosResumen();
+    }
+
+    // ========== HELPERS ==========
+
+    private GeneroResponseDTO toResponseDTO(GeneroModel g) {
+        GeneroResponseDTO dto = new GeneroResponseDTO();
+        dto.setId(g.getId());
+        dto.setNombre(g.getNombre());
+        return dto;
     }
 }

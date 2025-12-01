@@ -5,7 +5,9 @@ import java.util.stream.Collectors;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.ubicacion.RegionModelAssembler;
-import com.example.NoLimits.Multimedia.model.ubicacion.RegionModel;
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.RegionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.response.RegionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.update.RegionUpdateDTO;
 import com.example.NoLimits.Multimedia.service.ubicacion.RegionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,13 +50,13 @@ public class RegionControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar todas las regiones")
-    public ResponseEntity<CollectionModel<EntityModel<RegionModel>>> getAll() {
-        List<EntityModel<RegionModel>> regiones = regionService.findAll()
+    public ResponseEntity<CollectionModel<EntityModel<RegionResponseDTO>>> getAll() {
+        List<EntityModel<RegionResponseDTO>> regiones = regionService.findAll()
                 .stream()
                 .map(regionAssembler::toModel)
                 .collect(Collectors.toList());
 
-        CollectionModel<EntityModel<RegionModel>> body = CollectionModel.of(
+        CollectionModel<EntityModel<RegionResponseDTO>> body = CollectionModel.of(
                 regiones,
                 linkTo(methodOn(RegionControllerV2.class).getAll()).withSelfRel()
         );
@@ -63,42 +66,44 @@ public class RegionControllerV2 {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una región por ID")
-    public EntityModel<RegionModel> getById(@PathVariable Long id) throws RecursoNoEncontradoException {
-        RegionModel region = regionService.findById(id);
+    public EntityModel<RegionResponseDTO> getById(@PathVariable Long id) throws RecursoNoEncontradoException {
+        RegionResponseDTO region = regionService.findById(id);
         return regionAssembler.toModel(region);
     }
 
-    @PostMapping(consumes = MediaTypes.HAL_JSON_VALUE)
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Crear una nueva región")
-    public ResponseEntity<EntityModel<RegionModel>> create(@Valid @RequestBody RegionModel region) {
-        RegionModel creada = regionService.save(region);
-        EntityModel<RegionModel> entityModel = regionAssembler.toModel(creada);
+    public ResponseEntity<EntityModel<RegionResponseDTO>> create(
+            @Valid @RequestBody RegionRequestDTO region) {
+
+        RegionResponseDTO creada = regionService.save(region);
+        EntityModel<RegionResponseDTO> entityModel = regionAssembler.toModel(creada);
 
         return ResponseEntity.created(
                         entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
                 .body(entityModel);
     }
 
-    @PutMapping(value = "/{id}", consumes = MediaTypes.HAL_JSON_VALUE)
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar completamente una región")
-    public ResponseEntity<EntityModel<RegionModel>> update(
+    public ResponseEntity<EntityModel<RegionResponseDTO>> update(
             @PathVariable Long id,
-            @Valid @RequestBody RegionModel in) {
+            @Valid @RequestBody RegionUpdateDTO in) {
 
-        RegionModel actualizada = regionService.update(id, in);
-        EntityModel<RegionModel> entityModel = regionAssembler.toModel(actualizada);
+        RegionResponseDTO actualizada = regionService.update(id, in);
+        EntityModel<RegionResponseDTO> entityModel = regionAssembler.toModel(actualizada);
 
         return ResponseEntity.ok(entityModel);
     }
 
-    @PatchMapping(value = "/{id}", consumes = MediaTypes.HAL_JSON_VALUE)
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar parcialmente una región (PATCH)")
-    public ResponseEntity<EntityModel<RegionModel>> patch(
+    public ResponseEntity<EntityModel<RegionResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody RegionModel in) {
+            @RequestBody RegionUpdateDTO in) {
 
-        RegionModel actualizada = regionService.patch(id, in);
-        EntityModel<RegionModel> entityModel = regionAssembler.toModel(actualizada);
+        RegionResponseDTO actualizada = regionService.patch(id, in);
+        EntityModel<RegionResponseDTO> entityModel = regionAssembler.toModel(actualizada);
 
         return ResponseEntity.ok(entityModel);
     }

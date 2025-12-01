@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoDeDesarrolladorRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoDeDesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoDeDesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoDeDesarrolladorRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.TiposDeDesarrolladorRepository;
@@ -21,17 +24,20 @@ public class TipoDeDesarrolladorService {
     @Autowired
     private TiposDeDesarrolladorRepository tiposDeDesarrolladorRepository;
 
-    public List<TipoDeDesarrolladorModel> findAll() {
-        return tipoDeDesarrolladorRepository.findAll();
+    public List<TipoDeDesarrolladorResponseDTO> findAll() {
+        return tipoDeDesarrolladorRepository.findAll().stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    public TipoDeDesarrolladorModel findById(Long id) {
-        return tipoDeDesarrolladorRepository.findById(id)
+    public TipoDeDesarrolladorResponseDTO findById(Long id) {
+        TipoDeDesarrolladorModel model = tipoDeDesarrolladorRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Tipo de desarrollador no encontrado: " + id));
+        return toResponseDTO(model);
     }
 
-    public TipoDeDesarrolladorModel save(TipoDeDesarrolladorModel t) {
+    public TipoDeDesarrolladorResponseDTO save(TipoDeDesarrolladorRequestDTO t) {
         if (t.getNombre() == null || t.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
@@ -41,12 +47,17 @@ public class TipoDeDesarrolladorService {
             throw new IllegalArgumentException("Ya existe un tipo de desarrollador con ese nombre");
         }
 
-        t.setNombre(normalizado);
-        return tipoDeDesarrolladorRepository.save(t);
+        TipoDeDesarrolladorModel model = new TipoDeDesarrolladorModel();
+        model.setNombre(normalizado);
+
+        TipoDeDesarrolladorModel guardado = tipoDeDesarrolladorRepository.save(model);
+        return toResponseDTO(guardado);
     }
 
-    public TipoDeDesarrolladorModel update(Long id, TipoDeDesarrolladorModel in) {
-        TipoDeDesarrolladorModel t = findById(id);
+    public TipoDeDesarrolladorResponseDTO update(Long id, TipoDeDesarrolladorUpdateDTO in) {
+        TipoDeDesarrolladorModel t = tipoDeDesarrolladorRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Tipo de desarrollador no encontrado: " + id));
 
         if (in.getNombre() != null) {
             String v = in.getNombre().trim();
@@ -60,33 +71,33 @@ public class TipoDeDesarrolladorService {
             t.setNombre(v);
         }
 
-        return tipoDeDesarrolladorRepository.save(t);
+        TipoDeDesarrolladorModel actualizado = tipoDeDesarrolladorRepository.save(t);
+        return toResponseDTO(actualizado);
     }
 
-    public TipoDeDesarrolladorModel patch(Long id, TipoDeDesarrolladorModel in) {
-        TipoDeDesarrolladorModel t = findById(id);
-
-        if (in.getNombre() != null) {
-            String v = in.getNombre().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            if (!v.equalsIgnoreCase(t.getNombre())
-                    && tipoDeDesarrolladorRepository.existsByNombreIgnoreCase(v)) {
-                throw new IllegalArgumentException("Ya existe un tipo de desarrollador con ese nombre");
-            }
-            t.setNombre(v);
-        }
-
-        return tipoDeDesarrolladorRepository.save(t);
+    public TipoDeDesarrolladorResponseDTO patch(Long id, TipoDeDesarrolladorUpdateDTO in) {
+        // misma lógica que update, separado por semántica
+        return update(id, in);
     }
 
     public void deleteById(Long id) {
-        findById(id);
+        tipoDeDesarrolladorRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Tipo de desarrollador no encontrado: " + id));
+
         if (tiposDeDesarrolladorRepository.existsByTipoDeDesarrollador_Id(id)) {
             throw new IllegalStateException(
                     "No se puede eliminar: hay relaciones en tipos_de_desarrollador.");
         }
         tipoDeDesarrolladorRepository.deleteById(id);
+    }
+
+    // ================= HELPERS =================
+
+    private TipoDeDesarrolladorResponseDTO toResponseDTO(TipoDeDesarrolladorModel model) {
+        TipoDeDesarrolladorResponseDTO dto = new TipoDeDesarrolladorResponseDTO();
+        dto.setId(model.getId());
+        dto.setNombre(model.getNombre());
+        return dto;
     }
 }

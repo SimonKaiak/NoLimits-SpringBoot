@@ -2,18 +2,21 @@ package com.example.NoLimits.Multimedia.controller.ubicacion;
 
 import java.util.List;
 
-import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.response.DireccionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.update.DireccionUpdateDTO;
 import com.example.NoLimits.Multimedia.service.ubicacion.DireccionService;
 
 import jakarta.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,28 +29,42 @@ public class DireccionController {
     private DireccionService direccionService;
 
     @GetMapping
-    public List<DireccionModel> getAll() {
-        return direccionService.findAll();
+    public ResponseEntity<List<DireccionResponseDTO>> getAll() {
+        List<DireccionResponseDTO> direcciones = direccionService.findAll();
+        return direcciones.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(direcciones);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DireccionModel> getById(@PathVariable Long id) {
-        DireccionModel direccion = direccionService.findById(id);
+    public ResponseEntity<DireccionResponseDTO> getById(@PathVariable Long id) {
+        DireccionResponseDTO direccion = direccionService.findById(id);
         return ResponseEntity.ok(direccion);
     }
 
     @PostMapping
-    public ResponseEntity<DireccionModel> create(@Valid @RequestBody DireccionModel direccion) {
-        DireccionModel creada = direccionService.save(direccion);
-        return ResponseEntity.status(201).body(creada);
+    public ResponseEntity<DireccionResponseDTO> create(
+            @Valid @RequestBody DireccionRequestDTO direccionRequest) {
+
+        DireccionResponseDTO creada = direccionService.save(direccionRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creada);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DireccionResponseDTO> update(
+            @PathVariable Long id,
+            @Valid @RequestBody DireccionUpdateDTO direccionUpdate) {
+
+        DireccionResponseDTO actualizada = direccionService.update(id, direccionUpdate);
+        return ResponseEntity.ok(actualizada);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<DireccionModel> patch(
+    public ResponseEntity<DireccionResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody DireccionModel entrada) {
+            @RequestBody DireccionUpdateDTO entrada) {
 
-        DireccionModel actualizada = direccionService.patch(id, entrada);
+        DireccionResponseDTO actualizada = direccionService.patch(id, entrada);
         return ResponseEntity.ok(actualizada);
     }
 

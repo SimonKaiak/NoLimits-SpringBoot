@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoEnvioRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoEnvioUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.MetodoEnvioRepository;
 
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -17,45 +21,83 @@ public class MetodoEnvioService {
     @Autowired
     private MetodoEnvioRepository metodoEnvioRepository;
 
-    public List<MetodoEnvioModel> findAll() {
-        return metodoEnvioRepository.findAll();
-    }
+    // ================== HELPERS ==================
 
-    public MetodoEnvioModel findById(Long id) {
+    private MetodoEnvioModel findEntityById(Long id) {
         return metodoEnvioRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Método de envío no encontrado con ID: " + id));
     }
 
-    public MetodoEnvioModel save(MetodoEnvioModel m) {
-        if (m.getNombre() == null || m.getNombre().trim().isEmpty()) {
+    private MetodoEnvioResponseDTO toResponseDTO(MetodoEnvioModel m) {
+        MetodoEnvioResponseDTO dto = new MetodoEnvioResponseDTO();
+        dto.setId(m.getId());
+        dto.setNombre(m.getNombre());
+        dto.setDescripcion(m.getDescripcion());
+        dto.setActivo(m.getActivo());
+        return dto;
+    }
+
+    // ================== LECTURAS ==================
+
+    public List<MetodoEnvioResponseDTO> findAll() {
+        return metodoEnvioRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public MetodoEnvioResponseDTO findById(Long id) {
+        return toResponseDTO(findEntityById(id));
+    }
+
+    // ================== CREAR ==================
+
+    public MetodoEnvioResponseDTO create(MetodoEnvioRequestDTO in) {
+
+        if (in.getNombre() == null || in.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del método de envío es obligatorio");
         }
 
-        m.setNombre(m.getNombre().trim());
-        if (m.getActivo() == null) {
+        MetodoEnvioModel m = new MetodoEnvioModel();
+        m.setNombre(in.getNombre().trim());
+        m.setDescripcion(in.getDescripcion());
+
+        // si no viene activo en el request, queda true por defecto
+        if (in.getActivo() != null) {
+            m.setActivo(in.getActivo());
+        } else {
             m.setActivo(true);
         }
-        return metodoEnvioRepository.save(m);
+
+        MetodoEnvioModel guardado = metodoEnvioRepository.save(m);
+        return toResponseDTO(guardado);
     }
 
-    public MetodoEnvioModel update(Long id, MetodoEnvioModel in) {
-        MetodoEnvioModel m = findById(id);
+    // ================== UPDATE (PUT) ==================
+
+    public MetodoEnvioResponseDTO update(Long id, MetodoEnvioRequestDTO in) {
+        MetodoEnvioModel m = findEntityById(id);
 
         if (in.getNombre() == null || in.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre no puede estar vacío");
         }
+
         m.setNombre(in.getNombre().trim());
         m.setDescripcion(in.getDescripcion());
+
         if (in.getActivo() != null) {
             m.setActivo(in.getActivo());
         }
 
-        return metodoEnvioRepository.save(m);
+        MetodoEnvioModel actualizado = metodoEnvioRepository.save(m);
+        return toResponseDTO(actualizado);
     }
 
-    public MetodoEnvioModel patch(Long id, MetodoEnvioModel in) {
-        MetodoEnvioModel m = findById(id);
+    // ================== PATCH ==================
+
+    public MetodoEnvioResponseDTO patch(Long id, MetodoEnvioUpdateDTO in) {
+        MetodoEnvioModel m = findEntityById(id);
 
         if (in.getNombre() != null) {
             String nuevo = in.getNombre().trim();
@@ -73,12 +115,14 @@ public class MetodoEnvioService {
             m.setActivo(in.getActivo());
         }
 
-        return metodoEnvioRepository.save(m);
+        MetodoEnvioModel actualizado = metodoEnvioRepository.save(m);
+        return toResponseDTO(actualizado);
     }
 
+    // ================== DELETE ==================
 
     public void deleteById(Long id) {
-        findById(id);
+        findEntityById(id);
         metodoEnvioRepository.deleteById(id);
     }
 }

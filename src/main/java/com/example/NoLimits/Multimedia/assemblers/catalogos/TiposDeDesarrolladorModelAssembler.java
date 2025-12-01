@@ -1,7 +1,7 @@
 package com.example.NoLimits.Multimedia.assemblers.catalogos;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.TiposDeDesarrolladorControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.TiposDeDesarrolladorModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TiposDeDesarrolladorResponseDTO;
 
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
@@ -11,21 +11,16 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class TiposDeDesarrolladorModelAssembler
-        implements RepresentationModelAssembler<TiposDeDesarrolladorModel, EntityModel<TiposDeDesarrolladorModel>> {
+public class TiposDeDesarrolladorModelAssembler implements RepresentationModelAssembler<TiposDeDesarrolladorResponseDTO, EntityModel<TiposDeDesarrolladorResponseDTO>> {
 
     @Override
-    public EntityModel<TiposDeDesarrolladorModel> toModel(TiposDeDesarrolladorModel entity) {
+    public EntityModel<TiposDeDesarrolladorResponseDTO> toModel(TiposDeDesarrolladorResponseDTO entity) {
 
-        Long desarrolladorId = entity.getDesarrollador() != null
-                ? entity.getDesarrollador().getId()
-                : null;
+        Long desarrolladorId = entity.getDesarrolladorId();
+        Long tipoId = entity.getTipoDeDesarrolladorId();
+        Long relacionId = entity.getId();
 
-        Long tipoId = entity.getTipoDeDesarrollador() != null
-                ? entity.getTipoDeDesarrollador().getId()
-                : null;
-
-        EntityModel<TiposDeDesarrolladorModel> model = EntityModel.of(entity);
+        EntityModel<TiposDeDesarrolladorResponseDTO> model = EntityModel.of(entity);
 
         if (desarrolladorId != null) {
             model.add(
@@ -44,6 +39,14 @@ public class TiposDeDesarrolladorModelAssembler
                         linkTo(methodOn(TiposDeDesarrolladorControllerV2.class)
                                 .unlink(desarrolladorId, tipoId))
                                 .withRel("desvincular")
+                );
+            }
+
+            if (relacionId != null) {
+                model.add(
+                        linkTo(methodOn(TiposDeDesarrolladorControllerV2.class)
+                                .patch(desarrolladorId, relacionId, null))
+                                .withRel("actualizar_relacion")
                 );
             }
         }

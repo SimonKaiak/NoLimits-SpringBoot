@@ -1,11 +1,19 @@
 package com.example.NoLimits.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.producto.request.ImagenesRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ImagenesResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.update.ImagenesUpdateDTO;
 import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.producto.ImagenesRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.producto.ImagenesService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +21,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -46,7 +54,6 @@ public class ImagenesServiceTest {
         p.setId(id);
         p.setNombre("Producto X");
         p.setPrecio(9990.0);
-        // No es necesario setear tipo/estado/clasificación para estos tests
         return p;
     }
 
@@ -59,18 +66,23 @@ public class ImagenesServiceTest {
         return img;
     }
 
-    // ================== TESTS ==================
+    // ================== FIND ==================
 
     @Test
     public void testFindAll() {
         when(imagenesRepository.findAll())
                 .thenReturn(List.of(createImagen(1L, 10L)));
 
-        List<ImagenesModel> lista = imagenesService.findAll();
+        List<ImagenesResponseDTO> lista = imagenesService.findAll();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertEquals(1L, lista.get(0).getId());
+
+        ImagenesResponseDTO dto = lista.get(0);
+        assertEquals(1L, dto.getId());
+        assertEquals("/assets/img/productos/10.webp", dto.getRuta());
+        assertEquals("Imagen 10", dto.getAltText());
+        assertEquals(10L, dto.getProductoId());
     }
 
     @Test
@@ -78,11 +90,13 @@ public class ImagenesServiceTest {
         when(imagenesRepository.findById(1L))
                 .thenReturn(Optional.of(createImagen(1L, 10L)));
 
-        ImagenesModel img = imagenesService.findById(1L);
+        ImagenesResponseDTO dto = imagenesService.findById(1L);
 
-        assertNotNull(img);
-        assertEquals(1L, img.getId());
-        assertEquals("/assets/img/productos/10.webp", img.getRuta());
+        assertNotNull(dto);
+        assertEquals(1L, dto.getId());
+        assertEquals("/assets/img/productos/10.webp", dto.getRuta());
+        assertEquals("Imagen 10", dto.getAltText());
+        assertEquals(10L, dto.getProductoId());
     }
 
     @Test
@@ -99,105 +113,126 @@ public class ImagenesServiceTest {
         when(imagenesRepository.findByProducto_Id(10L))
                 .thenReturn(List.of(createImagen(1L, 10L)));
 
-        List<ImagenesModel> lista = imagenesService.findByProducto(10L);
+        List<ImagenesResponseDTO> lista = imagenesService.findByProducto(10L);
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertEquals(10L, lista.get(0).getProducto().getId());
+
+        ImagenesResponseDTO dto = lista.get(0);
+        assertEquals(10L, dto.getProductoId());
     }
 
     @Test
+    public void testFindByRutaContainingIgnoreCase() {
+        when(imagenesRepository.findByRutaContainingIgnoreCase("productos"))
+                .thenReturn(List.of(createImagen(1L, 10L)));
+
+        List<ImagenesResponseDTO> lista = imagenesService.findByRutaContainingIgnoreCase("productos");
+
+        assertNotNull(lista);
+        assertEquals(1, lista.size());
+        assertEquals("/assets/img/productos/10.webp", lista.get(0).getRuta());
+    }
+
+    // ================== SAVE ==================
+
+    @Test
     public void testSave_Ok() {
-        ImagenesModel input = new ImagenesModel();
-        input.setRuta("  /assets/img/Peliculas/spiderman.webp  ");
-        input.setAltText("  Spider-Man posando  ");
-        ProductoModel refProd = new ProductoModel();
-        refProd.setId(10L);
-        input.setProducto(refProd);
+        ImagenesRequestDTO request = new ImagenesRequestDTO();
+        request.setProductoId(10L);
+        request.setRuta("  /assets/img/Peliculas/spiderman.webp  ");
+        request.setAltText("  Spider-Man posando  ");
 
         when(productoRepository.findById(10L))
                 .thenReturn(Optional.of(createProducto(10L)));
         when(imagenesRepository.save(any(ImagenesModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+                .thenAnswer(inv -> {
+                    ImagenesModel img = inv.getArgument(0);
+                    img.setId(1L);
+                    return img;
+                });
 
-        ImagenesModel guardada = imagenesService.save(input);
+        ImagenesResponseDTO guardada = imagenesService.save(request);
 
         assertNotNull(guardada);
+        assertEquals(1L, guardada.getId());
         assertEquals("/assets/img/Peliculas/spiderman.webp", guardada.getRuta());
         assertEquals("Spider-Man posando", guardada.getAltText());
-        assertNotNull(guardada.getProducto());
-        assertEquals(10L, guardada.getProducto().getId());
+        assertEquals(10L, guardada.getProductoId());
     }
 
     @Test
     public void testSave_SinProducto_LanzaIllegalArgument() {
-        ImagenesModel input = new ImagenesModel();
-        input.setRuta("/assets/img/test.webp");
-        // sin producto
+        ImagenesRequestDTO request = new ImagenesRequestDTO();
+        request.setRuta("/assets/img/test.webp");
+        // sin productoId
 
         assertThrows(IllegalArgumentException.class,
-                () -> imagenesService.save(input));
+                () -> imagenesService.save(request));
+
+        verify(productoRepository, never()).findById(anyLong());
+        verify(imagenesRepository, never()).save(any(ImagenesModel.class));
     }
 
     @Test
     public void testSave_ProductoNoExiste_LanzaRecursoNoEncontrado() {
-        ImagenesModel input = new ImagenesModel();
-        input.setRuta("/assets/img/test.webp");
-        ProductoModel p = new ProductoModel();
-        p.setId(999L);
-        input.setProducto(p);
+        ImagenesRequestDTO request = new ImagenesRequestDTO();
+        request.setProductoId(999L);
+        request.setRuta("/assets/img/test.webp");
 
         when(productoRepository.findById(999L))
                 .thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-                () -> imagenesService.save(input));
+                () -> imagenesService.save(request));
+
+        verify(imagenesRepository, never()).save(any(ImagenesModel.class));
     }
 
     @Test
     public void testSave_RutaVacia_LanzaIllegalArgument() {
-        ImagenesModel input = new ImagenesModel();
-        input.setRuta("   ");
-        ProductoModel p = new ProductoModel();
-        p.setId(1L);
-        input.setProducto(p);
+        ImagenesRequestDTO request = new ImagenesRequestDTO();
+        request.setProductoId(1L);
+        request.setRuta("   ");
 
         when(productoRepository.findById(1L))
                 .thenReturn(Optional.of(createProducto(1L)));
 
         assertThrows(IllegalArgumentException.class,
-                () -> imagenesService.save(input));
+                () -> imagenesService.save(request));
+
+        verify(imagenesRepository, never()).save(any(ImagenesModel.class));
     }
+
+    // ================== UPDATE / PATCH ==================
 
     @Test
     public void testUpdate_CambiaRutaYAltText() {
         ImagenesModel existente = createImagen(1L, 10L);
-        ImagenesModel cambios = new ImagenesModel();
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
         cambios.setRuta("   /assets/img/Peliculas/spiderman-remaster.webp  ");
         cambios.setAltText("   Nuevo alt text   ");
-        // sin cambiar producto
 
         when(imagenesRepository.findById(1L))
                 .thenReturn(Optional.of(existente));
         when(imagenesRepository.save(any(ImagenesModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ImagenesModel actualizado = imagenesService.update(1L, cambios);
+        ImagenesResponseDTO actualizado = imagenesService.update(1L, cambios);
 
         assertNotNull(actualizado);
         assertEquals("/assets/img/Peliculas/spiderman-remaster.webp", actualizado.getRuta());
         assertEquals("Nuevo alt text", actualizado.getAltText());
-        assertEquals(10L, actualizado.getProducto().getId()); // producto se mantiene
+        assertEquals(10L, actualizado.getProductoId());
     }
 
     @Test
     public void testUpdate_CambiaProducto() {
         ImagenesModel existente = createImagen(1L, 10L);
 
-        ImagenesModel cambios = new ImagenesModel();
-        ProductoModel nuevoProdRef = new ProductoModel();
-        nuevoProdRef.setId(20L);
-        cambios.setProducto(nuevoProdRef);
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setProductoId(20L);
 
         when(imagenesRepository.findById(1L))
                 .thenReturn(Optional.of(existente));
@@ -206,18 +241,18 @@ public class ImagenesServiceTest {
         when(imagenesRepository.save(any(ImagenesModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        ImagenesModel actualizado = imagenesService.update(1L, cambios);
+        ImagenesResponseDTO actualizado = imagenesService.update(1L, cambios);
 
         assertNotNull(actualizado);
-        assertEquals(20L, actualizado.getProducto().getId());
+        assertEquals(20L, actualizado.getProductoId());
     }
 
     @Test
     public void testUpdate_RutaVacia_LanzaIllegalArgument() {
         ImagenesModel existente = createImagen(1L, 10L);
 
-        ImagenesModel cambios = new ImagenesModel();
-        cambios.setRuta("   "); // se vuelve string vacío tras trim
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setRuta("   ");
 
         when(imagenesRepository.findById(1L))
                 .thenReturn(Optional.of(existente));
@@ -227,16 +262,37 @@ public class ImagenesServiceTest {
     }
 
     @Test
+    public void testPatch_SeComportaComoUpdate() {
+        ImagenesModel existente = createImagen(1L, 10L);
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setAltText("   Texto parche   ");
+
+        when(imagenesRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+        when(imagenesRepository.save(any(ImagenesModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ImagenesResponseDTO patched = imagenesService.patch(1L, cambios);
+
+        assertNotNull(patched);
+        assertEquals("Texto parche", patched.getAltText());
+        assertEquals(10L, patched.getProductoId());
+    }
+
+    // ================== DELETE ==================
+
+    @Test
     public void testDeleteById() {
         ImagenesModel existente = createImagen(1L, 10L);
 
         when(imagenesRepository.findById(1L))
                 .thenReturn(Optional.of(existente));
-        doNothing().when(imagenesRepository).deleteById(1L);
+        doNothing().when(imagenesRepository).delete(existente);
 
         imagenesService.deleteById(1L);
 
-        verify(imagenesRepository, times(1)).deleteById(1L);
+        verify(imagenesRepository, times(1)).delete(existente);
     }
 
     @Test
@@ -247,6 +303,58 @@ public class ImagenesServiceTest {
         assertThrows(RecursoNoEncontradoException.class,
                 () -> imagenesService.deleteById(99L));
 
-        verify(imagenesRepository, never()).deleteById(any());
+        verify(imagenesRepository, never()).delete(any(ImagenesModel.class));
     }
+
+    @Test
+    public void testDeleteByProducto_Ok() {
+        when(productoRepository.existsById(10L)).thenReturn(true);
+        when(imagenesRepository.deleteByProducto_Id(10L)).thenReturn(3L);
+
+        long borradas = imagenesService.deleteByProducto(10L);
+
+        assertEquals(3L, borradas);
+        verify(imagenesRepository, times(1)).deleteByProducto_Id(10L);
+    }
+
+    @Test
+    public void testDeleteByProducto_ProductoNoExiste_Lanza404() {
+        when(productoRepository.existsById(10L)).thenReturn(false);
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> imagenesService.deleteByProducto(10L));
+
+        verify(imagenesRepository, never()).deleteByProducto_Id(anyLong());
+    }
+
+    // ================== RESUMEN ==================
+
+    @Test
+        public void testObtenerImagenesResumen() {
+        // Simula una fila: id, ruta, altText, productoId
+        Object[] fila = new Object[] {
+                1L,
+                "/assets/img/productos/10.webp",
+                "Imagen 10",
+                10L
+        };
+
+        // Construimos la lista "a mano" para que sea List<Object[]>
+        List<Object[]> filasMock = new ArrayList<>();
+        filasMock.add(fila);
+
+        when(imagenesRepository.obtenerImagenesResumen())
+                .thenReturn(filasMock);
+
+        List<Map<String, Object>> resumen = imagenesService.obtenerImagenesResumen();
+
+        assertNotNull(resumen);
+        assertEquals(1, resumen.size());
+
+        Map<String, Object> row = resumen.get(0);
+        assertEquals(1L, row.get("ID"));
+        assertEquals("/assets/img/productos/10.webp", row.get("Ruta"));
+        assertEquals("Imagen 10", row.get("AltText"));
+        assertEquals(10L, row.get("ProductoId"));
+        }
 }

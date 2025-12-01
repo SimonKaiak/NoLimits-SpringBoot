@@ -5,7 +5,9 @@ import java.util.stream.Collectors;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.usuario.RolModelAssembler;
-import com.example.NoLimits.Multimedia.model.usuario.RolModel;
+import com.example.NoLimits.Multimedia.dto.usuario.request.RolRequestDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.response.RolResponseDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.RolUpdateDTO;
 import com.example.NoLimits.Multimedia.service.usuario.RolService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,6 +36,12 @@ import org.springframework.web.bind.annotation.RestController;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * Controlador V2 de roles con soporte HATEOAS.
+ *
+ * - Usa DTOs (request / response / update) en vez de exponer RolModel.
+ * - Responde en formato HAL+JSON usando EntityModel y CollectionModel.
+ */
 @RestController
 @RequestMapping(value = "/api/v2/roles", produces = MediaTypes.HAL_JSON_VALUE)
 @Validated
@@ -45,15 +54,20 @@ public class RolControllerV2 {
     @Autowired
     private RolModelAssembler rolAssembler;
 
+    /**
+     * GET /api/v2/roles
+     *
+     * Lista todos los roles en formato HAL.
+     */
     @GetMapping
     @Operation(summary = "Listar todos los roles")
-    public ResponseEntity<CollectionModel<EntityModel<RolModel>>> getAll() {
-        List<EntityModel<RolModel>> roles = rolService.findAll()
+    public ResponseEntity<CollectionModel<EntityModel<RolResponseDTO>>> getAll() {
+        List<EntityModel<RolResponseDTO>> roles = rolService.findAll()
                 .stream()
                 .map(rolAssembler::toModel)
                 .collect(Collectors.toList());
 
-        CollectionModel<EntityModel<RolModel>> body = CollectionModel.of(
+        CollectionModel<EntityModel<RolResponseDTO>> body = CollectionModel.of(
                 roles,
                 linkTo(methodOn(RolControllerV2.class).getAll()).withSelfRel()
         );
@@ -61,48 +75,80 @@ public class RolControllerV2 {
         return ResponseEntity.ok(body);
     }
 
+    /**
+     * GET /api/v2/roles/{id}
+     *
+     * Obtiene un rol por su ID.
+     */
     @GetMapping("/{id}")
     @Operation(summary = "Obtener un rol por ID")
-    public EntityModel<RolModel> getById(@PathVariable Long id) throws RecursoNoEncontradoException {
-        RolModel rol = rolService.findById(id);
-        return rolAssembler.toModel(rol);
+    public ResponseEntity<EntityModel<RolResponseDTO>> getById(@PathVariable Long id) {
+        try {
+            RolResponseDTO rol = rolService.findById(id);
+            return ResponseEntity.ok(rolAssembler.toModel(rol));
+        } catch (RecursoNoEncontradoException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @PostMapping(consumes = MediaTypes.HAL_JSON_VALUE)
+    /**
+     * POST /api/v2/roles
+     *
+     * Crea un nuevo rol a partir de RolRequestDTO.
+     */
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Crear un nuevo rol")
-    public ResponseEntity<EntityModel<RolModel>> create(@Valid @RequestBody RolModel rol) {
-        RolModel creado = rolService.save(rol);
-        EntityModel<RolModel> entityModel = rolAssembler.toModel(creado);
+    public ResponseEntity<EntityModel<RolResponseDTO>> create(
+            @Valid @RequestBody RolRequestDTO dto) {
+
+        RolResponseDTO creado = rolService.save(dto);
+        EntityModel<RolResponseDTO> entityModel = rolAssembler.toModel(creado);
 
         return ResponseEntity.created(
                         entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
                 .body(entityModel);
     }
 
-    @PutMapping(value = "/{id}", consumes = MediaTypes.HAL_JSON_VALUE)
+    /**
+     * PUT /api/v2/roles/{id}
+     *
+     * Actualización completa de un rol usando RolUpdateDTO.
+     */
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar completamente un rol")
-    public ResponseEntity<EntityModel<RolModel>> update(
+    public ResponseEntity<EntityModel<RolResponseDTO>> update(
             @PathVariable Long id,
-            @Valid @RequestBody RolModel in) {
+            @Valid @RequestBody RolUpdateDTO dto) {
 
-        RolModel actualizado = rolService.update(id, in);
-        EntityModel<RolModel> entityModel = rolAssembler.toModel(actualizado);
+        RolResponseDTO actualizado = rolService.update(id, dto);
+        EntityModel<RolResponseDTO> entityModel = rolAssembler.toModel(actualizado);
 
         return ResponseEntity.ok(entityModel);
     }
 
-    @PatchMapping(value = "/{id}", consumes = MediaTypes.HAL_JSON_VALUE)
+    /**
+     * PATCH /api/v2/roles/{id}
+     *
+     * Actualización parcial de un rol.
+     * Solo se aplican los campos no nulos del RolUpdateDTO.
+     */
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar parcialmente un rol (PATCH)")
-    public ResponseEntity<EntityModel<RolModel>> patch(
+    public ResponseEntity<EntityModel<RolResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody RolModel in) {
+            @RequestBody RolUpdateDTO dto) {
 
-        RolModel actualizado = rolService.patch(id, in);
-        EntityModel<RolModel> entityModel = rolAssembler.toModel(actualizado);
+        RolResponseDTO actualizado = rolService.patch(id, dto);
+        EntityModel<RolResponseDTO> entityModel = rolAssembler.toModel(actualizado);
 
         return ResponseEntity.ok(entityModel);
     }
 
+    /**
+     * DELETE /api/v2/roles/{id}
+     *
+     * Elimina un rol por ID.
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar un rol por ID")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

@@ -1,7 +1,7 @@
 package com.example.NoLimits.Multimedia.assemblers.catalogos;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.ClasificacionControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.ClasificacionResponseDTO;
 
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
@@ -11,7 +11,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
- * Assembler encargado de transformar un objeto ClasificacionModel
+ * Assembler encargado de transformar un objeto ClasificacionResponseDTO
  * en una representación HATEOAS enriquecida con enlaces dinámicos.
  *
  * Implementa RepresentationModelAssembler para incluir links que
@@ -19,19 +19,19 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * siguiendo el principio HATEOAS (Hypermedia As The Engine Of Application State).
  */
 @Component
-public class ClasificacionModelAssembler implements RepresentationModelAssembler<ClasificacionModel, EntityModel<ClasificacionModel>> {
+public class ClasificacionModelAssembler implements RepresentationModelAssembler<ClasificacionResponseDTO, EntityModel<ClasificacionResponseDTO>> {
 
     /**
-     * Convierte un objeto ClasificacionModel en un EntityModel con enlaces HATEOAS.
+     * Convierte un objeto ClasificacionResponseDTO en un EntityModel con enlaces HATEOAS.
      *
-     * @param clasificacion entidad de clasificación base
+     * @param clasificacion DTO de clasificación base
      * @return EntityModel con enlaces auto-descriptivos
      */
     @Override
-    public EntityModel<ClasificacionModel> toModel(ClasificacionModel clasificacion) {
+    public EntityModel<ClasificacionResponseDTO> toModel(ClasificacionResponseDTO clasificacion) {
 
-        // Se crea la representación base con la entidad + links principales
-        EntityModel<ClasificacionModel> model = EntityModel.of(
+        // Se crea la representación base con el DTO + links principales
+        EntityModel<ClasificacionResponseDTO> model = EntityModel.of(
                 clasificacion,
 
                 // ================================

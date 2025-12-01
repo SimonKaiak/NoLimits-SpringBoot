@@ -1,95 +1,81 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoEmpresaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoEmpresaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoEmpresaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoEmpresaRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.TiposEmpresaRepository;
 
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @Transactional
 public class TipoEmpresaService {
 
     @Autowired
-    private TipoEmpresaRepository tipoEmpresaRepository;
+    private TipoEmpresaRepository repository;
 
     @Autowired
     private TiposEmpresaRepository tiposEmpresaRepository;
 
-    public List<TipoEmpresaModel> findAll() {
-        return tipoEmpresaRepository.findAll();
+    public List<TipoEmpresaResponseDTO> findAll() {
+        return repository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public TipoEmpresaModel findById(Long id) {
-        return tipoEmpresaRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Tipo de empresa no encontrado: " + id));
+    public TipoEmpresaResponseDTO findById(Long id) {
+        return toDTO(repository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tipo empresa no encontrado: " + id)));
     }
 
-    public TipoEmpresaModel save(TipoEmpresaModel t) {
-        if (t.getNombre() == null || t.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre es obligatorio");
-        }
-
-        String nombre = t.getNombre().trim();
-        if (tipoEmpresaRepository.existsByNombreIgnoreCase(nombre)) {
-            throw new IllegalArgumentException("Ya existe un tipo de empresa con ese nombre");
-        }
-
-        t.setNombre(nombre);
-        return tipoEmpresaRepository.save(t);
+    public TipoEmpresaResponseDTO save(TipoEmpresaRequestDTO dto) {
+        TipoEmpresaModel model = new TipoEmpresaModel();
+        model.setNombre(dto.getNombre());
+        return toDTO(repository.save(model));
     }
 
-    public TipoEmpresaModel update(Long id, TipoEmpresaModel in) {
-        TipoEmpresaModel t = findById(id);
+    public TipoEmpresaResponseDTO update(Long id, TipoEmpresaRequestDTO dto) {
+        TipoEmpresaModel model = repository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tipo empresa no encontrado: " + id));
 
-        if (in.getNombre() != null) {
-            String v = in.getNombre().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            if (!v.equalsIgnoreCase(t.getNombre())
-                    && tipoEmpresaRepository.existsByNombreIgnoreCase(v)) {
-                throw new IllegalArgumentException("Ya existe un tipo de empresa con ese nombre");
-            }
-            t.setNombre(v);
-        }
-
-        return tipoEmpresaRepository.save(t);
+        model.setNombre(dto.getNombre());
+        return toDTO(repository.save(model));
     }
 
-    // PATCH: actualización parcial
-    public TipoEmpresaModel patch(Long id, TipoEmpresaModel in) {
-        TipoEmpresaModel t = findById(id);
+    public TipoEmpresaResponseDTO patch(Long id, TipoEmpresaUpdateDTO dto) {
+        TipoEmpresaModel model = repository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tipo empresa no encontrado: " + id));
 
-        if (in.getNombre() != null) {
-            String v = in.getNombre().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            if (!v.equalsIgnoreCase(t.getNombre())
-                    && tipoEmpresaRepository.existsByNombreIgnoreCase(v)) {
-                throw new IllegalArgumentException("Ya existe un tipo de empresa con ese nombre");
-            }
-            t.setNombre(v);
+        if (dto.getNombre() != null) {
+            model.setNombre(dto.getNombre());
         }
 
-        return tipoEmpresaRepository.save(t);
+        return toDTO(repository.save(model));
     }
 
     public void deleteById(Long id) {
-        findById(id);
 
         if (tiposEmpresaRepository.existsByTipoEmpresa_Id(id)) {
-            throw new IllegalStateException(
-                    "No se puede eliminar: hay relaciones en tipos_empresa.");
+            throw new IllegalStateException("No se puede eliminar, existen relaciones asociadas");
         }
 
-        tipoEmpresaRepository.deleteById(id);
+        repository.deleteById(id);
+    }
+
+    private TipoEmpresaResponseDTO toDTO(TipoEmpresaModel model) {
+        TipoEmpresaResponseDTO dto = new TipoEmpresaResponseDTO();
+        dto.setId(model.getId());
+        dto.setNombre(model.getNombre());
+        return dto;
     }
 }

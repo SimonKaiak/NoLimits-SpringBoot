@@ -5,18 +5,18 @@ import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.producto.DetalleVentaControllerV2;
-import com.example.NoLimits.Multimedia.model.producto.DetalleVentaModel;
+import com.example.NoLimits.Multimedia.dto.producto.response.DetalleVentaResponseDTO;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class DetalleVentaModelAssembler implements RepresentationModelAssembler<DetalleVentaModel, EntityModel<DetalleVentaModel>> {
+public class DetalleVentaModelAssembler implements RepresentationModelAssembler<DetalleVentaResponseDTO, EntityModel<DetalleVentaResponseDTO>> {
 
     @Override
-    public EntityModel<DetalleVentaModel> toModel(DetalleVentaModel detalle) {
+    public EntityModel<DetalleVentaResponseDTO> toModel(DetalleVentaResponseDTO detalle) {
 
-        EntityModel<DetalleVentaModel> entityModel = EntityModel.of(
+        EntityModel<DetalleVentaResponseDTO> entityModel = EntityModel.of(
             detalle,
             // self
             linkTo(methodOn(DetalleVentaControllerV2.class).getById(detalle.getId())).withSelfRel(),
@@ -29,15 +29,6 @@ public class DetalleVentaModelAssembler implements RepresentationModelAssembler<
             // eliminar
             linkTo(methodOn(DetalleVentaControllerV2.class).delete(detalle.getId())).withRel("eliminar")
         );
-
-        // link a los detalles de la venta a la que pertenece
-        if (detalle.getVenta() != null && detalle.getVenta().getId() != null) {
-            entityModel.add(
-                linkTo(methodOn(DetalleVentaControllerV2.class)
-                        .getByVenta(detalle.getVenta().getId()))
-                    .withRel("detalles-de-esta-venta")
-            );
-        }
 
         return entityModel;
     }

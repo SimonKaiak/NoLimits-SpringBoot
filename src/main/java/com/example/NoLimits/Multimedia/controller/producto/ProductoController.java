@@ -1,6 +1,8 @@
 package com.example.NoLimits.Multimedia.controller.producto;
 
-import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
+import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.service.producto.ProductoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,11 +50,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No hay productos disponibles.")
     })
-    public ResponseEntity<List<ProductoModel>> listarProductos() {
-        List<ProductoModel> productos = productoService.findAll();
+    public ResponseEntity<List<ProductoResponseDTO>> listarProductos() {
+        List<ProductoResponseDTO> productos = productoService.findAll();
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -65,10 +67,10 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Producto encontrado exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoModel.class))),
+                            schema = @Schema(implementation = ProductoResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
     })
-    public ResponseEntity<ProductoModel> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ProductoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.findById(id));
     }
 
@@ -80,6 +82,7 @@ public class ProductoController {
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ProductoRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Producto mínimo",
@@ -88,8 +91,8 @@ public class ProductoController {
                                                     {
                                                       "nombre": "Control Inalámbrico",
                                                       "precio": 39990,
-                                                      "tipoProducto": { "id": 1 },
-                                                      "estado": { "id": 1 }
+                                                      "tipoProductoId": 1,
+                                                      "estadoId": 1
                                                     }
                                                     """
                                     ),
@@ -100,9 +103,9 @@ public class ProductoController {
                                                     {
                                                       "nombre": "Spider-Man (2002)",
                                                       "precio": 12990,
-                                                      "tipoProducto": { "id": 2 },
-                                                      "clasificacion": { "id": 3 },
-                                                      "estado": { "id": 1 }
+                                                      "tipoProductoId": 2,
+                                                      "clasificacionId": 3,
+                                                      "estadoId": 1
                                                     }
                                                     """
                                     )
@@ -113,11 +116,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Producto creado exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoModel.class))),
+                            schema = @Schema(implementation = ProductoResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "Datos inválidos para crear el producto.")
     })
-    public ResponseEntity<ProductoModel> crearProducto(@Valid @RequestBody ProductoModel producto) {
-        ProductoModel nuevoProducto = productoService.save(producto);
+    public ResponseEntity<ProductoResponseDTO> crearProducto(@Valid @RequestBody ProductoRequestDTO producto) {
+        ProductoResponseDTO nuevoProducto = productoService.save(producto);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
     }
 
@@ -129,6 +132,7 @@ public class ProductoController {
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ProductoRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "PUT seguro (sin id en body)",
@@ -137,23 +141,9 @@ public class ProductoController {
                                                     {
                                                       "nombre": "Control Inalámbrico",
                                                       "precio": 39990,
-                                                      "tipoProducto": { "id": 1 },
-                                                      "clasificacion": { "id": 2 },
-                                                      "estado": { "id": 1 }
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "PUT con id (coincide con path)",
-                                            description = "Incluye el id en el body y debe coincidir con el {id} de la URL.",
-                                            value = """
-                                                    {
-                                                      "id": 1,
-                                                      "nombre": "Control Inalámbrico",
-                                                      "precio": 39990,
-                                                      "tipoProducto": { "id": 1 },
-                                                      "clasificacion": { "id": 2 },
-                                                      "estado": { "id": 1 }
+                                                      "tipoProductoId": 1,
+                                                      "clasificacionId": 2,
+                                                      "estadoId": 1
                                                     }
                                                     """
                                     )
@@ -164,12 +154,12 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoModel.class))),
+                            schema = @Schema(implementation = ProductoResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
     })
-    public ResponseEntity<ProductoModel> actualizarProducto(
+    public ResponseEntity<ProductoResponseDTO> actualizarProducto(
             @PathVariable Long id,
-            @Valid @RequestBody ProductoModel productoDetalles) {
+            @Valid @RequestBody ProductoRequestDTO productoDetalles) {
 
         return ResponseEntity.ok(productoService.update(id, productoDetalles));
     }
@@ -182,6 +172,7 @@ public class ProductoController {
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
+                            schema = @Schema(implementation = ProductoUpdateDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "PATCH ejemplo",
@@ -189,7 +180,7 @@ public class ProductoController {
                                             value = """
                                                     {
                                                       "precio": 34990,
-                                                      "estado": { "id": 2 }
+                                                      "estadoId": 2
                                                     }
                                                     """
                                     )
@@ -200,12 +191,12 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Producto actualizado parcialmente.",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoModel.class))),
+                            schema = @Schema(implementation = ProductoResponseDTO.class))),
             @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
     })
-    public ResponseEntity<ProductoModel> editarProducto(
+    public ResponseEntity<ProductoResponseDTO> editarProducto(
             @PathVariable Long id,
-            @RequestBody ProductoModel productoDetalles) {
+            @RequestBody ProductoUpdateDTO productoDetalles) {
 
         return ResponseEntity.ok(productoService.patch(id, productoDetalles));
     }
@@ -231,11 +222,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Productos encontrados exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos con ese nombre.")
     })
-    public ResponseEntity<List<ProductoModel>> buscarPorNombre(@PathVariable String nombre) {
-        List<ProductoModel> productos = productoService.findByNombre(nombre);
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorNombre(@PathVariable String nombre) {
+        List<ProductoResponseDTO> productos = productoService.findByNombre(nombre);
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -248,11 +239,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Productos encontrados exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese criterio.")
     })
-    public ResponseEntity<List<ProductoModel>> buscarPorNombreContiene(@PathVariable String nombre) {
-        List<ProductoModel> productos = productoService.findByNombreContainingIgnoreCase(nombre);
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorNombreContiene(@PathVariable String nombre) {
+        List<ProductoResponseDTO> productos = productoService.findByNombreContainingIgnoreCase(nombre);
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -265,11 +256,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Productos encontrados exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese tipo.")
     })
-    public ResponseEntity<List<ProductoModel>> buscarPorTipo(@PathVariable Long tipoProductoId) {
-        List<ProductoModel> productos = productoService.findByTipoProducto(tipoProductoId);
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorTipo(@PathVariable Long tipoProductoId) {
+        List<ProductoResponseDTO> productos = productoService.findByTipoProducto(tipoProductoId);
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -282,11 +273,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Productos encontrados exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para esa clasificación.")
     })
-    public ResponseEntity<List<ProductoModel>> buscarPorClasificacion(@PathVariable Long clasificacionId) {
-        List<ProductoModel> productos = productoService.findByClasificacion(clasificacionId);
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorClasificacion(@PathVariable Long clasificacionId) {
+        List<ProductoResponseDTO> productos = productoService.findByClasificacion(clasificacionId);
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -299,11 +290,11 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Productos encontrados exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese estado.")
     })
-    public ResponseEntity<List<ProductoModel>> buscarPorEstado(@PathVariable Long estadoId) {
-        List<ProductoModel> productos = productoService.findByEstado(estadoId);
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorEstado(@PathVariable Long estadoId) {
+        List<ProductoResponseDTO> productos = productoService.findByEstado(estadoId);
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -316,14 +307,14 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Productos encontrados exitosamente.",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoModel.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para esos filtros.")
     })
-    public ResponseEntity<List<ProductoModel>> buscarPorTipoYEstado(
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorTipoYEstado(
             @PathVariable Long tipoProductoId,
             @PathVariable Long estadoId) {
 
-        List<ProductoModel> productos = productoService.findByTipoProductoAndEstado(tipoProductoId, estadoId);
+        List<ProductoResponseDTO> productos = productoService.findByTipoProductoAndEstado(tipoProductoId, estadoId);
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

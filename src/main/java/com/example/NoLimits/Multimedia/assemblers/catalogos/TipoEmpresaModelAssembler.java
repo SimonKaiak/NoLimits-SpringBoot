@@ -5,31 +5,29 @@ import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.TipoEmpresaControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoEmpresaResponseDTO;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class TipoEmpresaModelAssembler implements RepresentationModelAssembler<TipoEmpresaModel, EntityModel<TipoEmpresaModel>> {
+public class TipoEmpresaModelAssembler
+        implements RepresentationModelAssembler<TipoEmpresaResponseDTO, EntityModel<TipoEmpresaResponseDTO>> {
 
     @Override
-    public EntityModel<TipoEmpresaModel> toModel(TipoEmpresaModel tipo) {
-        EntityModel<TipoEmpresaModel> model = EntityModel.of(tipo);
+    public EntityModel<TipoEmpresaResponseDTO> toModel(TipoEmpresaResponseDTO tipo) {
 
-        Long id = tipo.getId();
+        EntityModel<TipoEmpresaResponseDTO> model = EntityModel.of(tipo);
 
-        if (id != null) {
-            // self: /api/v2/tipos-empresa/{id}
+        if (tipo.getId() != null) {
             model.add(
-                    linkTo(methodOn(TipoEmpresaControllerV2.class).findById(id))
-                            .withSelfRel()
+                linkTo(methodOn(TipoEmpresaControllerV2.class).findById(tipo.getId()))
+                    .withSelfRel()
             );
 
-            // colección: /api/v2/tipos-empresa
             model.add(
-                    linkTo(methodOn(TipoEmpresaControllerV2.class).findAll())
-                            .withRel("tipos-empresa")
+                linkTo(methodOn(TipoEmpresaControllerV2.class).findAll())
+                    .withRel("tipos-empresa")
             );
         }
 

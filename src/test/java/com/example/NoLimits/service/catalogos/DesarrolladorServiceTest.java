@@ -1,9 +1,15 @@
 package com.example.NoLimits.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladorRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladorRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.DesarrolladorService;
+
+import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,16 +17,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -32,33 +39,58 @@ public class DesarrolladorServiceTest {
     @MockBean
     private DesarrolladorRepository desarrolladorRepository;
 
+    // ==========================
+    // HELPERS
+    // ==========================
+
     private DesarrolladorModel dev() {
         DesarrolladorModel d = new DesarrolladorModel();
         d.setId(1L);
         d.setNombre("Insomniac Games");
+        d.setActivo(true);
         return d;
     }
+
+    private DesarrolladorRequestDTO req(String nombre, Boolean activo) {
+        DesarrolladorRequestDTO dto = new DesarrolladorRequestDTO();
+        dto.setNombre(nombre);
+        dto.setActivo(activo);
+        return dto;
+    }
+
+    private DesarrolladorUpdateDTO upd(String nombre, Boolean activo) {
+        DesarrolladorUpdateDTO dto = new DesarrolladorUpdateDTO();
+        dto.setNombre(nombre);
+        dto.setActivo(activo);
+        return dto;
+    }
+
+    // ==========================
+    // findAll / findById
+    // ==========================
 
     @Test
     void testFindAll() {
         when(desarrolladorRepository.findAll()).thenReturn(List.of(dev()));
 
-        List<DesarrolladorModel> lista = desarrolladorService.findAll();
+        List<DesarrolladorResponseDTO> lista = desarrolladorService.findAll();
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
         assertEquals("Insomniac Games", lista.get(0).getNombre());
+        assertTrue(lista.get(0).getActivo());
     }
 
     @Test
     void testFindById_Existe() {
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
 
-        DesarrolladorModel d = desarrolladorService.findById(1L);
+        DesarrolladorResponseDTO dto = desarrolladorService.findById(1L);
 
-        assertNotNull(d);
-        assertEquals(1L, d.getId());
-        assertEquals("Insomniac Games", d.getNombre());
+        assertNotNull(dto);
+        assertEquals(1L, dto.getId());
+        assertEquals("Insomniac Games", dto.getNombre());
+        assertTrue(dto.getActivo());
     }
 
     @Test
@@ -69,13 +101,17 @@ public class DesarrolladorServiceTest {
                 () -> desarrolladorService.findById(99L));
     }
 
+    // ==========================
+    // save (POST)
+    // ==========================
+
     @Test
     void testSave_Ok() {
-        DesarrolladorModel input = new DesarrolladorModel();
-        input.setNombre("Naughty Dog");
+        DesarrolladorRequestDTO input = req("Naughty Dog", true);
 
         when(desarrolladorRepository.existsByNombreIgnoreCase("Naughty Dog"))
                 .thenReturn(false);
+
         when(desarrolladorRepository.save(any(DesarrolladorModel.class)))
                 .thenAnswer(invocation -> {
                     DesarrolladorModel d = invocation.getArgument(0);
@@ -83,18 +119,37 @@ public class DesarrolladorServiceTest {
                     return d;
                 });
 
-        DesarrolladorModel saved = desarrolladorService.save(input);
+        DesarrolladorResponseDTO saved = desarrolladorService.save(input);
 
         assertNotNull(saved);
         assertEquals(10L, saved.getId());
         assertEquals("Naughty Dog", saved.getNombre());
-        verify(desarrolladorRepository, times(1)).save(any(DesarrolladorModel.class));
+        assertTrue(saved.getActivo());
+    }
+
+    @Test
+    void testSave_ActivoNull_DefaultTrue() {
+        DesarrolladorRequestDTO input = req("Studio X", null);
+
+        when(desarrolladorRepository.existsByNombreIgnoreCase("Studio X"))
+                .thenReturn(false);
+
+        when(desarrolladorRepository.save(any(DesarrolladorModel.class)))
+                .thenAnswer(invocation -> {
+                    DesarrolladorModel d = invocation.getArgument(0);
+                    d.setId(20L);
+                    return d;
+                });
+
+        DesarrolladorResponseDTO saved = desarrolladorService.save(input);
+
+        assertNotNull(saved);
+        assertTrue(saved.getActivo(), "El campo activo debe quedar TRUE cuando viene null");
     }
 
     @Test
     void testSave_NombreVacio_LanzaIllegalArgument() {
-        DesarrolladorModel input = new DesarrolladorModel();
-        input.setNombre("   ");
+        DesarrolladorRequestDTO input = req("   ", true);
 
         assertThrows(IllegalArgumentException.class,
                 () -> desarrolladorService.save(input));
@@ -102,8 +157,7 @@ public class DesarrolladorServiceTest {
 
     @Test
     void testSave_NombreDuplicado_LanzaIllegalArgument() {
-        DesarrolladorModel input = new DesarrolladorModel();
-        input.setNombre("Insomniac Games");
+        DesarrolladorRequestDTO input = req("Insomniac Games", true);
 
         when(desarrolladorRepository.existsByNombreIgnoreCase("Insomniac Games"))
                 .thenReturn(true);
@@ -112,11 +166,14 @@ public class DesarrolladorServiceTest {
                 () -> desarrolladorService.save(input));
     }
 
+    // ==========================
+    // update (PUT)
+    // ==========================
+
     @Test
-    void testUpdate_CambiaNombre() {
-        DesarrolladorModel original = dev();
-        DesarrolladorModel cambios = new DesarrolladorModel();
-        cambios.setNombre("Insomniac Studio");
+    void testUpdate_CambiaNombreYActivo() {
+        DesarrolladorModel original = dev(); // activo = true
+        DesarrolladorUpdateDTO cambios = upd("Insomniac Studio", false);
 
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(original));
         when(desarrolladorRepository.existsByNombreIgnoreCase("Insomniac Studio"))
@@ -124,17 +181,28 @@ public class DesarrolladorServiceTest {
         when(desarrolladorRepository.save(any(DesarrolladorModel.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DesarrolladorModel actualizado = desarrolladorService.update(1L, cambios);
+        DesarrolladorResponseDTO actualizado = desarrolladorService.update(1L, cambios);
 
         assertNotNull(actualizado);
         assertEquals("Insomniac Studio", actualizado.getNombre());
+        assertFalse(actualizado.getActivo());
+    }
+
+    @Test
+    void testUpdate_NombreVacio_LanzaIllegalArgument() {
+        DesarrolladorModel original = dev();
+        DesarrolladorUpdateDTO cambios = upd("   ", null);
+
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(original));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> desarrolladorService.update(1L, cambios));
     }
 
     @Test
     void testUpdate_NombreDuplicado_LanzaIllegalArgument() {
         DesarrolladorModel original = dev();
-        DesarrolladorModel cambios = new DesarrolladorModel();
-        cambios.setNombre("Naughty Dog");
+        DesarrolladorUpdateDTO cambios = upd("Naughty Dog", null);
 
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(original));
         when(desarrolladorRepository.existsByNombreIgnoreCase("Naughty Dog"))
@@ -144,11 +212,14 @@ public class DesarrolladorServiceTest {
                 () -> desarrolladorService.update(1L, cambios));
     }
 
+    // ==========================
+    // patch (PATCH)
+    // ==========================
+
     @Test
     void testPatch_CambiaSoloNombre() {
-        DesarrolladorModel existente = dev();
-        DesarrolladorModel parciales = new DesarrolladorModel();
-        parciales.setNombre("Insomniac Studio");
+        DesarrolladorModel existente = dev(); // activo=true
+        DesarrolladorUpdateDTO parciales = upd("Insomniac Studio", null);
 
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(desarrolladorRepository.existsByNombreIgnoreCase("Insomniac Studio"))
@@ -156,17 +227,33 @@ public class DesarrolladorServiceTest {
         when(desarrolladorRepository.save(any(DesarrolladorModel.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        DesarrolladorModel resultado = desarrolladorService.patch(1L, parciales);
+        DesarrolladorResponseDTO actualizado = desarrolladorService.patch(1L, parciales);
 
-        assertNotNull(resultado);
-        assertEquals("Insomniac Studio", resultado.getNombre());
+        assertNotNull(actualizado);
+        assertEquals("Insomniac Studio", actualizado.getNombre());
+        assertTrue(actualizado.getActivo());
+    }
+
+    @Test
+    void testPatch_CambiaSoloActivo() {
+        DesarrolladorModel existente = dev(); // activo=true
+        DesarrolladorUpdateDTO parciales = upd(null, false);
+
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(desarrolladorRepository.save(any(DesarrolladorModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        DesarrolladorResponseDTO actualizado = desarrolladorService.patch(1L, parciales);
+
+        assertNotNull(actualizado);
+        assertEquals("Insomniac Games", actualizado.getNombre());
+        assertFalse(actualizado.getActivo());
     }
 
     @Test
     void testPatch_NombreVacio_LanzaIllegalArgument() {
         DesarrolladorModel existente = dev();
-        DesarrolladorModel parciales = new DesarrolladorModel();
-        parciales.setNombre("   ");
+        DesarrolladorUpdateDTO parciales = upd("   ", null);
 
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
 
@@ -177,8 +264,7 @@ public class DesarrolladorServiceTest {
     @Test
     void testPatch_NombreDuplicado_LanzaIllegalArgument() {
         DesarrolladorModel existente = dev();
-        DesarrolladorModel parciales = new DesarrolladorModel();
-        parciales.setNombre("Naughty Dog");
+        DesarrolladorUpdateDTO parciales = upd("Naughty Dog", null);
 
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(desarrolladorRepository.existsByNombreIgnoreCase("Naughty Dog"))
@@ -187,6 +273,10 @@ public class DesarrolladorServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> desarrolladorService.patch(1L, parciales));
     }
+
+    // ==========================
+    // deleteById
+    // ==========================
 
     @Test
     void testDeleteById() {
@@ -198,16 +288,41 @@ public class DesarrolladorServiceTest {
     }
 
     @Test
-    void testFindByNombre_DelegadoAlRepo() {
+    void testDeleteById_NoExiste_Lanza404() {
+        when(desarrolladorRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> desarrolladorService.deleteById(99L));
+
+        verify(desarrolladorRepository, never()).deleteById(any());
+    }
+
+    // ==========================
+    // findByNombre
+    // ==========================
+
+    @Test
+    void testFindByNombre_Ok() {
         when(desarrolladorRepository.findByNombreContainingIgnoreCase("games"))
                 .thenReturn(List.of(dev()));
 
-        List<DesarrolladorModel> lista = desarrolladorService.findByNombre("games");
+        List<DesarrolladorResponseDTO> lista = desarrolladorService.findByNombre("games");
 
         assertNotNull(lista);
         assertEquals(1, lista.size());
         assertEquals("Insomniac Games", lista.get(0).getNombre());
+    }
+
+    @Test
+    void testFindByNombre_Null_UsaFiltroVacio() {
+        when(desarrolladorRepository.findByNombreContainingIgnoreCase(""))
+                .thenReturn(List.of(dev()));
+
+        List<DesarrolladorResponseDTO> lista = desarrolladorService.findByNombre(null);
+
+        assertNotNull(lista);
+        assertEquals(1, lista.size());
         verify(desarrolladorRepository, times(1))
-                .findByNombreContainingIgnoreCase("games");
+                .findByNombreContainingIgnoreCase("");
     }
 }

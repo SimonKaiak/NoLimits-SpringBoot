@@ -8,15 +8,15 @@ import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.TipoProductoControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoProductoResponseDTO;
 
 @Component
-public class TipoProductoModelAssembler implements RepresentationModelAssembler<TipoProductoModel, EntityModel<TipoProductoModel>> {
+public class TipoProductoModelAssembler implements RepresentationModelAssembler<TipoProductoResponseDTO, EntityModel<TipoProductoResponseDTO>> {
 
     @Override
-    public EntityModel<TipoProductoModel> toModel(TipoProductoModel tipoProducto) {
+    public EntityModel<TipoProductoResponseDTO> toModel(TipoProductoResponseDTO tipoProducto) {
 
-        EntityModel<TipoProductoModel> model = EntityModel.of(
+        EntityModel<TipoProductoResponseDTO> model = EntityModel.of(
                 tipoProducto,
                 // Enlace a la colección completa
                 linkTo(methodOn(TipoProductoControllerV2.class).getAll()).withRel("tipos_producto"),

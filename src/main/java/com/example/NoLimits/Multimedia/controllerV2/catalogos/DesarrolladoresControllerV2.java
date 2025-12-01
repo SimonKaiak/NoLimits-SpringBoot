@@ -1,16 +1,18 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/DesarrolladoresControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
 import java.util.stream.Collectors;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.DesarrolladoresModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladoresModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladoresRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladoresResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladoresUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.DesarrolladoresService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -41,7 +43,7 @@ public class DesarrolladoresControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar desarrolladores asociados a un producto (TP - HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<DesarrolladoresModel>>> listar(
+    public ResponseEntity<CollectionModel<EntityModel<DesarrolladoresResponseDTO>>> listar(
             @PathVariable Long productoId
     ) {
         var lista = service.findByProducto(productoId).stream()
@@ -58,12 +60,21 @@ public class DesarrolladoresControllerV2 {
 
     @PostMapping("/{desarrolladorId}")
     @Operation(summary = "Vincular Producto ↔ Desarrollador (HATEOAS)")
-    public ResponseEntity<EntityModel<DesarrolladoresModel>> link(
+    public ResponseEntity<EntityModel<DesarrolladoresResponseDTO>> link(
             @PathVariable Long productoId,
-            @PathVariable Long desarrolladorId
+            @PathVariable Long desarrolladorId,
+            @Valid @RequestBody(required = false) DesarrolladoresRequestDTO requestDTO
     ) {
         try {
-            var rel = service.link(productoId, desarrolladorId);
+            DesarrolladoresRequestDTO dto = (requestDTO != null)
+                    ? requestDTO
+                    : new DesarrolladoresRequestDTO();
+
+            // Forzamos los IDs desde la ruta
+            dto.setProductoId(productoId);
+            dto.setDesarrolladorId(desarrolladorId);
+
+            var rel = service.link(dto);
             return ResponseEntity.ok(assembler.toModel(rel));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
@@ -74,10 +85,10 @@ public class DesarrolladoresControllerV2 {
 
     @PatchMapping("/relaciones/{relacionId}")
     @Operation(summary = "Actualizar parcialmente la relación Producto ↔ Desarrollador (HATEOAS)")
-    public ResponseEntity<EntityModel<DesarrolladoresModel>> patch(
+    public ResponseEntity<EntityModel<DesarrolladoresResponseDTO>> patch(
             @PathVariable Long productoId,
             @PathVariable Long relacionId,
-            @RequestBody DesarrolladoresModel parciales
+            @RequestBody DesarrolladoresUpdateDTO parciales
     ) {
         try {
             var actualizado = service.patch(relacionId, parciales);

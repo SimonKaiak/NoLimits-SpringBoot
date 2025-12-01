@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.PlataformaRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformaResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.PlataformaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
 
@@ -17,27 +20,37 @@ public class PlataformaService {
     @Autowired
     private PlataformaRepository plataformaRepository;
 
-    public List<PlataformaModel> findAll() {
-        return plataformaRepository.findAll();
+    public List<PlataformaResponseDTO> findAll() {
+        return plataformaRepository.findAll().stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    public PlataformaModel findById(Long id) {
-        return plataformaRepository.findById(id)
+    public PlataformaResponseDTO findById(Long id) {
+        PlataformaModel model = plataformaRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + id));
+        return toResponseDTO(model);
     }
 
-    public PlataformaModel save(PlataformaModel p) {
+    public PlataformaResponseDTO save(PlataformaRequestDTO p) {
         if (p.getNombre() == null || p.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la plataforma es obligatorio");
         }
 
-        p.setNombre(p.getNombre().trim());
-        return plataformaRepository.save(p);
+        String nombre = p.getNombre().trim();
+
+        PlataformaModel model = new PlataformaModel();
+        model.setNombre(nombre);
+
+        PlataformaModel guardada = plataformaRepository.save(model);
+        return toResponseDTO(guardada);
     }
 
-    public PlataformaModel update(Long id, PlataformaModel in) {
-        PlataformaModel p = findById(id);
+    public PlataformaResponseDTO update(Long id, PlataformaUpdateDTO in) {
+        PlataformaModel p = plataformaRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + id));
 
         if (in.getNombre() != null) {
             String nuevo = in.getNombre().trim();
@@ -47,25 +60,28 @@ public class PlataformaService {
             p.setNombre(nuevo);
         }
 
-        return plataformaRepository.save(p);
+        PlataformaModel actualizada = plataformaRepository.save(p);
+        return toResponseDTO(actualizada);
     }
 
-    public PlataformaModel patch(Long id, PlataformaModel in) {
-        PlataformaModel p = findById(id);
-
-        if (in.getNombre() != null) {
-            String nuevo = in.getNombre().trim();
-            if (nuevo.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            p.setNombre(nuevo);
-        }
-
-        return plataformaRepository.save(p);
+    public PlataformaResponseDTO patch(Long id, PlataformaUpdateDTO in) {
+        // mismo comportamiento que update, separado por semántica
+        return update(id, in);
     }
 
     public void deleteById(Long id) {
-        findById(id);
+        plataformaRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Plataforma no encontrada con ID: " + id));
         plataformaRepository.deleteById(id);
+    }
+
+    // ========== HELPERS ==========
+
+    private PlataformaResponseDTO toResponseDTO(PlataformaModel model) {
+        PlataformaResponseDTO dto = new PlataformaResponseDTO();
+        dto.setId(model.getId());
+        dto.setNombre(model.getNombre());
+        return dto;
     }
 }

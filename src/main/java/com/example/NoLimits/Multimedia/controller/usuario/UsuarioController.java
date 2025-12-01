@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/UsuarioController.java
 package com.example.NoLimits.Multimedia.controller.usuario;
 
 import java.util.List;
@@ -16,10 +15,10 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
-import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
-import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.service.usuario.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 /**
  * Controlador REST para operaciones relacionadas con usuarios.
@@ -39,12 +39,6 @@ import jakarta.servlet.http.HttpSession;
  * - Consulta de compras asociadas a un usuario.
  * - Endpoints de perfil basados en sesión (/me).
  */
-@CrossOrigin(
-    origins = {
-        "http://localhost:5173",
-    },
-    allowCredentials = "true"
-)
 @RestController
 @RequestMapping("/api/v1/usuarios")
 @Tag(name = "Usuarios-Controller", description = "Operaciones relacionadas con los usuarios.")
@@ -65,8 +59,8 @@ public class UsuarioController {
         summary = "Listar todos los usuarios",
         description = "Obtiene una lista de todos los usuarios registrados."
     )
-    public ResponseEntity<List<UsuarioModel>> listarUsuarios() {
-        List<UsuarioModel> usuarios = usuarioService.findAll();
+    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios() {
+        List<UsuarioResponseDTO> usuarios = usuarioService.findAll();
         return usuarios.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(usuarios);
@@ -76,26 +70,23 @@ public class UsuarioController {
      * Buscar un usuario por su ID.
      *
      * Si el usuario existe, se devuelve con código 200.
-     * Si no se encuentra, se responde con 404.
+     * Si no se encuentra, el service lanza 404.
      */
     @GetMapping("/{id}")
     @Operation(
         summary = "Buscar usuario por ID",
         description = "Obtiene un usuario específico por su ID."
     )
-    public ResponseEntity<UsuarioModel> buscarUsuarioPorId(@PathVariable long id) {
-        try {
-            return ResponseEntity.ok(usuarioService.findById(id));
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UsuarioResponseDTO> buscarUsuarioPorId(@PathVariable long id) {
+        UsuarioResponseDTO usuario = usuarioService.findById(id);
+        return ResponseEntity.ok(usuario);
     }
 
     /**
      * Listar compras asociadas a un usuario.
      *
      * Este endpoint devuelve un mapa con la información del usuario
-     * y el detalle de sus compras (ventas) asociadas.
+     * (UsuarioResponseDTO) y el detalle de sus compras (ventas) asociadas.
      */
     @GetMapping("/{id}/compras")
     @Operation(
@@ -110,8 +101,8 @@ public class UsuarioController {
     /**
      * Crear un nuevo usuario.
      *
-     * Recibe un UsuarioModel en el cuerpo del request y lo guarda en la base de datos.
-     * Si todo sale bien, responde con 201 (creado) y el usuario resultante.
+     * Recibe un UsuarioRequestDTO en el cuerpo del request y lo guarda en la base de datos.
+     * Si todo sale bien, responde con 201 (creado) y el usuario resultante (UsuarioResponseDTO).
      */
     @PostMapping
     @Operation(
@@ -121,7 +112,7 @@ public class UsuarioController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = UsuarioModel.class),
+                schema = @Schema(implementation = UsuarioRequestDTO.class),
                 examples = @ExampleObject(
                     name = "Nuevo usuario",
                     value = """
@@ -130,7 +121,8 @@ public class UsuarioController {
                       "apellidos": "Fernández",
                       "correo": "lucas@example.com",
                       "telefono": 912345678,
-                      "password": "clave123"
+                      "password": "clave123",
+                      "rolId": 1
                     }
                     """
                 )
@@ -140,14 +132,16 @@ public class UsuarioController {
             @ApiResponse(
                 responseCode = "201",
                 description = "Usuario creado",
-                content = @Content(schema = @Schema(implementation = UsuarioModel.class))
+                content = @Content(schema = @Schema(implementation = UsuarioResponseDTO.class))
             ),
             @ApiResponse(responseCode = "409", description = "Correo ya registrado"),
             @ApiResponse(responseCode = "400", description = "Error de validación")
         }
     )
-    public ResponseEntity<UsuarioModel> crearUsuario(@RequestBody UsuarioModel usuario) {
-        UsuarioModel nuevoUsuario = usuarioService.save(usuario);
+    public ResponseEntity<UsuarioResponseDTO> crearUsuario(
+            @Valid @RequestBody UsuarioRequestDTO usuario) {
+
+        UsuarioResponseDTO nuevoUsuario = usuarioService.save(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
     }
 
@@ -165,7 +159,7 @@ public class UsuarioController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = UsuarioModel.class),
+                schema = @Schema(implementation = UsuarioUpdateDTO.class),
                 examples = @ExampleObject(
                     name = "Usuario PUT completo",
                     value = """
@@ -174,29 +168,20 @@ public class UsuarioController {
                       "apellidos": "Medhurst",
                       "correo": "damon@example.com",
                       "telefono": 912345678,
-                      "password": "clave123"
+                      "password": "clave123",
+                      "rolId": 1
                     }
                     """
                 )
             )
         )
     )
-    public ResponseEntity<?> actualizarUsuario(
+    public ResponseEntity<UsuarioResponseDTO> actualizarUsuario(
             @PathVariable long id,
-            @RequestBody @jakarta.validation.Valid UsuarioModel usuario) {
+            @RequestBody @Valid UsuarioUpdateDTO usuario) {
 
-        try {
-            return ResponseEntity.ok(usuarioService.update(id, usuario));
-        } catch (RecursoNoEncontradoException e) {
-            // Si el usuario no existe
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalStateException e) {
-            // Por ejemplo, conflicto por correo duplicado
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            // Errores de validación u otros argumentos inválidos
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        UsuarioResponseDTO actualizado = usuarioService.update(id, usuario);
+        return ResponseEntity.ok(actualizado);
     }
 
     /**
@@ -213,7 +198,7 @@ public class UsuarioController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = UsuarioModel.class),
+                schema = @Schema(implementation = UsuarioUpdateDTO.class),
                 examples = @ExampleObject(
                     name = "Usuario PATCH parcial",
                     value = """
@@ -229,28 +214,26 @@ public class UsuarioController {
             @ApiResponse(
                 responseCode = "200",
                 description = "Usuario actualizado",
-                content = @Content(schema = @Schema(implementation = UsuarioModel.class))
+                content = @Content(schema = @Schema(implementation = UsuarioResponseDTO.class))
             ),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "409", description = "Correo ya registrado"),
             @ApiResponse(responseCode = "400", description = "Error de validación")
         }
     )
-    public ResponseEntity<UsuarioModel> editarUsuarioParcial(
+    public ResponseEntity<UsuarioResponseDTO> editarUsuarioParcial(
             @PathVariable long id,
-            @RequestBody UsuarioModel usuario) {
+            @RequestBody UsuarioUpdateDTO usuario) {
 
-        UsuarioModel usuarioActualizado = usuarioService.patch(id, usuario);
-        return usuarioActualizado == null
-                ? ResponseEntity.notFound().build()
-                : ResponseEntity.ok(usuarioActualizado);
+        UsuarioResponseDTO usuarioActualizado = usuarioService.patch(id, usuario);
+        return ResponseEntity.ok(usuarioActualizado);
     }
 
     /**
      * Eliminar un usuario por su ID.
      *
      * Si la operación tiene éxito, responde con 204 (sin contenido).
-     * Si el usuario no existe, el servicio lanzará la excepción correspondiente.
+     * Si el usuario no existe o tiene compras, el service lanza la excepción correspondiente.
      */
     @DeleteMapping("/{id}")
     @Operation(
@@ -273,8 +256,8 @@ public class UsuarioController {
         summary = "Buscar usuarios por nombre",
         description = "Obtiene una lista de usuarios que coinciden con el nombre."
     )
-    public ResponseEntity<List<UsuarioModel>> buscarUsuarioPorNombre(@PathVariable String nombre) {
-        List<UsuarioModel> usuarios = usuarioService.findByNombre(nombre);
+    public ResponseEntity<List<UsuarioResponseDTO>> buscarUsuarioPorNombre(@PathVariable String nombre) {
+        List<UsuarioResponseDTO> usuarios = usuarioService.findByNombre(nombre);
         return usuarios.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(usuarios);
@@ -285,19 +268,16 @@ public class UsuarioController {
      *
      * Este endpoint asume que el correo es único.
      * Si se encuentra, se devuelve el usuario con código 200.
-     * Si no, se responde con 404.
+     * Si no, el service lanza 404.
      */
     @GetMapping("/correo/{correo}")
     @Operation(
         summary = "Buscar usuario por correo",
         description = "Obtiene un usuario que coincide con el correo."
     )
-    public ResponseEntity<UsuarioModel> buscarUsuarioPorCorreo(@PathVariable String correo) {
-        try {
-            return ResponseEntity.ok(usuarioService.findByCorreo(correo));
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UsuarioResponseDTO> buscarUsuarioPorCorreo(@PathVariable String correo) {
+        UsuarioResponseDTO usuario = usuarioService.findByCorreo(correo);
+        return ResponseEntity.ok(usuario);
     }
 
     /**
@@ -311,14 +291,14 @@ public class UsuarioController {
         summary = "Obtener mi perfil",
         description = "Devuelve los datos del usuario asociado a la sesión actual."
     )
-    public ResponseEntity<UsuarioModel> obtenerMiPerfil(HttpSession session) {
+    public ResponseEntity<UsuarioResponseDTO> obtenerMiPerfil(HttpSession session) {
         Long usuarioId = (Long) session.getAttribute("usuarioId");
 
         if (usuarioId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UsuarioModel usuario = usuarioService.findById(usuarioId);
+        UsuarioResponseDTO usuario = usuarioService.findById(usuarioId);
         return ResponseEntity.ok(usuario);
     }
 
@@ -333,8 +313,8 @@ public class UsuarioController {
         summary = "Actualizar mi perfil",
         description = "Actualiza algunos campos del usuario asociado a la sesión actual."
     )
-    public ResponseEntity<UsuarioModel> actualizarMiPerfilSesion(
-            @RequestBody UsuarioModel cambios,
+    public ResponseEntity<UsuarioResponseDTO> actualizarMiPerfilSesion(
+            @RequestBody UsuarioUpdateDTO cambios,
             HttpSession session) {
 
         Long usuarioId = (Long) session.getAttribute("usuarioId");
@@ -343,7 +323,7 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UsuarioModel actualizado = usuarioService.patch(usuarioId, cambios);
+        UsuarioResponseDTO actualizado = usuarioService.patch(usuarioId, cambios);
         return ResponseEntity.ok(actualizado);
     }
 }

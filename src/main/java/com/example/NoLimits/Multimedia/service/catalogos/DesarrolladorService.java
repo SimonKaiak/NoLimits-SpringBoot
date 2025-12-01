@@ -1,8 +1,9 @@
-// Ruta: backend/src/main/java/com/example/NoLimits/Multimedia/service/DesarrolladorService.java
-
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladorRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladorRepository;
 
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,39 +21,90 @@ public class DesarrolladorService {
     @Autowired
     private DesarrolladorRepository desarrolladorRepository;
 
-    public List<DesarrolladorModel> findAll() {
-        return desarrolladorRepository.findAll();
+    // ==========================
+    // MÉTODOS PÚBLICOS CON DTOs
+    // ==========================
+
+    /**
+     * Listar todos los desarrolladores (catálogo completo).
+     */
+    public List<DesarrolladorResponseDTO> findAll() {
+        return desarrolladorRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public DesarrolladorModel findById(Long id) {
-        return desarrolladorRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Desarrollador no encontrado con ID: " + id));
+    /**
+     * Obtener un desarrollador por ID (como DTO de respuesta).
+     */
+    public DesarrolladorResponseDTO findById(Long id) {
+        DesarrolladorModel model = findEntityById(id);
+        return toResponseDTO(model);
     }
 
-    public DesarrolladorModel save(DesarrolladorModel d) {
-        if (d.getNombre() == null || d.getNombre().isBlank()) {
+    /**
+     * Crear un nuevo desarrollador a partir de un RequestDTO.
+     */
+    public DesarrolladorResponseDTO save(DesarrolladorRequestDTO dto) {
+        if (dto.getNombre() == null || dto.getNombre().isBlank()) {
             throw new IllegalArgumentException("El nombre del desarrollador es obligatorio");
         }
 
-        String normalizado = d.getNombre().trim();
+        String normalizado = dto.getNombre().trim();
 
         if (desarrolladorRepository.existsByNombreIgnoreCase(normalizado)) {
             throw new IllegalArgumentException("Ya existe un desarrollador con ese nombre");
         }
 
-        d.setNombre(normalizado);
+        DesarrolladorModel entity = new DesarrolladorModel();
+        entity.setNombre(normalizado);
 
-        // si desde el front no envían nada, queda true por defecto
-        if (d.getId() == null && !d.isActivo()) {
-            d.setActivo(true);
+        // Si desde el front no envían nada, queda true por defecto.
+        // Si el DTO trae explícitamente false, se respeta.
+        if (dto.getActivo() == null) {
+            entity.setActivo(true);
+        } else {
+            entity.setActivo(dto.getActivo());
         }
 
-        return desarrolladorRepository.save(d);
+        DesarrolladorModel guardado = desarrolladorRepository.save(entity);
+        return toResponseDTO(guardado);
     }
 
-    public DesarrolladorModel update(Long id, DesarrolladorModel in) {
-        DesarrolladorModel d = findById(id);
+    /**
+     * Actualizar un desarrollador (PUT completo) usando UpdateDTO.
+     */
+    public DesarrolladorResponseDTO update(Long id, DesarrolladorUpdateDTO in) {
+        DesarrolladorModel d = findEntityById(id);
+
+        // Actualizar nombre si viene en el body
+        if (in.getNombre() != null) {
+            String nuevo = in.getNombre().trim();
+            if (nuevo.isEmpty()) {
+                throw new IllegalArgumentException("El nombre no puede estar vacío");
+            }
+            if (!nuevo.equalsIgnoreCase(d.getNombre())
+                    && desarrolladorRepository.existsByNombreIgnoreCase(nuevo)) {
+                throw new IllegalArgumentException("Ya existe un desarrollador con ese nombre");
+            }
+            d.setNombre(nuevo);
+        }
+
+        // Actualizar activo si viene en el DTO (Boolean wrapper para diferenciar null)
+        if (in.getActivo() != null && in.getActivo() != d.isActivo()) {
+            d.setActivo(in.getActivo());
+        }
+
+        DesarrolladorModel actualizado = desarrolladorRepository.save(d);
+        return toResponseDTO(actualizado);
+    }
+
+    /**
+     * Actualización parcial (PATCH) de un desarrollador usando el mismo UpdateDTO.
+     */
+    public DesarrolladorResponseDTO patch(Long id, DesarrolladorUpdateDTO in) {
+        DesarrolladorModel d = findEntityById(id);
 
         if (in.getNombre() != null) {
             String nuevo = in.getNombre().trim();
@@ -65,46 +118,56 @@ public class DesarrolladorService {
             d.setNombre(nuevo);
         }
 
-        // actualizar activo si viene en el body
-        // (Jackson setea false si viene explícito en el JSON)
-        if (in.isActivo() != d.isActivo()) {
-            d.setActivo(in.isActivo());
+        // Para patch, activo también se maneja como Boolean:
+        // solo se aplica si viene explícito en el JSON.
+        if (in.getActivo() != null && in.getActivo() != d.isActivo()) {
+            d.setActivo(in.getActivo());
         }
 
-        return desarrolladorRepository.save(d);
+        DesarrolladorModel actualizado = desarrolladorRepository.save(d);
+        return toResponseDTO(actualizado);
     }
 
-    public DesarrolladorModel patch(Long id, DesarrolladorModel in) {
-        DesarrolladorModel d = findById(id);
-
-        if (in.getNombre() != null) {
-            String nuevo = in.getNombre().trim();
-            if (nuevo.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            if (!nuevo.equalsIgnoreCase(d.getNombre())
-                    && desarrolladorRepository.existsByNombreIgnoreCase(nuevo)) {
-                throw new IllegalArgumentException("Ya existe un desarrollador con ese nombre");
-            }
-            d.setNombre(nuevo);
-        }
-
-        // para patch podrías manejar activo con un wrapper Boolean, pero
-        // si lo dejas así y el JSON trae "activo": false, también se aplicará
-        if (in.isActivo() != d.isActivo()) {
-            d.setActivo(in.isActivo());
-        }
-
-        return desarrolladorRepository.save(d);
-    }
-
+    /**
+     * Eliminar un desarrollador por ID.
+     */
     public void deleteById(Long id) {
-        findById(id);
+        findEntityById(id); // valida existencia
         desarrolladorRepository.deleteById(id);
     }
 
-    public List<DesarrolladorModel> findByNombre(String nombre) {
+    /**
+     * Búsqueda por nombre (filtro parcial, ignore case).
+     */
+    public List<DesarrolladorResponseDTO> findByNombre(String nombre) {
         String filtro = (nombre == null) ? "" : nombre.trim();
-        return desarrolladorRepository.findByNombreContainingIgnoreCase(filtro);
+        return desarrolladorRepository.findByNombreContainingIgnoreCase(filtro)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // ==========================
+    // MÉTODOS PRIVADOS DE APOYO
+    // ==========================
+
+    /**
+     * Obtener la entidad real desde BD o lanzar excepción.
+     */
+    private DesarrolladorModel findEntityById(Long id) {
+        return desarrolladorRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Desarrollador no encontrado con ID: " + id));
+    }
+
+    /**
+     * Mapear entidad JPA → DTO de respuesta.
+     */
+    private DesarrolladorResponseDTO toResponseDTO(DesarrolladorModel m) {
+        DesarrolladorResponseDTO dto = new DesarrolladorResponseDTO();
+        dto.setId(m.getId());
+        dto.setNombre(m.getNombre());
+        dto.setActivo(m.isActivo());
+        return dto;
     }
 }

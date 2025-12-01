@@ -1,9 +1,10 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/TipoProductoControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.TipoProductoModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoProductoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoProductoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +22,10 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.MediaTypes;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -64,12 +68,12 @@ public class TipoProductoControllerV2 {
                     description = "Tipos de producto obtenidos exitosamente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "204", description = "No hay tipos de producto registrados.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<TipoProductoModel>>> getAll() {
+    public ResponseEntity<CollectionModel<EntityModel<TipoProductoResponseDTO>>> getAll() {
         var tipos = tipoProductoService.findAll().stream()
                 .map(tipoProductoAssembler::toModel)
                 .collect(Collectors.toList());
@@ -99,14 +103,14 @@ public class TipoProductoControllerV2 {
                     description = "Tipo de producto encontrado.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Tipo de producto no encontrado.")
     })
-    public ResponseEntity<EntityModel<TipoProductoModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<TipoProductoResponseDTO>> getById(@PathVariable Long id) {
         try {
-            var tipo = tipoProductoService.findById(id);
+            TipoProductoResponseDTO tipo = tipoProductoService.findById(id);
             return ResponseEntity.ok(tipoProductoAssembler.toModel(tipo));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -126,17 +130,17 @@ public class TipoProductoControllerV2 {
                     description = "Tipo de producto creado correctamente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud.")
     })
-    public ResponseEntity<EntityModel<TipoProductoModel>> create(
+    public ResponseEntity<EntityModel<TipoProductoResponseDTO>> create(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = TipoProductoModel.class),
+                            schema = @Schema(implementation = TipoProductoRequestDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "POST completo",
@@ -152,11 +156,10 @@ public class TipoProductoControllerV2 {
                             }
                     )
             )
-            @Valid @RequestBody TipoProductoModel body
+            @Valid @RequestBody TipoProductoRequestDTO body
     ) {
-        body.setId(null); // ignorar id si lo envían
-        var nuevo = tipoProductoService.save(body);
-        var entity = tipoProductoAssembler.toModel(nuevo);
+        TipoProductoResponseDTO nuevo = tipoProductoService.save(body);
+        EntityModel<TipoProductoResponseDTO> entity = tipoProductoAssembler.toModel(nuevo);
 
         return ResponseEntity
                 .created(entity.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -176,7 +179,7 @@ public class TipoProductoControllerV2 {
                     description = "Tipo de producto actualizado correctamente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Datos incompletos para un PUT."),
@@ -213,7 +216,7 @@ public class TipoProductoControllerV2 {
                             }
                     )
             )
-            @Valid @RequestBody TipoProductoModel detalles
+            @Valid @RequestBody TipoProductoRequestDTO detalles
     ) {
         // Guardia mínima para que PUT sea “reemplazo completo”
         if (detalles.getNombre() == null || detalles.getDescripcion() == null || detalles.getActivo() == null) {
@@ -223,7 +226,7 @@ public class TipoProductoControllerV2 {
         }
 
         try {
-            var actualizado = tipoProductoService.update(id, detalles);
+            TipoProductoResponseDTO actualizado = tipoProductoService.update(id, detalles);
             return ResponseEntity.ok(tipoProductoAssembler.toModel(actualizado));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -243,12 +246,12 @@ public class TipoProductoControllerV2 {
                     description = "Tipo de producto actualizado parcialmente.",
                     content = @Content(
                             mediaType = "application/hal+json",
-                            schema = @Schema(implementation = TipoProductoModel.class)
+                            schema = @Schema(implementation = TipoProductoResponseDTO.class)
                     )
             ),
             @ApiResponse(responseCode = "404", description = "Tipo de producto no encontrado.")
     })
-    public ResponseEntity<EntityModel<TipoProductoModel>> patch(
+    public ResponseEntity<EntityModel<TipoProductoResponseDTO>> patch(
             @PathVariable Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
@@ -262,10 +265,10 @@ public class TipoProductoControllerV2 {
                             )
                     )
             )
-            @RequestBody TipoProductoModel detalles
+            @RequestBody TipoProductoUpdateDTO detalles
     ) {
         try {
-            var actualizado = tipoProductoService.patch(id, detalles);
+            TipoProductoResponseDTO actualizado = tipoProductoService.patch(id, detalles);
             return ResponseEntity.ok(tipoProductoAssembler.toModel(actualizado));
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();

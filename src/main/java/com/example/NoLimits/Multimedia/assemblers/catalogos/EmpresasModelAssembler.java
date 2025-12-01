@@ -1,64 +1,31 @@
 package com.example.NoLimits.Multimedia.assemblers.catalogos;
 
+import com.example.NoLimits.Multimedia.controllerV2.catalogos.EmpresasControllerV2;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresasResponseDTO;
+
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
-
-import com.example.NoLimits.Multimedia.controllerV2.catalogos.EmpresaControllerV2;
-import com.example.NoLimits.Multimedia.controllerV2.catalogos.EmpresasControllerV2;
-import com.example.NoLimits.Multimedia.controllerV2.catalogos.TiposEmpresaControllerV2;
-import com.example.NoLimits.Multimedia.model.catalogos.EmpresasModel;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class EmpresasModelAssembler implements RepresentationModelAssembler<EmpresasModel, EntityModel<EmpresasModel>> {
+public class EmpresasModelAssembler
+        implements RepresentationModelAssembler<EmpresasResponseDTO, EntityModel<EmpresasResponseDTO>> {
 
     @Override
-    public EntityModel<EmpresasModel> toModel(EmpresasModel rel) {
-        EntityModel<EmpresasModel> model = EntityModel.of(rel);
+    public EntityModel<EmpresasResponseDTO> toModel(EmpresasResponseDTO dto) {
 
-        Long productoId = rel.getProducto() != null ? rel.getProducto().getId() : null;
-        Long empresaId = rel.getEmpresa() != null ? rel.getEmpresa().getId() : null;
+        return EntityModel.of(dto,
 
-        // /api/v2/productos/{productoId}/empresas  (colección)
-        if (productoId != null) {
-            model.add(
-                    linkTo(methodOn(EmpresasControllerV2.class).listar(productoId))
-                            .withRel("producto-empresas")
-            );
-        }
+            linkTo(methodOn(EmpresasControllerV2.class)
+                    .listar(dto.getProductoId()))
+                    .withRel("producto-empresas"),
 
-        // /api/v2/empresas/{empresaId}
-        if (empresaId != null) {
-            model.add(
-                    linkTo(methodOn(EmpresaControllerV2.class).findById(empresaId))
-                            .withRel("empresa")
-            );
-            // /api/v2/empresas/{empresaId}/tipos-empresa
-            model.add(
-                    linkTo(methodOn(TiposEmpresaControllerV2.class).listar(empresaId))
-                            .withRel("tipos-empresa")
-            );
-        }
-
-        // Self: usamos la colección como referencia del recurso relación
-        if (productoId != null) {
-            model.add(
-                    linkTo(methodOn(EmpresasControllerV2.class).listar(productoId))
-                            .withSelfRel()
-            );
-        }
-
-        // Link para desvincular Producto ↔ Empresa
-        if (productoId != null && empresaId != null) {
-            model.add(
-                    linkTo(methodOn(EmpresasControllerV2.class).unlink(productoId, empresaId))
-                            .withRel("desvincular")
-            );
-        }
-
-        return model;
+            linkTo(methodOn(EmpresasControllerV2.class)
+                    .unlink(dto.getProductoId(), dto.getEmpresaId()))
+                    .withRel("desvincular")
+        );
     }
 }

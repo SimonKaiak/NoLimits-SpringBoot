@@ -2,7 +2,9 @@ package com.example.NoLimits.Multimedia.controller.ubicacion;
 
 import java.util.List;
 
-import com.example.NoLimits.Multimedia.model.ubicacion.RegionModel;
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.RegionRequestDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.response.RegionResponseDTO;
+import com.example.NoLimits.Multimedia.dto.ubicacion.update.RegionUpdateDTO;
 import com.example.NoLimits.Multimedia.service.ubicacion.RegionService;
 
 import jakarta.validation.Valid;
@@ -27,37 +29,39 @@ public class RegionController {
     private RegionService regionService;
 
     @GetMapping
-    public List<RegionModel> getAll() {
+    public List<RegionResponseDTO> getAll() {
         return regionService.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RegionModel> getById(@PathVariable Long id) {
-        RegionModel region = regionService.findById(id);
+    public ResponseEntity<RegionResponseDTO> getById(@PathVariable Long id) {
+        RegionResponseDTO region = regionService.findById(id);
         return ResponseEntity.ok(region);
     }
 
     @PostMapping
-    public ResponseEntity<RegionModel> create(@Valid @RequestBody RegionModel region) {
-        RegionModel creada = regionService.save(region);
+    public ResponseEntity<RegionResponseDTO> create(
+            @Valid @RequestBody RegionRequestDTO region) {
+
+        RegionResponseDTO creada = regionService.save(region);
         return ResponseEntity.status(201).body(creada);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RegionModel> update(
+    public ResponseEntity<RegionResponseDTO> update(
             @PathVariable Long id,
-            @Valid @RequestBody RegionModel in) {
+            @Valid @RequestBody RegionUpdateDTO in) {
 
-        RegionModel actualizada = regionService.update(id, in);
+        RegionResponseDTO actualizada = regionService.update(id, in);
         return ResponseEntity.ok(actualizada);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<RegionModel> patch(
+    public ResponseEntity<RegionResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody RegionModel in) {
+            @RequestBody RegionUpdateDTO in) {
 
-        RegionModel actualizada = regionService.patch(id, in);
+        RegionResponseDTO actualizada = regionService.patch(id, in);
         return ResponseEntity.ok(actualizada);
     }
 

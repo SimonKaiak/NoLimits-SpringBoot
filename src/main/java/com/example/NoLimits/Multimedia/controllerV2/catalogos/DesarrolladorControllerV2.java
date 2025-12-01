@@ -4,7 +4,9 @@ import java.util.stream.Collectors;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.DesarrolladorModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladorRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.DesarrolladorService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,7 +51,7 @@ public class DesarrolladorControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar todos los desarrolladores (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<DesarrolladorModel>>> getAll() {
+    public ResponseEntity<CollectionModel<EntityModel<DesarrolladorResponseDTO>>> getAll() {
         var lista = desarrolladorService.findAll().stream()
                 .map(desarrolladorAssembler::toModel)
                 .collect(Collectors.toList());
@@ -68,7 +70,7 @@ public class DesarrolladorControllerV2 {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener desarrollador por ID (HATEOAS)")
-    public ResponseEntity<EntityModel<DesarrolladorModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<DesarrolladorResponseDTO>> getById(@PathVariable Long id) {
         try {
             var dev = desarrolladorService.findById(id);
             return ResponseEntity.ok(desarrolladorAssembler.toModel(dev));
@@ -79,7 +81,7 @@ public class DesarrolladorControllerV2 {
 
     @GetMapping(value = "/search", produces = MediaTypes.HAL_JSON_VALUE)
     @Operation(summary = "Buscar desarrolladores por nombre (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<DesarrolladorModel>>> searchByNombre(
+    public ResponseEntity<CollectionModel<EntityModel<DesarrolladorResponseDTO>>> searchByNombre(
             @RequestParam String nombre
     ) {
         var lista = desarrolladorService.findByNombre(nombre).stream()
@@ -100,10 +102,9 @@ public class DesarrolladorControllerV2 {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Crear desarrollador (HATEOAS)")
-    public ResponseEntity<EntityModel<DesarrolladorModel>> create(
-            @Valid @RequestBody DesarrolladorModel body
+    public ResponseEntity<EntityModel<DesarrolladorResponseDTO>> create(
+            @Valid @RequestBody DesarrolladorRequestDTO body
     ) {
-        body.setId(null);
         var creado = desarrolladorService.save(body);
         var entity = desarrolladorAssembler.toModel(creado);
 
@@ -114,9 +115,9 @@ public class DesarrolladorControllerV2 {
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar desarrollador por ID (PUT - HATEOAS)")
-    public ResponseEntity<EntityModel<DesarrolladorModel>> update(
+    public ResponseEntity<EntityModel<DesarrolladorResponseDTO>> update(
             @PathVariable Long id,
-            @Valid @RequestBody DesarrolladorModel body
+            @Valid @RequestBody DesarrolladorUpdateDTO body
     ) {
         try {
             var actualizado = desarrolladorService.update(id, body);
@@ -128,9 +129,9 @@ public class DesarrolladorControllerV2 {
 
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar parcialmente desarrollador por ID (PATCH - HATEOAS)")
-    public ResponseEntity<EntityModel<DesarrolladorModel>> patch(
+    public ResponseEntity<EntityModel<DesarrolladorResponseDTO>> patch(
             @PathVariable Long id,
-            @RequestBody DesarrolladorModel body
+            @RequestBody DesarrolladorUpdateDTO body
     ) {
         try {
             var actualizado = desarrolladorService.patch(id, body);

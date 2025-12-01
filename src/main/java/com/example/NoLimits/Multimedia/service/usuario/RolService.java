@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.usuario;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.usuario.request.RolRequestDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.response.RolResponseDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.RolUpdateDTO;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 
@@ -9,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -17,57 +21,87 @@ public class RolService {
     @Autowired
     private RolRepository rolRepository;
 
-    public List<RolModel> findAll() {
-        return rolRepository.findAll();
+    // =========================================================
+    // MÉTODOS PÚBLICOS EXPONIENDO DTOs
+    // =========================================================
+
+    public List<RolResponseDTO> findAll() {
+        return rolRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public RolModel findById(Long id) {
-        return rolRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Rol no encontrado con ID: " + id));
+    public RolResponseDTO findById(Long id) {
+        RolModel rol = findEntityById(id);
+        return toResponseDTO(rol);
     }
 
-    public RolModel save(RolModel r) {
-        if (r.getNombre() == null || r.getNombre().trim().isEmpty()) {
+    /**
+     * CREATE – usa RolRequestDTO (sin ID en el body).
+     */
+    public RolResponseDTO save(RolRequestDTO dto) {
+
+        if (dto.getNombre() == null || dto.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del rol es obligatorio");
         }
 
-        r.setNombre(r.getNombre().trim());
-        return rolRepository.save(r);
+        if (dto.getActivo() == null) {
+            throw new IllegalArgumentException("El estado 'activo' del rol es obligatorio");
+        }
+
+        String nombre = dto.getNombre().trim();
+
+        RolModel rol = new RolModel();
+        rol.setNombre(nombre);
+        rol.setDescripcion(dto.getDescripcion());
+        rol.setActivo(dto.getActivo());
+
+        RolModel guardado = rolRepository.save(rol);
+        return toResponseDTO(guardado);
     }
 
-    public RolModel update(Long id, RolModel in) {
-        RolModel r = findById(id);
+    /**
+     * UPDATE (PUT) – usa RolUpdateDTO.
+     * Se actualizan solo los campos no nulos.
+     */
+    public RolResponseDTO update(Long id, RolUpdateDTO in) {
+        RolModel rol = findEntityById(id);
 
+        // nombre
         if (in.getNombre() != null) {
             String v = in.getNombre().trim();
             if (v.isEmpty()) {
                 throw new IllegalArgumentException("El nombre no puede estar vacío");
             }
-            r.setNombre(v);
+            rol.setNombre(v);
         }
 
-        return rolRepository.save(r);
+        // descripción
+        if (in.getDescripcion() != null) {
+            rol.setDescripcion(in.getDescripcion());
+        }
+
+        // activo
+        if (in.getActivo() != null) {
+            rol.setActivo(in.getActivo());
+        }
+
+        RolModel actualizado = rolRepository.save(rol);
+        return toResponseDTO(actualizado);
     }
 
-    // PATCH: actualización parcial
-    public RolModel patch(Long id, RolModel in) {
-        RolModel r = findById(id);
-
-        if (in.getNombre() != null) {
-            String v = in.getNombre().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("El nombre no puede estar vacío");
-            }
-            r.setNombre(v);
-        }
-
-        return rolRepository.save(r);
+    /**
+     * PATCH – actualización parcial.
+     * Misma lógica que update: solo se aplican campos no nulos.
+     */
+    public RolResponseDTO patch(Long id, RolUpdateDTO in) {
+        return update(id, in);
     }
 
     public void deleteById(Long id) {
         // Verifica que el rol exista
-        findById(id);
+        findEntityById(id);
 
         // Bloquea si hay usuarios asociados a este rol
         if (rolRepository.existeUsuarioConRol(id)) {
@@ -75,5 +109,24 @@ public class RolService {
         }
 
         rolRepository.deleteById(id);
+    }
+
+    // =========================================================
+    // MÉTODOS PRIVADOS DE APOYO
+    // =========================================================
+
+    private RolModel findEntityById(Long id) {
+        return rolRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Rol no encontrado con ID: " + id));
+    }
+
+    private RolResponseDTO toResponseDTO(RolModel entity) {
+        RolResponseDTO dto = new RolResponseDTO();
+        dto.setId(entity.getId());
+        dto.setNombre(entity.getNombre());
+        dto.setDescripcion(entity.getDescripcion());
+        dto.setActivo(entity.getActivo());
+        return dto;
     }
 }

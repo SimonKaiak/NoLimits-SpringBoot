@@ -1,9 +1,10 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/TipoDeDesarrolladorControllerV2.java
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.TipoDeDesarrolladorModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoDeDesarrolladorRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoDeDesarrolladorResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoDeDesarrolladorUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoDeDesarrolladorService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controllerV2/catalogos/TipoDeDesarrolladorControllerV2.java
 @RestController
 @RequestMapping(
         value = "/api/v2/tipos-desarrollador",
@@ -52,9 +54,9 @@ public class TipoDeDesarrolladorControllerV2 {
 
     @GetMapping
     @Operation(summary = "Listar tipos de desarrollador (HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<TipoDeDesarrolladorModel>>> getAll() {
+    public ResponseEntity<CollectionModel<EntityModel<TipoDeDesarrolladorResponseDTO>>> getAll() {
 
-        List<EntityModel<TipoDeDesarrolladorModel>> lista = service.findAll().stream()
+        List<EntityModel<TipoDeDesarrolladorResponseDTO>> lista = service.findAll().stream()
                 .map(assembler::toModel)
                 .collect(Collectors.toList());
 
@@ -62,7 +64,7 @@ public class TipoDeDesarrolladorControllerV2 {
             return ResponseEntity.noContent().build();
         }
 
-        CollectionModel<EntityModel<TipoDeDesarrolladorModel>> collection =
+        CollectionModel<EntityModel<TipoDeDesarrolladorResponseDTO>> collection =
                 CollectionModel.of(
                         lista,
                         linkTo(methodOn(TipoDeDesarrolladorControllerV2.class).getAll()).withSelfRel()
@@ -74,9 +76,9 @@ public class TipoDeDesarrolladorControllerV2 {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener tipo de desarrollador por ID (HATEOAS)")
-    public ResponseEntity<EntityModel<TipoDeDesarrolladorModel>> getById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<TipoDeDesarrolladorResponseDTO>> getById(@PathVariable Long id) {
         try {
-            var tipo = service.findById(id);
+            TipoDeDesarrolladorResponseDTO tipo = service.findById(id);
             return ResponseEntity.ok(assembler.toModel(tipo));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
@@ -85,12 +87,11 @@ public class TipoDeDesarrolladorControllerV2 {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Crear tipo de desarrollador (HATEOAS)")
-    public ResponseEntity<EntityModel<TipoDeDesarrolladorModel>> create(
-            @Valid @RequestBody TipoDeDesarrolladorModel body
+    public ResponseEntity<EntityModel<TipoDeDesarrolladorResponseDTO>> create(
+            @Valid @RequestBody TipoDeDesarrolladorRequestDTO body
     ) {
-        body.setId(null);
-        var creado = service.save(body);
-        var entity = assembler.toModel(creado);
+        TipoDeDesarrolladorResponseDTO creado = service.save(body);
+        EntityModel<TipoDeDesarrolladorResponseDTO> entity = assembler.toModel(creado);
 
         return ResponseEntity.created(entity.getRequiredLink(IanaLinkRelations.SELF).toUri())
                 .body(entity);
@@ -100,13 +101,17 @@ public class TipoDeDesarrolladorControllerV2 {
     @Operation(summary = "Actualizar tipo de desarrollador (PUT - HATEOAS)")
     public ResponseEntity<?> update(
             @PathVariable Long id,
-            @Valid @RequestBody TipoDeDesarrolladorModel body
+            @Valid @RequestBody TipoDeDesarrolladorUpdateDTO body
     ) {
         try {
-            var actualizado = service.update(id, body);
+            TipoDeDesarrolladorResponseDTO actualizado = service.update(id, body);
             return ResponseEntity.ok(assembler.toModel(actualizado));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", ex.getMessage())
+            );
         }
     }
 
@@ -114,13 +119,17 @@ public class TipoDeDesarrolladorControllerV2 {
     @Operation(summary = "Actualizar parcialmente tipo de desarrollador (PATCH - HATEOAS)")
     public ResponseEntity<?> patch(
             @PathVariable Long id,
-            @RequestBody TipoDeDesarrolladorModel body
+            @RequestBody TipoDeDesarrolladorUpdateDTO body
     ) {
         try {
-            var actualizado = service.patch(id, body);
+            TipoDeDesarrolladorResponseDTO actualizado = service.patch(id, body);
             return ResponseEntity.ok(assembler.toModel(actualizado));
         } catch (RecursoNoEncontradoException ex) {
             return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", ex.getMessage())
+            );
         }
     }
 

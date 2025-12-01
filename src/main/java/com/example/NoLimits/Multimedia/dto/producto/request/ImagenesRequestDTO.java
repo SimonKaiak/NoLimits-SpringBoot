@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Schema(description = "DTO para registrar o actualizar una imagen de un producto.")
-public class ImagenRequestDTO {
+public class ImagenesRequestDTO {
 
     @NotBlank(message = "La ruta de la imagen es obligatoria.")
     @Schema(

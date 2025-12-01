@@ -1,7 +1,5 @@
 package com.example.NoLimits.Multimedia.controllerV2.catalogos;
 
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -17,92 +15,58 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.EmpresasModelAssembler;
-import com.example.NoLimits.Multimedia.model.catalogos.EmpresasModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresasResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.EmpresasUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.EmpresasService;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping(
-        value = "/api/v2/productos/{productoId}/empresas",
-        produces = MediaTypes.HAL_JSON_VALUE
-)
-@Tag(name = "Empresas-Controller-V2", description = "Relación Producto ↔ Empresa con HATEOAS.")
+@RequestMapping(value = "/api/v2/productos/{productoId}/empresas",
+                produces = MediaTypes.HAL_JSON_VALUE)
+@Tag(name = "Empresas-Controller-V2")
 public class EmpresasControllerV2 {
 
-    @Autowired
-    private EmpresasService service;
-
-    @Autowired
-    private EmpresasModelAssembler assembler;
+    @Autowired private EmpresasService service;
+    @Autowired private EmpresasModelAssembler assembler;
 
     @GetMapping
-    @Operation(summary = "Listar empresas asociadas a un producto (TP - HATEOAS)")
-    public ResponseEntity<CollectionModel<EntityModel<EmpresasModel>>> listar(
-            @PathVariable Long productoId
-    ) {
+    public ResponseEntity<CollectionModel<EntityModel<EmpresasResponseDTO>>> listar(
+            @PathVariable Long productoId) {
+
         var lista = service.findByProducto(productoId).stream()
                 .map(assembler::toModel)
-                .collect(Collectors.toList());
+                .toList();
 
-        if (lista.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(CollectionModel.of(lista));
+        return lista.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(CollectionModel.of(lista));
     }
 
     @PostMapping("/{empresaId}")
-    @Operation(summary = "Vincular Producto ↔ Empresa (HATEOAS)")
-    public ResponseEntity<EntityModel<EmpresasModel>> link(
+    public ResponseEntity<EntityModel<EmpresasResponseDTO>> link(
             @PathVariable Long productoId,
-            @PathVariable Long empresaId
-    ) {
-        try {
-            var rel = service.link(productoId, empresaId);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(assembler.toModel(rel));
-        } catch (RecursoNoEncontradoException ex) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+            @PathVariable Long empresaId) {
 
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(assembler.toModel(service.link(productoId, empresaId)));
+    }
 
     @PatchMapping("/{relacionId}")
-    @Operation(
-            summary = "Actualizar parcialmente la relación Producto ↔ Empresa (PATCH - HATEOAS)",
-            description = "Permite cambiar el producto o la empresa asociados a la relación."
-    )
-    public ResponseEntity<EntityModel<EmpresasModel>> patch(
-            @PathVariable Long productoId,
+    public ResponseEntity<EntityModel<EmpresasResponseDTO>> patch(
             @PathVariable Long relacionId,
-            @RequestBody EmpresasModel body
-    ) {
-        try {
-            EmpresasModel relActualizada = service.patch(relacionId, body);
+            @RequestBody EmpresasUpdateDTO dto) {
 
-            return ResponseEntity.ok(assembler.toModel(relActualizada));
-        } catch (RecursoNoEncontradoException ex) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(assembler.toModel(service.patch(relacionId, dto)));
     }
 
-
-
     @DeleteMapping("/{empresaId}")
-    @Operation(summary = "Desvincular Producto ↔ Empresa (HATEOAS)")
     public ResponseEntity<Void> unlink(
             @PathVariable Long productoId,
-            @PathVariable Long empresaId
-    ) {
-        try {
-            service.unlink(productoId, empresaId);
-            return ResponseEntity.noContent().build();
-        } catch (RecursoNoEncontradoException ex) {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable Long empresaId) {
+
+        service.unlink(productoId, empresaId);
+        return ResponseEntity.noContent().build();
     }
 }

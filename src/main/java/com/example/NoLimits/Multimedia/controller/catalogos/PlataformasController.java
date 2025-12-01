@@ -3,7 +3,7 @@ package com.example.NoLimits.Multimedia.controller.catalogos;
 import java.util.List;
 import java.util.Map;
 
-import com.example.NoLimits.Multimedia.model.catalogos.PlataformasModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformasResponseDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformasService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,17 +31,21 @@ public class PlataformasController {
 
     @GetMapping
     @Operation(summary = "Listar plataformas asociadas a un producto")
-    public List<PlataformasModel> listarPorProducto(@PathVariable Long productoId) {
-        return plataformasService.findByProducto(productoId);
+    public ResponseEntity<List<PlataformasResponseDTO>> listarPorProducto(@PathVariable Long productoId) {
+        List<PlataformasResponseDTO> lista = plataformasService.findByProducto(productoId);
+        if (lista.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(lista);
     }
 
     @PostMapping("/{plataformaId}")
     @Operation(summary = "Vincular Producto ↔ Plataforma")
-    public ResponseEntity<PlataformasModel> link(
+    public ResponseEntity<PlataformasResponseDTO> link(
             @PathVariable Long productoId,
             @PathVariable Long plataformaId
     ) {
-        PlataformasModel rel = plataformasService.link(productoId, plataformaId);
+        PlataformasResponseDTO rel = plataformasService.link(productoId, plataformaId);
         return ResponseEntity.status(HttpStatus.CREATED).body(rel);
     }
 
@@ -50,14 +54,18 @@ public class PlataformasController {
         summary = "Actualizar parcialmente la relación Producto ↔ Plataforma (PATCH)",
         description = "Permite cambiar el producto o la plataforma asociados a la relación."
     )
-    public PlataformasModel patch(
+    public ResponseEntity<PlataformasResponseDTO> patch(
             @PathVariable Long productoId,
             @PathVariable Long relacionId,
             @RequestBody Map<String, Long> body
     ) {
         Long nuevoProductoId   = body.get("nuevoProductoId");
         Long nuevaPlataformaId = body.get("nuevaPlataformaId");
-        return plataformasService.patch(relacionId, nuevoProductoId, nuevaPlataformaId);
+
+        PlataformasResponseDTO actualizada =
+                plataformasService.patch(relacionId, nuevoProductoId, nuevaPlataformaId);
+
+        return ResponseEntity.ok(actualizada);
     }
 
     @DeleteMapping("/{plataformaId}")

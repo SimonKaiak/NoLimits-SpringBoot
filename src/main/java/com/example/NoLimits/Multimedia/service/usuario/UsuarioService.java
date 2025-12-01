@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/UsuarioService.java
 package com.example.NoLimits.Multimedia.service.usuario;
 
 import java.util.ArrayList;
@@ -11,11 +10,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
-import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
+import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -42,15 +44,20 @@ public class UsuarioService {
     /* ================= CRUD BÁSICO ================= */
 
     // Obtener todos los usuarios
-    public List<UsuarioModel> findAll() {
-        return usuarioRepository.findAll();
+    public List<UsuarioResponseDTO> findAll() {
+        List<UsuarioModel> usuarios = usuarioRepository.findAll();
+        List<UsuarioResponseDTO> respuesta = new ArrayList<>();
+
+        for (UsuarioModel u : usuarios) {
+            respuesta.add(toResponseDTO(u));
+        }
+        return respuesta;
     }
 
     // Obtener un usuario por ID (404 si no existe)
-    public UsuarioModel findById(long id) {
-        return usuarioRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
+    public UsuarioResponseDTO findById(long id) {
+        UsuarioModel usuario = getUsuarioOrThrow(id);
+        return toResponseDTO(usuario);
     }
 
     /*
@@ -61,26 +68,39 @@ public class UsuarioService {
      - Correo obligatorio.
      - Correo no duplicado (se normaliza en minúsculas).
     */
-    public UsuarioModel save(UsuarioModel usuario) {
-        if (usuario.getPassword() != null && usuario.getPassword().length() > 10) {
+    public UsuarioResponseDTO save(UsuarioRequestDTO dto) {
+        if (dto.getPassword() != null && dto.getPassword().length() > 10) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
         }
 
-        if (usuario.getCorreo() == null || usuario.getCorreo().trim().isEmpty()) {
+        if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "El correo es obligatorio");
         }
 
-        String correo = usuario.getCorreo().trim().toLowerCase();
+        String correo = dto.getCorreo().trim().toLowerCase();
 
         if (usuarioRepository.existsByCorreo(correo)) {
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
         }
 
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setNombre(dto.getNombre());
+        usuario.setApellidos(dto.getApellidos());
         usuario.setCorreo(correo);
-        return usuarioRepository.save(usuario);
+        usuario.setTelefono(dto.getTelefono());
+        usuario.setPassword(dto.getPassword());
+
+        if (dto.getRolId() != null) {
+            RolModel rol = new RolModel();
+            rol.setId(dto.getRolId());
+            usuario.setRol(rol);
+        }
+
+        UsuarioModel guardado = usuarioRepository.save(usuario);
+        return toResponseDTO(guardado);
     }
 
     /*
@@ -91,9 +111,7 @@ public class UsuarioService {
     */
     public void deleteById(Long id) {
         // Verificar existencia
-        usuarioRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
+        getUsuarioOrThrow(id);
 
         // Validar que no tenga ventas
         boolean tieneVentas = !ventaRepository.findByUsuarioModel_Id(id).isEmpty();
@@ -111,18 +129,18 @@ public class UsuarioService {
      Obtener detalle + total de compras del usuario.
 
      Devuelve un mapa con:
-     - "usuario": UsuarioModel
+     - "usuario": UsuarioResponseDTO
      - "compras": List<VentaModel>
      - "totalCompras": cantidad de ventas
     */
     public Map<String, Object> obtenerDetalleUsuario(long usuarioId) {
-        UsuarioModel usuario = findById(usuarioId);
+        UsuarioModel usuario = getUsuarioOrThrow(usuarioId);
 
         List<VentaModel> compras = ventaRepository.findByUsuarioModel_Id(usuarioId);
         long totalCompras = ventaRepository.countByUsuarioModel_Id(usuarioId);
 
         Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("usuario", usuario);
+        respuesta.put("usuario", toResponseDTO(usuario));
         respuesta.put("compras", compras);
         respuesta.put("totalCompras", totalCompras);
 
@@ -132,30 +150,33 @@ public class UsuarioService {
     /* ================= BÚSQUEDAS ================= */
 
     // Buscar por nombre (parcial, sin distinguir mayúsculas/minúsculas)
-    public List<UsuarioModel> findByNombre(String nombreUsuario) {
+    public List<UsuarioResponseDTO> findByNombre(String nombreUsuario) {
         if (nombreUsuario == null) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "El nombre de búsqueda no puede ser nulo");
         }
 
         String filtro = nombreUsuario.trim();
+        List<UsuarioModel> encontrados;
+
         if (filtro.isEmpty()) {
             // Si viene vacío, devolvemos todos
-            return usuarioRepository.findAll();
+            encontrados = usuarioRepository.findAll();
+        } else {
+            encontrados = usuarioRepository.findByNombreContainingIgnoreCase(filtro);
         }
 
-        return usuarioRepository.findByNombreContainingIgnoreCase(filtro);
+        List<UsuarioResponseDTO> respuesta = new ArrayList<>();
+        for (UsuarioModel u : encontrados) {
+            respuesta.add(toResponseDTO(u));
+        }
+        return respuesta;
     }
 
     // Buscar por correo (404 si no existe)
-    public UsuarioModel findByCorreo(String correoUsuario) {
-        String correo = (correoUsuario == null)
-                ? null
-                : correoUsuario.trim().toLowerCase();
-
-        return usuarioRepository.findByCorreo(correo)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
+    public UsuarioResponseDTO findByCorreo(String correoUsuario) {
+        UsuarioModel usuario = getUsuarioByCorreoOrThrow(correoUsuario);
+        return toResponseDTO(usuario);
     }
 
     /* ================= Actualización (PUT) ================= */
@@ -164,19 +185,19 @@ public class UsuarioService {
      Actualizar un usuario (PUT estricto).
 
      Reglas:
-     - Todos los campos deben venir informados: nombre, apellidos, correo, teléfono, password.
+     - Todos los campos deben venir informados: nombre, apellidos, correo, teléfono, password, rolId.
      - El correo se normaliza en minúsculas y debe seguir siendo único.
      - La contraseña máximo 10 caracteres.
     */
-    public UsuarioModel update(long id, UsuarioModel d) {
-        UsuarioModel u = findById(id);
+    public UsuarioResponseDTO update(long id, UsuarioUpdateDTO d) {
+        UsuarioModel u = getUsuarioOrThrow(id);
 
         if (d.getNombre() == null || d.getApellidos() == null ||
             d.getCorreo() == null || d.getTelefono() == null ||
-            d.getPassword() == null) {
+            d.getPassword() == null || d.getRolId() == null) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "PUT requiere todos los campos: nombre, apellidos, correo, telefono, password");
+                "PUT requiere todos los campos: nombre, apellidos, correo, telefono, password, rolId");
         }
 
         String nuevoCorreo = d.getCorreo().trim().toLowerCase();
@@ -199,7 +220,14 @@ public class UsuarioService {
         u.setTelefono(d.getTelefono());
         u.setPassword(d.getPassword());
 
-        return usuarioRepository.save(u);
+        if (d.getRolId() != null) {
+            RolModel nuevoRol = new RolModel();
+            nuevoRol.setId(d.getRolId());
+            u.setRol(nuevoRol);
+        }
+
+        UsuarioModel guardado = usuarioRepository.save(u);
+        return toResponseDTO(guardado);
     }
 
     /* ================= Actualización parcial (PATCH) ================= */
@@ -213,10 +241,10 @@ public class UsuarioService {
      - correo (validando duplicados)
      - teléfono
      - password (máx. 10 caracteres)
-     - rol (usando solo el ID)
+     - rolId
     */
-    public UsuarioModel patch(long id, UsuarioModel d) {
-        UsuarioModel u = findById(id);
+    public UsuarioResponseDTO patch(long id, UsuarioUpdateDTO d) {
+        UsuarioModel u = getUsuarioOrThrow(id);
 
         // Nombre
         if (d.getNombre() != null) {
@@ -260,14 +288,15 @@ public class UsuarioService {
             u.setPassword(d.getPassword());
         }
 
-        // Rol (solo se toma el ID y se crea una instancia ligera)
-        if (d.getRol() != null && d.getRol().getId() != null) {
+        // Rol (usando rolId)
+        if (d.getRolId() != null) {
             RolModel nuevoRol = new RolModel();
-            nuevoRol.setId(d.getRol().getId());
+            nuevoRol.setId(d.getRolId());
             u.setRol(nuevoRol);
         }
 
-        return usuarioRepository.save(u);
+        UsuarioModel guardado = usuarioRepository.save(u);
+        return toResponseDTO(guardado);
     }
 
     /* ================= Resumen para reportes / admin ================= */
@@ -307,8 +336,8 @@ public class UsuarioService {
      - findByCorreo para buscar el usuario.
      - Comparación directa de password (si luego usas hashing, se reemplaza aquí).
     */
-    public UsuarioModel login(String correo, String password) {
-        UsuarioModel usuario = findByCorreo(correo);
+    public UsuarioResponseDTO login(String correo, String password) {
+        UsuarioModel usuario = getUsuarioByCorreoOrThrow(correo);
 
         // Aquí podrías aplicar hashing en vez de comparar texto plano
         if (!usuario.getPassword().equals(password)) {
@@ -318,6 +347,63 @@ public class UsuarioService {
             );
         }
 
-        return usuario;
+        return toResponseDTO(usuario);
+    }
+
+    /* ================= MÉTODOS PRIVADOS ================= */
+
+    private UsuarioModel getUsuarioOrThrow(long id) {
+        return usuarioRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
+    }
+
+    private UsuarioModel getUsuarioByCorreoOrThrow(String correoUsuario) {
+        String correo = (correoUsuario == null)
+                ? null
+                : correoUsuario.trim().toLowerCase();
+
+        return usuarioRepository.findByCorreo(correo)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
+    }
+
+    private UsuarioResponseDTO toResponseDTO(UsuarioModel u) {
+        if (u == null) {
+            return null;
+        }
+
+        UsuarioResponseDTO dto = new UsuarioResponseDTO();
+        dto.setId(u.getId());
+        dto.setNombre(u.getNombre());
+        dto.setApellidos(u.getApellidos());
+
+        if (u.getNombre() != null && u.getApellidos() != null) {
+            dto.setNombreCompleto(u.getNombre() + " " + u.getApellidos());
+        }
+
+        dto.setCorreo(u.getCorreo());
+        dto.setTelefono(u.getTelefono());
+
+        if (u.getRol() != null) {
+            dto.setRolId(u.getRol().getId());
+            dto.setRolNombre(u.getRol().getNombre());
+        }
+
+        if (u.getDireccion() != null) {
+            dto.setDireccionId(u.getDireccion().getId());
+
+            if (u.getDireccion().getComuna() != null) {
+                dto.setComunaId(u.getDireccion().getComuna().getId());
+                dto.setComunaNombre(u.getDireccion().getComuna().getNombre());
+
+                if (u.getDireccion().getComuna().getRegion() != null) {
+                    dto.setRegionId(u.getDireccion().getComuna().getRegion().getId());
+                    dto.setRegionNombre(u.getDireccion().getComuna().getRegion().getNombre());
+                }
+            }
+        }
+
+        return dto;
     }
 }

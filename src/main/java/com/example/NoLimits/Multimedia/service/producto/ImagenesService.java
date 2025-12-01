@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.producto.request.ImagenesRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ImagenesResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.update.ImagenesUpdateDTO;
 import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.producto.ImagenesRepository;
@@ -14,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -27,114 +31,88 @@ public class ImagenesService {
 
     /* ===================== BÁSICOS ===================== */
 
-    public List<ImagenesModel> findAll() {
-        return imagenesRepository.findAll();
+    public List<ImagenesResponseDTO> findAll() {
+        return imagenesRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public ImagenesModel findById(Long id) {
-        return imagenesRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "Imagen no encontrada con ID: " + id));
+    public ImagenesResponseDTO findById(Long id) {
+        ImagenesModel entity = getImagenEntityOrThrow(id);
+        return toResponseDTO(entity);
     }
 
-    public List<ImagenesModel> findByProducto(Long productoId) {
-        return imagenesRepository.findByProducto_Id(productoId);
+    public List<ImagenesResponseDTO> findByProducto(Long productoId) {
+        return imagenesRepository.findByProducto_Id(productoId)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<ImagenesModel> findByRutaContainingIgnoreCase(String ruta) {
-        return imagenesRepository.findByRutaContainingIgnoreCase(ruta);
+    public List<ImagenesResponseDTO> findByRutaContainingIgnoreCase(String ruta) {
+        return imagenesRepository.findByRutaContainingIgnoreCase(ruta)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    /* ===================== CREAR / ACTUALIZAR ===================== */
+    /* ===================== CREAR ===================== */
 
-    public ImagenesModel save(ImagenesModel img) {
-        if (img.getProducto() == null || img.getProducto().getId() == null) {
+    public ImagenesResponseDTO save(ImagenesRequestDTO dto) {
+
+        if (dto.getProductoId() == null) {
             throw new IllegalArgumentException("Debe indicar el producto de la imagen");
         }
 
-        ProductoModel p = productoRepository.findById(img.getProducto().getId())
+        ProductoModel p = productoRepository.findById(dto.getProductoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "Producto no encontrado con ID: " + img.getProducto().getId()));
+                        "Producto no encontrado con ID: " + dto.getProductoId()));
 
-        img.setProducto(p);
-
-        if (img.getRuta() == null || img.getRuta().trim().isEmpty()) {
+        if (dto.getRuta() == null || dto.getRuta().trim().isEmpty()) {
             throw new IllegalArgumentException("La ruta/URL de la imagen es obligatoria");
         }
-        img.setRuta(img.getRuta().trim());
 
-        if (img.getAltText() != null) {
-            String alt = img.getAltText().trim();
+        ImagenesModel img = new ImagenesModel();
+        img.setProducto(p);
+        img.setRuta(dto.getRuta().trim());
+
+        if (dto.getAltText() != null) {
+            String alt = dto.getAltText().trim();
             img.setAltText(alt.isEmpty() ? null : alt);
         }
 
-        return imagenesRepository.save(img);
+        ImagenesModel guardada = imagenesRepository.save(img);
+        return toResponseDTO(guardada);
     }
 
-    public ImagenesModel update(Long id, ImagenesModel in) {
-        ImagenesModel e = findById(id);
+    /* ===================== ACTUALIZAR (PUT) ===================== */
 
-        if (in.getRuta() != null) {
-            String v = in.getRuta().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("La ruta/URL no puede ser vacía");
-            }
-            e.setRuta(v);
-        }
+    public ImagenesResponseDTO update(Long id, ImagenesUpdateDTO in) {
+        ImagenesModel e = getImagenEntityOrThrow(id);
 
-        if (in.getAltText() != null) {
-            String alt = in.getAltText().trim();
-            e.setAltText(alt.isEmpty() ? null : alt);
-        }
+        aplicarCambiosDesdeUpdateDTO(in, e);
 
-        if (in.getProducto() != null && in.getProducto().getId() != null) {
-            Long nuevoProdId = in.getProducto().getId();
-            Long actualProdId = (e.getProducto() != null ? e.getProducto().getId() : null);
-
-            if (actualProdId == null || !actualProdId.equals(nuevoProdId)) {
-                ProductoModel p = productoRepository.findById(nuevoProdId)
-                        .orElseThrow(() -> new RecursoNoEncontradoException(
-                                "Producto no encontrado con ID: " + nuevoProdId));
-                e.setProducto(p);
-            }
-        }
-
-        return imagenesRepository.save(e);
+        ImagenesModel actualizada = imagenesRepository.save(e);
+        return toResponseDTO(actualizada);
     }
 
     /* ===================== PATCH ===================== */
 
-    public ImagenesModel patch(Long id, ImagenesModel in) {
-        ImagenesModel e = findById(id);
+    public ImagenesResponseDTO patch(Long id, ImagenesUpdateDTO in) {
+        ImagenesModel e = getImagenEntityOrThrow(id);
 
-        if (in.getRuta() != null) {
-            String v = in.getRuta().trim();
-            if (v.isEmpty()) {
-                throw new IllegalArgumentException("La ruta/URL no puede ser vacía");
-            }
-            e.setRuta(v);
-        }
+        aplicarCambiosDesdeUpdateDTO(in, e);
 
-        if (in.getAltText() != null) {
-            String alt = in.getAltText().trim();
-            e.setAltText(alt.isEmpty() ? null : alt);
-        }
-
-        if (in.getProducto() != null && in.getProducto().getId() != null) {
-            ProductoModel nuevoProd = productoRepository.findById(in.getProducto().getId())
-                    .orElseThrow(() -> new RecursoNoEncontradoException(
-                            "Producto no encontrado con ID: " + in.getProducto().getId()));
-            e.setProducto(nuevoProd);
-        }
-
-        return imagenesRepository.save(e);
+        ImagenesModel actualizada = imagenesRepository.save(e);
+        return toResponseDTO(actualizada);
     }
 
     /* ===================== ELIMINAR ===================== */
 
     public void deleteById(Long id) {
-        findById(id);
-        imagenesRepository.deleteById(id);
+        ImagenesModel e = getImagenEntityOrThrow(id);
+        imagenesRepository.delete(e);
     }
 
     public long deleteByProducto(Long productoId) {
@@ -160,5 +138,48 @@ public class ImagenesService {
             lista.add(datos);
         }
         return lista;
+    }
+
+    /* ===================== MAPEOS PRIVADOS ===================== */
+
+    private ImagenesModel getImagenEntityOrThrow(Long id) {
+        return imagenesRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Imagen no encontrada con ID: " + id));
+    }
+
+    private ImagenesResponseDTO toResponseDTO(ImagenesModel entity) {
+        ImagenesResponseDTO dto = new ImagenesResponseDTO();
+        dto.setId(entity.getId());
+        dto.setRuta(entity.getRuta());
+        dto.setAltText(entity.getAltText());
+        dto.setProductoId(entity.getProducto() != null ? entity.getProducto().getId() : null);
+        return dto;
+    }
+
+    /**
+     * Aplica los cambios de un DTO de actualización (PUT/PATCH) a la entidad.
+     */
+    private void aplicarCambiosDesdeUpdateDTO(ImagenesUpdateDTO in, ImagenesModel e) {
+
+        if (in.getRuta() != null) {
+            String v = in.getRuta().trim();
+            if (v.isEmpty()) {
+                throw new IllegalArgumentException("La ruta/URL no puede ser vacía");
+            }
+            e.setRuta(v);
+        }
+
+        if (in.getAltText() != null) {
+            String alt = in.getAltText().trim();
+            e.setAltText(alt.isEmpty() ? null : alt);
+        }
+
+        if (in.getProductoId() != null) {
+            ProductoModel nuevoProd = productoRepository.findById(in.getProductoId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Producto no encontrado con ID: " + in.getProductoId()));
+            e.setProducto(nuevoProd);
+        }
     }
 }

@@ -14,7 +14,7 @@ import lombok.Data;
 */
 @Data
 @Schema(description = "Detalle de producto enviado desde el frontend para crear una venta.")
-public class DetalleVentaRequest {
+public class DetalleVentaRequestDTO {
 
     /*
      ID del producto que se está vendiendo.

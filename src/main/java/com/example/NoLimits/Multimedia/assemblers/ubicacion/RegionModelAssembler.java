@@ -1,7 +1,7 @@
 package com.example.NoLimits.Multimedia.assemblers.ubicacion;
 
 import com.example.NoLimits.Multimedia.controllerV2.ubicacion.RegionControllerV2;
-import com.example.NoLimits.Multimedia.model.ubicacion.RegionModel;
+import com.example.NoLimits.Multimedia.dto.ubicacion.response.RegionResponseDTO;
 
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
@@ -11,10 +11,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Component
-public class RegionModelAssembler implements RepresentationModelAssembler<RegionModel, EntityModel<RegionModel>> {
+public class RegionModelAssembler implements RepresentationModelAssembler<RegionResponseDTO, EntityModel<RegionResponseDTO>> {
 
     @Override
-    public EntityModel<RegionModel> toModel(RegionModel region) {
+    public EntityModel<RegionResponseDTO> toModel(RegionResponseDTO region) {
 
         return EntityModel.of(
                 region,

@@ -6,22 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoEnvioRequestDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO;
+import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoEnvioUpdateDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoEnvioService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/metodos-envio")
@@ -33,14 +28,14 @@ public class MetodoEnvioController {
 
     @GetMapping
     @Operation(summary = "Listar métodos de envío")
-    public ResponseEntity<List<MetodoEnvioModel>> listar() {
-        List<MetodoEnvioModel> metodos = metodoEnvioService.findAll();
-        return metodos.isEmpty()? ResponseEntity.noContent().build() : ResponseEntity.ok(metodos);
+    public ResponseEntity<List<MetodoEnvioResponseDTO>> listar() {
+        List<MetodoEnvioResponseDTO> metodos = metodoEnvioService.findAll();
+        return metodos.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(metodos);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar método de envío por ID")
-    public ResponseEntity<MetodoEnvioModel> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<MetodoEnvioResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(metodoEnvioService.findById(id));
     }
 
@@ -59,24 +54,26 @@ public class MetodoEnvioController {
             )
         )
     )
-    public ResponseEntity<MetodoEnvioModel> crear(@RequestBody MetodoEnvioModel m) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(metodoEnvioService.save(m));
+    public ResponseEntity<MetodoEnvioResponseDTO> crear(
+            @Valid @RequestBody MetodoEnvioRequestDTO body) {
+        MetodoEnvioResponseDTO creado = metodoEnvioService.create(body);
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar método de envío")
-    public ResponseEntity<MetodoEnvioModel> actualizar(
+    public ResponseEntity<MetodoEnvioResponseDTO> actualizar(
             @PathVariable Long id,
-            @RequestBody MetodoEnvioModel m) {
-        return ResponseEntity.ok(metodoEnvioService.update(id, m));
+            @Valid @RequestBody MetodoEnvioRequestDTO body) {
+        return ResponseEntity.ok(metodoEnvioService.update(id, body));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Editar parcialmente método de envío")
-    public ResponseEntity<MetodoEnvioModel> patch(
+    public ResponseEntity<MetodoEnvioResponseDTO> patch(
             @PathVariable Long id,
-            @RequestBody MetodoEnvioModel m) {
-        return ResponseEntity.ok(metodoEnvioService.patch(id, m));
+            @Valid @RequestBody MetodoEnvioUpdateDTO body) {
+        return ResponseEntity.ok(metodoEnvioService.patch(id, body));
     }
 
     @DeleteMapping("/{id}")

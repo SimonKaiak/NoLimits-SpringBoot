@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/GenerosController.java
 package com.example.NoLimits.Multimedia.controller.catalogos;
 
 import java.util.HashMap;
@@ -6,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
-import com.example.NoLimits.Multimedia.model.catalogos.GenerosModel;
+import com.example.NoLimits.Multimedia.dto.catalogos.response.GenerosResponseDTO;
 import com.example.NoLimits.Multimedia.service.catalogos.GenerosService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,13 +19,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PatchMapping;
 
+/**
+ * Controlador REST V1 (sin HATEOAS) para la relación Producto–Género.
+ *
+ * Expone la información usando DTO (GenerosResponseDTO) y endpoints simples.
+ */
 @RestController
 @RequestMapping("/api/v1/productos-generos")
 @Tag(name = "Generos-Controller", description = "Relaciones puente entre Producto y Género.")
@@ -40,9 +44,9 @@ public class GenerosController {
             description = "Devuelve las relaciones Producto–Género para un producto dado.")
     @ApiResponse(responseCode = "200", description = "Relaciones encontradas.",
             content = @Content(mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = GenerosModel.class))))
-    public ResponseEntity<List<GenerosModel>> obtenerPorProducto(@PathVariable Long productoId) {
-        List<GenerosModel> relaciones = generosService.findByProducto(productoId);
+                    array = @ArraySchema(schema = @Schema(implementation = GenerosResponseDTO.class))))
+    public ResponseEntity<List<GenerosResponseDTO>> obtenerPorProducto(@PathVariable Long productoId) {
+        List<GenerosResponseDTO> relaciones = generosService.findByProducto(productoId);
         if (relaciones.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -54,9 +58,9 @@ public class GenerosController {
             description = "Devuelve las relaciones Producto–Género asociadas a un género dado.")
     @ApiResponse(responseCode = "200", description = "Relaciones encontradas.",
             content = @Content(mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = GenerosModel.class))))
-    public ResponseEntity<List<GenerosModel>> obtenerPorGenero(@PathVariable Long generoId) {
-        List<GenerosModel> relaciones = generosService.findByGenero(generoId);
+                    array = @ArraySchema(schema = @Schema(implementation = GenerosResponseDTO.class))))
+    public ResponseEntity<List<GenerosResponseDTO>> obtenerPorGenero(@PathVariable Long generoId) {
+        List<GenerosResponseDTO> relaciones = generosService.findByGenero(generoId);
         if (relaciones.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -68,13 +72,13 @@ public class GenerosController {
             description = "Crea (si no existe) la relación entre un producto y un género.")
     @ApiResponse(responseCode = "200", description = "Relación creada o ya existente.",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = GenerosModel.class)))
-    public ResponseEntity<GenerosModel> vincular(
+                    schema = @Schema(implementation = GenerosResponseDTO.class)))
+    public ResponseEntity<GenerosResponseDTO> vincular(
             @PathVariable Long productoId,
             @PathVariable Long generoId
     ) {
         try {
-            GenerosModel rel = generosService.link(productoId, generoId);
+            GenerosResponseDTO rel = generosService.link(productoId, generoId);
             return ResponseEntity.ok(rel);
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
@@ -104,23 +108,23 @@ public class GenerosController {
     @Operation(
             summary = "Actualizar parcialmente la relación Producto–Género.",
             description = "Permite cambiar el producto y/o el género asociados a la relación puente. "
-                        + "Puedes enviar solo nuevoProductoId, solo nuevoGeneroId, o ambos."
+                    + "Puedes enviar solo nuevoProductoId, solo nuevoGeneroId, o ambos."
     )
     @ApiResponse(
             responseCode = "200",
             description = "Relación actualizada.",
             content = @Content(
                     mediaType = "application/json",
-                    schema = @Schema(implementation = GenerosModel.class)
+                    schema = @Schema(implementation = GenerosResponseDTO.class)
             )
     )
-    public ResponseEntity<GenerosModel> patch(
+    public ResponseEntity<GenerosResponseDTO> patch(
             @PathVariable Long relacionId,
             @RequestParam(required = false) Long nuevoProductoId,
             @RequestParam(required = false) Long nuevoGeneroId
     ) {
         try {
-            GenerosModel actualizado = generosService.patch(relacionId, nuevoProductoId, nuevoGeneroId);
+            GenerosResponseDTO actualizado = generosService.patch(relacionId, nuevoProductoId, nuevoGeneroId);
             return ResponseEntity.ok(actualizado);
         } catch (RecursoNoEncontradoException e) {
             return ResponseEntity.notFound().build();
