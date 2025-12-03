@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
 import java.util.List;
 
 @Data
@@ -31,7 +32,22 @@ public class ProductoRequestDTO {
     @Schema(description = "ID del estado", example = "1")
     private Long estadoId;
 
-    // Relaciones N:M
+    // ==================== SAGAS ====================
+
+    @Schema(
+            description = "Nombre de la saga a la que pertenece el producto (solo se usa en películas).",
+            example = "Spiderman"
+    )
+    private String saga;
+
+    @Schema(
+            description = "Ruta/URL de la portada representativa de la saga.",
+            example = "/assets/img/sagas/spidermanSaga.webp"
+    )
+    private String portadaSaga;
+
+    // ==================== Relaciones N:M ====================
+
     private List<Long> plataformasIds;
     private List<Long> generosIds;
     private List<Long> empresasIds;

@@ -40,7 +40,6 @@ public class ProductoService {
     @Autowired
     private EstadoRepository estadoRepository;
 
-
     /* ================= CRUD BÁSICO ================= */
 
     public List<ProductoResponseDTO> findAll() {
@@ -135,11 +134,17 @@ public class ProductoService {
                                     "Estado no encontrado con ID: " + dto.getEstadoId()))
             );
         }
+        // PATCH de saga y portadaSaga
+        if (dto.getSaga() != null) {
+            productoExistente.setSaga(dto.getSaga());
+        }
+        if (dto.getPortadaSaga() != null) {
+            productoExistente.setPortadaSaga(dto.getPortadaSaga());
+        }
 
         ProductoModel actualizado = productoRepository.save(productoExistente);
         return toResponseDTO(actualizado);
     }
-
 
     public void deleteById(Long id) {
         // Verifica existencia
@@ -201,6 +206,30 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
+    /* ================= SAGAS ================= */
+
+    public List<ProductoResponseDTO> findBySaga(String saga) {
+        return productoRepository.findBySaga(saga)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProductoResponseDTO> findBySagaIgnoreCase(String saga) {
+        return productoRepository.findBySagaIgnoreCase(saga)
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> obtenerSagasDistinct() {
+        return productoRepository.findDistinctSagas();
+    }
+
+    public List<String> obtenerSagasDistinctPorTipoProducto(Long tipoProductoId) {
+        return productoRepository.findDistinctSagasByTipoProductoId(tipoProductoId);
+    }
+
     /* ================= RESUMEN ================= */
 
     public List<Map<String, Object>> obtenerProductosConDatos() {
@@ -214,6 +243,9 @@ public class ProductoService {
             datos.put("Precio", fila[2]);
             datos.put("Tipo Producto", fila[3]);
             datos.put("Estado", fila[4]);
+            // Nuevos campos: saga y portadaSaga
+            datos.put("Saga", fila[5]);
+            datos.put("Portada Saga", fila[6]);
             lista.add(datos);
         }
         return lista;
@@ -224,6 +256,10 @@ public class ProductoService {
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
+
+        // saga y portadaSaga desde el request
+        producto.setSaga(dto.getSaga());
+        producto.setPortadaSaga(dto.getPortadaSaga());
 
         producto.setTipoProducto(
                 tipoProductoRepository.findById(dto.getTipoProductoId())
@@ -251,6 +287,10 @@ public class ProductoService {
         dto.setNombre(model.getNombre());
         dto.setPrecio(model.getPrecio());
 
+        // saga y portadaSaga hacia el response
+        dto.setSaga(model.getSaga());
+        dto.setPortadaSaga(model.getPortadaSaga());
+
         if (model.getTipoProducto() != null) {
             dto.setTipoProductoId(model.getTipoProducto().getId());
             dto.setTipoProductoNombre(model.getTipoProducto().getNombre());
@@ -266,7 +306,7 @@ public class ProductoService {
             dto.setEstadoNombre(model.getEstado().getNombre());
         }
 
-        // plataformas/géneros/empresas/desarrolladores/imagenes
+        // plataformas/géneros/empresas/desarrolladores/imagenes (si los mapeas luego)
         return dto;
     }
 }

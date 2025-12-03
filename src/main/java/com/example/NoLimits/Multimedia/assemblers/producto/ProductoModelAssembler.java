@@ -105,6 +105,14 @@ public class ProductoModelAssembler implements RepresentationModelAssembler<Prod
                                         dto.getEstadoId()
                                 ))
                                 .withRel("productos_mismo_tipo_y_estado")
+                        : null,
+
+                // ====================== SAGAS ======================
+                // Productos de la misma saga (si el producto pertenece a una)
+                dto.getSaga() != null ?
+                        linkTo(methodOn(ProductoControllerV2.class)
+                                .buscarPorSaga(dto.getSaga()))
+                                .withRel("productos_misma_saga")
                         : null
         );
     }

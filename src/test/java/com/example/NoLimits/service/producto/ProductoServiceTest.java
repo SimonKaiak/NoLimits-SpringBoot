@@ -95,6 +95,9 @@ public class ProductoServiceTest {
         p.setTipoProducto(tipoProducto());
         p.setClasificacion(clasificacion());
         p.setEstado(estado());
+        // Nuevos campos para sagas
+        p.setSaga("Spiderman");
+        p.setPortadaSaga("/assets/img/sagas/spidermanSaga.webp");
         return p;
     }
 
@@ -105,6 +108,7 @@ public class ProductoServiceTest {
         dto.setTipoProductoId(1L);
         dto.setClasificacionId(1L);
         dto.setEstadoId(1L);
+        // Saga opcional en el request, por ahora lo dejamos null
         return dto;
     }
 
@@ -126,6 +130,7 @@ public class ProductoServiceTest {
         assertEquals(29990.0, dto.getPrecio());
         assertEquals("Accesorio", dto.getTipoProductoNombre());
         assertEquals("Activo", dto.getEstadoNombre());
+        // no es obligatorio validar saga aquí, pero ya viene seteado
     }
 
     @Test
@@ -431,7 +436,9 @@ public class ProductoServiceTest {
                 "Teclado Mecánico",
                 29990.0,
                 "Accesorio",
-                "Activo"
+                "Activo",
+                "Spiderman",                                 // Saga
+                "/assets/img/sagas/spidermanSaga.webp"      // Portada Saga
         };
 
         when(productoRepository.obtenerProductosResumen())
@@ -449,5 +456,7 @@ public class ProductoServiceTest {
         assertEquals(29990.0, item.get("Precio"));
         assertEquals("Accesorio", item.get("Tipo Producto"));
         assertEquals("Activo", item.get("Estado"));
+        assertEquals("Spiderman", item.get("Saga"));
+        assertEquals("/assets/img/sagas/spidermanSaga.webp", item.get("Portada Saga"));
     }
 }

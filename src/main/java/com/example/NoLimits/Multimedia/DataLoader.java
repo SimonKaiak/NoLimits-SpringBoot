@@ -182,25 +182,14 @@ public class DataLoader implements CommandLineRunner {
 
     /**
      * Punto de entrada del cargador de datos.
-     *
-     * <p>
-     * Este método se ejecuta una sola vez al iniciar el contexto de Spring
-     * (solo bajo el perfil {@code dev}). Cada bloque está protegido con
-     * verificaciones {@code count() == 0} para evitar duplicar datos si el
-     * contexto se reinicia apuntando a la misma base.
-     * </p>
-     *
-     * @param args argumentos de línea de comando (no utilizados).
-     * @throws Exception en caso de error durante la carga inicial.
      */
     @Override
     public void run(String... args) throws Exception {
 
-        Faker faker = new Faker();     // Generador de datos de prueba realistas (nombres, direcciones, etc.).
-        Random random = new Random();  // Utilizado para seleccionar elementos aleatorios y cantidades.
+        Faker faker = new Faker();
+        Random random = new Random();
 
         // ================== TIPOS DE PRODUCTO ==================
-        // Crea tipos de producto base (Película, Videojuego, Accesorio) solo si la tabla está vacía.
         if (tipoProductoRepository.count() == 0) {
             String[][] tiposBase = {
                     { "Película", "Productos de tipo película (Blu-ray, digital, etc.)" },
@@ -212,28 +201,24 @@ public class DataLoader implements CommandLineRunner {
                 String nombre = t[0];
                 String descripcion = t[1];
 
-                // Evita duplicar si ya existe un tipo con el mismo nombre (ignore case).
                 if (tipoProductoRepository.existsByNombreIgnoreCase(nombre)) {
                     continue;
                 }
 
                 TipoProductoModel tipo = new TipoProductoModel();
                 tipo.setNombre(nombre.trim());
-                // Se limita la descripción a 255 caracteres por seguridad.
                 tipo.setDescripcion(descripcion.length() > 255 ? descripcion.substring(0, 255) : descripcion);
                 tipo.setActivo(true);
                 tipoProductoRepository.save(tipo);
             }
         }
 
-        // Si por algún motivo no hay tipos de producto, se detiene el seed.
         List<TipoProductoModel> tiposProducto = tipoProductoRepository.findAll();
         if (tiposProducto.isEmpty()) {
             return;
         }
 
         // ================== ESTADOS ==================
-        // Estados genéricos para productos.
         if (estadoRepository.count() == 0) {
             String[] estadosBase = { "Activo", "Agotado", "Descontinuado" };
             for (String nombre : estadosBase) {
@@ -255,7 +240,6 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ================== CLASIFICACIONES ==================
-        // Clasificaciones de contenido/edad (E, T, +13, etc.).
         if (clasificacionRepository.count() == 0) {
             Object[][] base = {
                     { "E", "Para todo público." },
@@ -287,7 +271,6 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ================== GÉNEROS (TNP) ==================
-        // Catálogo de géneros usado luego en tabla puente GenerosModel (TP).
         if (generoRepository.count() == 0) {
             String[] generosBase = {
                     "Acción",
@@ -501,7 +484,6 @@ public class DataLoader implements CommandLineRunner {
         }
 
         List<RolModel> roles = rolRepository.findAll();
-        // Rol por defecto para usuarios aleatorios generados.
         RolModel rolCliente = roles.stream()
                 .filter(r -> r.getNombre().equalsIgnoreCase("CLIENTE"))
                 .findFirst()
@@ -526,7 +508,6 @@ public class DataLoader implements CommandLineRunner {
         List<RegionModel> regiones = regionRepository.findAll();
 
         // ================== COMUNAS ==================
-        // Genera comunas base por región (ejemplo simplificado para el seed).
         if (comunaRepository.count() == 0) {
             for (RegionModel region : regiones) {
 
@@ -548,13 +529,11 @@ public class DataLoader implements CommandLineRunner {
 
         List<ComunaModel> comunas = comunaRepository.findAll();
 
-        // ================== USUARIOS (TNP actualizados con dirección y rol) ==================
-        // Crea 10 usuarios de prueba con rol CLIENTE y dirección asociada 1:1.
+        // ================== USUARIOS ==================
         if (usuarioRepository.count() == 0) {
 
             for (int i = 0; i < 10; i++) {
 
-                // Crear usuario base
                 UsuarioModel u = new UsuarioModel();
                 u.setNombre(faker.name().firstName());
                 u.setApellidos(faker.name().lastName());
@@ -563,20 +542,15 @@ public class DataLoader implements CommandLineRunner {
                 u.setPassword("clave" + i);
                 u.setRol(rolCliente);
 
-                // Guardar usuario
                 UsuarioModel usuarioGuardado = usuarioRepository.save(u);
 
-                // Crear dirección del usuario
                 DireccionModel d = new DireccionModel();
                 d.setCalle(faker.address().streetName());
                 d.setNumero(String.valueOf(faker.number().numberBetween(1, 2000)));
                 d.setCodigoPostal(String.valueOf(faker.number().numberBetween(1000000, 9999999)));
 
-                // Comuna aleatoria
                 ComunaModel comunaRandom = comunas.get(random.nextInt(comunas.size()));
                 d.setComuna(comunaRandom);
-
-                // Relación 1:1 usuario ↔ dirección
                 d.setUsuarioModel(usuarioGuardado);
 
                 direccionRepository.save(d);
@@ -585,15 +559,14 @@ public class DataLoader implements CommandLineRunner {
 
         List<UsuarioModel> usuarios = usuarioRepository.findAll();
 
-        // ================== PRODUCTOS ==================
-        // Genera ~30 productos con tipo, estado y clasificación aleatoria.
+        // ================== PRODUCTOS RANDOM ==================
         for (int i = 0; i < 30; i++) {
 
             String nombre = faker.commerce().productName();
             if (nombre.length() > 100) {
                 nombre = nombre.substring(0, 100);
             }
-            // Evita duplicar productos con el mismo nombre.
+
             if (productoRepository.existsByNombreIgnoreCase(nombre)) {
                 continue;
             }
@@ -601,7 +574,6 @@ public class DataLoader implements CommandLineRunner {
             ProductoModel p = new ProductoModel();
             p.setNombre(nombre.trim());
 
-            // Precio aleatorio entre 5.000 y 50.000; se asegura que no sea <= 0.
             double precio = faker.number().randomDouble(0, 5_000, 50_000);
             p.setPrecio(precio <= 0 ? 9_990 : precio);
 
@@ -612,13 +584,96 @@ public class DataLoader implements CommandLineRunner {
             productoRepository.save(p);
         }
 
+        // ================== PRODUCTOS CON SAGAS (PELÍCULAS) ==================
+        TipoProductoModel tipoPelicula = tiposProducto.stream()
+                .filter(t -> t.getNombre().equalsIgnoreCase("Película"))
+                .findFirst()
+                .orElse(null);
+
+        EstadoModel estadoActivo = estados.stream()
+                .filter(e -> e.getNombre().equalsIgnoreCase("Activo"))
+                .findFirst()
+                .orElse(estados.get(0));
+
+        ClasificacionModel clasif13 = clasificaciones.stream()
+                .filter(c -> c.getNombre().equalsIgnoreCase("+13"))
+                .findFirst()
+                .orElse(clasificaciones.get(0));
+
+        if (tipoPelicula != null) {
+
+            String portadaSpiderman = "/assets/img/sagas/spidermanSaga.webp";
+
+            crearPeliculaSiNoExiste(
+                    "Spider-Man (2002)",
+                    "Spiderman",
+                    portadaSpiderman,
+                    12990.0,
+                    tipoPelicula,
+                    clasif13,
+                    estadoActivo
+            );
+
+            crearPeliculaSiNoExiste(
+                    "Spider-Man 2 (2004)",
+                    "Spiderman",
+                    portadaSpiderman,
+                    13990.0,
+                    tipoPelicula,
+                    clasif13,
+                    estadoActivo
+            );
+
+            crearPeliculaSiNoExiste(
+                    "Spider-Man 3 (2007)",
+                    "Spiderman",
+                    portadaSpiderman,
+                    14990.0,
+                    tipoPelicula,
+                    clasif13,
+                    estadoActivo
+            );
+
+            String portadaLotr = "/assets/img/sagas/lotrSaga.webp";
+
+            crearPeliculaSiNoExiste(
+                    "El Señor de los Anillos: La Comunidad del Anillo",
+                    "El Señor de los Anillos",
+                    portadaLotr,
+                    15990.0,
+                    tipoPelicula,
+                    clasif13,
+                    estadoActivo
+            );
+
+            crearPeliculaSiNoExiste(
+                    "El Señor de los Anillos: Las Dos Torres",
+                    "El Señor de los Anillos",
+                    portadaLotr,
+                    15990.0,
+                    tipoPelicula,
+                    clasif13,
+                    estadoActivo
+            );
+
+            crearPeliculaSiNoExiste(
+                    "El Señor de los Anillos: El Retorno del Rey",
+                    "El Señor de los Anillos",
+                    portadaLotr,
+                    16990.0,
+                    tipoPelicula,
+                    clasif13,
+                    estadoActivo
+            );
+        }
+
+        // Recarga productos luego de crear las sagas
         List<ProductoModel> productos = productoRepository.findAll();
         if (productos.isEmpty()) {
             return;
         }
 
         // ================== ASIGNAR GÉNEROS (TP) ==================
-        // Para cada producto, asigna entre 1 y 3 géneros distintos usando la tabla puente GenerosModel.
         for (ProductoModel producto : productos) {
 
             int cantidadGeneros = 1 + random.nextInt(3);
@@ -636,7 +691,6 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ================== ASIGNAR PLATAFORMAS A PRODUCTOS (TP Plataformas) ==================
-        // Relación muchos a muchos producto ↔ plataforma.
         if (!plataformas.isEmpty()) {
             for (ProductoModel producto : productos) {
 
@@ -679,7 +733,6 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ================== ASIGNAR TIPOS A DESARROLLADORES (TP) ==================
-        // Asocia cada desarrollador a 1–3 tipos de desarrollador.
         if (!desarrolladores.isEmpty() && !tiposDesarrollador.isEmpty()) {
             for (DesarrolladorModel dev : desarrolladores) {
                 int cantidadTipos = 1 + random.nextInt(3);
@@ -743,13 +796,11 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ================== VENTAS Y DETALLES ==================
-        // Genera 20 ventas aleatorias con detalles usando usuarios, métodos de pago y envío existentes.
         if (!usuarios.isEmpty() && !metodosPago.isEmpty() && !metodosEnvio.isEmpty()) {
 
             for (int i = 0; i < 20; i++) {
 
                 VentaModel venta = new VentaModel();
-                // Fecha en los últimos 30 días
                 venta.setFechaCompra(LocalDate.now().minusDays(random.nextInt(30)));
                 venta.setHoraCompra(LocalTime.of(random.nextInt(23), random.nextInt(60)));
                 venta.setUsuarioModel(usuarios.get(random.nextInt(usuarios.size())));
@@ -759,7 +810,6 @@ public class DataLoader implements CommandLineRunner {
 
                 VentaModel ventaGuardada = ventaRepository.save(venta);
 
-                // Entre 1 y 4 ítems por venta
                 int cantidadDetalles = 1 + random.nextInt(4);
                 for (int j = 0; j < cantidadDetalles; j++) {
                     ProductoModel productoRandom = productos.get(random.nextInt(productos.size()));
@@ -776,7 +826,6 @@ public class DataLoader implements CommandLineRunner {
         }
 
         // ================== IMÁGENES ==================
-        // Genera entre 1 y 3 imágenes por producto para poblar la galería.
         for (ProductoModel producto : productos) {
 
             int cantidadImagenes = 1 + random.nextInt(3);
@@ -784,7 +833,6 @@ public class DataLoader implements CommandLineRunner {
             for (int i = 0; i < cantidadImagenes; i++) {
                 ImagenesModel img = new ImagenesModel();
 
-                // Ruta genérica de imagen basada en ID de producto.
                 img.setRuta("/assets/img/productos/" + producto.getId() + "_" + (i + 1) + ".webp");
 
                 String alt = "Imagen " + (i + 1) + " de " + producto.getNombre();
@@ -796,11 +844,40 @@ public class DataLoader implements CommandLineRunner {
             }
         }
 
-        // Mensaje final en consola para confirmar que el seed dev terminó correctamente.
         System.out.println(
                 "[DataLoader] Seed dev completo: tipos de producto, estados, clasificaciones, géneros, "
                         + "desarrolladores, tipos de desarrollador, empresas, tipos de empresa, plataformas, "
                         + "usuarios, métodos de pago, métodos de envío, regiones, comunas, direcciones, "
                         + "ventas, detalles de venta, relaciones TP, productos e imágenes.");
+    }
+
+    /**
+     * Crea una película de saga si no existe un producto con ese nombre.
+     */
+    private void crearPeliculaSiNoExiste(
+            String nombre,
+            String saga,
+            String portadaSaga,
+            Double precio,
+            TipoProductoModel tipoPelicula,
+            ClasificacionModel clasificacion,
+            EstadoModel estado
+    ) {
+        if (productoRepository.existsByNombreIgnoreCase(nombre)) {
+            return;
+        }
+
+        ProductoModel p = new ProductoModel();
+        p.setNombre(nombre);
+        p.setPrecio(precio);
+        p.setTipoProducto(tipoPelicula);
+        p.setClasificacion(clasificacion);
+        p.setEstado(estado);
+
+        // Campos nuevos para carrusel de sagas
+        p.setSaga(saga);
+        p.setPortadaSaga(portadaSaga);
+
+        productoRepository.save(p);
     }
 }

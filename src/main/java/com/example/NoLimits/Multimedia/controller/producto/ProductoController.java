@@ -108,6 +108,21 @@ public class ProductoController {
                                                       "estadoId": 1
                                                     }
                                                     """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Película con saga",
+                                            description = "Ejemplo de película que pertenece a una saga y define una portada de saga.",
+                                            value = """
+                                                    {
+                                                      "nombre": "Spider-Man 2",
+                                                      "precio": 13990,
+                                                      "tipoProductoId": 2,
+                                                      "clasificacionId": 3,
+                                                      "estadoId": 1,
+                                                      "saga": "Spiderman",
+                                                      "portadaSaga": "/assets/img/sagas/spidermanSaga.webp"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -181,6 +196,16 @@ public class ProductoController {
                                                     {
                                                       "precio": 34990,
                                                       "estadoId": 2
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "PATCH saga",
+                                            description = "Ejemplo de actualización parcial de la saga y portada de saga.",
+                                            value = """
+                                                    {
+                                                      "saga": "El Señor de los Anillos",
+                                                      "portadaSaga": "/assets/img/sagas/lotrSaga.webp"
                                                     }
                                                     """
                                     )
@@ -321,11 +346,64 @@ public class ProductoController {
         return ResponseEntity.ok(productos);
     }
 
+    // ========================= SAGAS =========================
+
+    @GetMapping("/sagas")
+    @Operation(summary = "Listar nombres de sagas.",
+            description = "Devuelve una lista de nombres de sagas distintas registradas en productos (solo valores no vacíos).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Listado de sagas obtenido exitosamente.",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = String.class)))),
+            @ApiResponse(responseCode = "204", description = "No hay sagas registradas.")
+    })
+    public ResponseEntity<List<String>> listarSagas() {
+        List<String> sagas = productoService.obtenerSagasDistinct();
+        if (sagas.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(sagas);
+    }
+
+    @GetMapping("/sagas/tipo/{tipoProductoId}")
+    @Operation(summary = "Listar nombres de sagas por tipo de producto.",
+            description = "Devuelve una lista de nombres de sagas filtradas por el tipo de producto (por ejemplo, solo películas).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Listado de sagas obtenido exitosamente.",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = String.class)))),
+            @ApiResponse(responseCode = "204", description = "No hay sagas para el tipo de producto indicado.")
+    })
+    public ResponseEntity<List<String>> listarSagasPorTipoProducto(@PathVariable Long tipoProductoId) {
+        List<String> sagas = productoService.obtenerSagasDistinctPorTipoProducto(tipoProductoId);
+        if (sagas.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(sagas);
+    }
+
+    @GetMapping("/sagas/{saga}")
+    @Operation(summary = "Buscar productos por saga.",
+            description = "Obtiene productos que pertenezcan a una saga específica (búsqueda case-insensitive).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Productos encontrados para la saga indicada.",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class)))),
+            @ApiResponse(responseCode = "204", description = "No se encontraron productos para esa saga.")
+    })
+    public ResponseEntity<List<ProductoResponseDTO>> buscarPorSaga(@PathVariable String saga) {
+        List<ProductoResponseDTO> productos = productoService.findBySagaIgnoreCase(saga);
+        if (productos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(productos);
+    }
+
     // ========================= RESUMEN =========================
 
     @GetMapping("/resumen")
     @Operation(summary = "Obtener resumen de productos.",
-            description = "Devuelve un resumen liviano de los productos (ID, nombre, precio, tipo y estado).")
+            description = "Devuelve un resumen liviano de los productos (ID, nombre, precio, tipo, estado, saga y portada de saga).")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Resumen obtenido exitosamente.",
                     content = @Content(mediaType = "application/json")),
