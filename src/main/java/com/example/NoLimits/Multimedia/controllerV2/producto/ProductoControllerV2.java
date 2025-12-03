@@ -120,173 +120,186 @@ public class ProductoControllerV2 {
         }
     }
 
-    @PostMapping(consumes = "application/json", produces = "application/hal+json")
-    @Operation(
-            summary = "Crear un nuevo producto (HATEOAS)",
-            description = "Crea un nuevo producto y devuelve el recurso con enlaces HATEOAS."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Producto creado correctamente.",
-                    content = @Content(
-                            mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud.")
-    })
-    public ResponseEntity<EntityModel<ProductoResponseDTO>> create(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Producto mínimo",
-                                            description = "Incluye campos requeridos y FKs válidas.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Control Inalámbrico",
-                                                      "precio": 39990,
-                                                      "tipoProductoId": 1,
-                                                      "estadoId": 1,
-                                                      "clasificacionId": 2
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Película con saga",
-                                            description = "Ejemplo de película que pertenece a una saga y define una portada de saga.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Spider-Man 2",
-                                                      "precio": 13990,
-                                                      "tipoProductoId": 2,
-                                                      "clasificacionId": 3,
-                                                      "estadoId": 1,
-                                                      "saga": "Spiderman",
-                                                      "portadaSaga": "/assets/img/sagas/spidermanSaga.webp"
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            )
-            @Valid @RequestBody ProductoRequestDTO dto
-    ) {
+        // ========================= CREAR =========================
+
+        @PostMapping(consumes = "application/json", produces = "application/hal+json")
+        @Operation(
+                summary = "Crear un nuevo producto (HATEOAS)",
+                description = "Crea un nuevo producto y devuelve el recurso con enlaces HATEOAS."
+        )
+        @ApiResponses(value = {
+                @ApiResponse(
+                        responseCode = "201",
+                        description = "Producto creado correctamente.",
+                        content = @Content(
+                                mediaType = "application/hal+json",
+                                schema = @Schema(implementation = ProductoResponseDTO.class)
+                        )
+                ),
+                @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud.")
+        })
+        public ResponseEntity<EntityModel<ProductoResponseDTO>> create(
+                @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                        required = true,
+                        content = @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                        @ExampleObject(
+                                                name = "Producto mínimo",
+                                                description = "Solo campos obligatorios.",
+                                                value = """
+                                                        {
+                                                        "nombre": "Spider-Man (2002)",
+                                                        "precio": 12990,
+                                                        "tipoProductoId": 1,
+                                                        "clasificacionId": 2,
+                                                        "estadoId": 1
+                                                        }
+                                                        """
+                                        ),
+                                        @ExampleObject(
+                                                name = "Producto con relaciones completas",
+                                                description = "Incluye relaciones N:M con catálogos.",
+                                                value = """
+                                                        {
+                                                        "nombre": "Spider-Man 2 (2004)",
+                                                        "precio": 13990,
+                                                        "tipoProductoId": 1,
+                                                        "clasificacionId": 2,
+                                                        "estadoId": 1,
+                                                        "plataformasIds": [1, 2],
+                                                        "generosIds": [1, 3],
+                                                        "empresasIds": [1],
+                                                        "desarrolladoresIds": [4]
+                                                        }
+                                                        """
+                                        )
+                                }
+                        )
+                )
+                @Valid @RequestBody ProductoRequestDTO dto
+        ) {
         ProductoResponseDTO nuevo = productoService.save(dto);
         EntityModel<ProductoResponseDTO> entityModel = productoAssembler.toModel(nuevo);
 
         return ResponseEntity
                 .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
                 .body(entityModel);
-    }
-
-    @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/hal+json")
-    @Operation(
-            summary = "Actualizar un producto (PUT - HATEOAS)",
-            description = "Reemplaza completamente un producto existente por uno nuevo."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Producto actualizado correctamente.",
-                    content = @Content(
-                            mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
-    })
-    public ResponseEntity<EntityModel<ProductoResponseDTO>> update(
-            @PathVariable Long id,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = {
-                                    @ExampleObject(
-                                            name = "PUT seguro (sin id en body)",
-                                            description = "Usa el id de la URL. Incluye campos obligatorios.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Control Inalámbrico",
-                                                      "precio": 39990,
-                                                      "tipoProductoId": 1,
-                                                      "clasificacionId": 2,
-                                                      "estadoId": 1
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            )
-            @Valid @RequestBody ProductoRequestDTO dto
-    ) {
-        try {
-            ProductoResponseDTO actualizado = productoService.update(id, dto);
-            return ResponseEntity.ok(productoAssembler.toModel(actualizado));
-        } catch (RecursoNoEncontradoException e) {
-            return ResponseEntity.notFound().build();
         }
-    }
 
-    @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/hal+json")
-    @Operation(
-            summary = "Actualizar parcialmente un producto (PATCH - HATEOAS)",
-            description = "Modifica campos específicos de un producto existente."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Producto actualizado correctamente.",
-                    content = @Content(
-                            mediaType = "application/hal+json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
-    })
-    public ResponseEntity<EntityModel<ProductoResponseDTO>> patch(
-            @PathVariable Long id,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = {
-                                    @ExampleObject(
-                                            name = "PATCH ejemplo",
-                                            description = "Solo los campos a modificar.",
-                                            value = """
-                                                    {
-                                                      "precio": 34990,
-                                                      "estadoId": 2
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "PATCH saga",
-                                            description = "Ejemplo de actualización parcial de la saga y portada de saga.",
-                                            value = """
-                                                    {
-                                                      "saga": "El Señor de los Anillos",
-                                                      "portadaSaga": "/assets/img/sagas/lotrSaga.webp"
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            )
-            @RequestBody ProductoUpdateDTO dto
-    ) {
+        // ========================= PUT =========================
+
+        @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/hal+json")
+        @Operation(
+                summary = "Actualizar un producto (PUT - HATEOAS)",
+                description = "Reemplaza completamente un producto existente por uno nuevo."
+        )
+        @ApiResponses(value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Producto actualizado correctamente.",
+                        content = @Content(
+                                mediaType = "application/hal+json",
+                                schema = @Schema(implementation = ProductoResponseDTO.class)
+                        )
+                ),
+                @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
+        })
+        public ResponseEntity<EntityModel<ProductoResponseDTO>> update(
+                @PathVariable Long id,
+                @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                        required = true,
+                        content = @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                        @ExampleObject(
+                                                name = "PUT seguro (sin id en body)",
+                                                description = "Usa el id de la URL. Requiere todos los campos obligatorios.",
+                                                value = """
+                                                        {
+                                                        "nombre": "Control Inalámbrico Pro",
+                                                        "precio": 39990,
+                                                        "tipoProductoId": 3,
+                                                        "clasificacionId": 1,
+                                                        "estadoId": 1,
+                                                        "plataformasIds": [1, 4],
+                                                        "generosIds": [5],
+                                                        "empresasIds": [2],
+                                                        "desarrolladoresIds": [3]
+                                                        }
+                                                        """
+                                        )
+                                }
+                        )
+                )
+                @Valid @RequestBody ProductoRequestDTO dto
+        ) {
         try {
-            ProductoResponseDTO actualizado = productoService.patch(id, dto);
-            return ResponseEntity.ok(productoAssembler.toModel(actualizado));
+                ProductoResponseDTO actualizado = productoService.update(id, dto);
+                return ResponseEntity.ok(productoAssembler.toModel(actualizado));
         } catch (RecursoNoEncontradoException e) {
-            return ResponseEntity.notFound().build();
+                return ResponseEntity.notFound().build();
         }
-    }
+        }
+
+        // ========================= PATCH =========================
+
+        @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/hal+json")
+        @Operation(
+                summary = "Actualizar parcialmente un producto (PATCH - HATEOAS)",
+                description = "Modifica campos específicos de un producto existente."
+        )
+        @ApiResponses(value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Producto actualizado correctamente.",
+                        content = @Content(
+                                mediaType = "application/hal+json",
+                                schema = @Schema(implementation = ProductoResponseDTO.class)
+                        )
+                ),
+                @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
+        })
+        public ResponseEntity<EntityModel<ProductoResponseDTO>> patch(
+                @PathVariable Long id,
+                @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                        required = true,
+                        content = @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                        @ExampleObject(
+                                                name = "PATCH precio y estado",
+                                                description = "Actualiza solo precio y estado.",
+                                                value = """
+                                                        {
+                                                        "precio": 34990,
+                                                        "estadoId": 2
+                                                        }
+                                                        """
+                                        ),
+                                        @ExampleObject(
+                                                name = "PATCH relaciones",
+                                                description = "Actualiza solo relaciones N:M.",
+                                                value = """
+                                                        {
+                                                        "plataformasIds": [1, 3],
+                                                        "generosIds": [2, 4],
+                                                        "empresasIds": [1, 3]
+                                                        }
+                                                        """
+                                        )
+                                }
+                        )
+                )
+                @RequestBody ProductoUpdateDTO dto
+        ) {
+        try {
+                ProductoResponseDTO actualizado = productoService.patch(id, dto);
+                return ResponseEntity.ok(productoAssembler.toModel(actualizado));
+        } catch (RecursoNoEncontradoException e) {
+                return ResponseEntity.notFound().build();
+        }
+        }
 
     @DeleteMapping("/{id}")
     @Operation(
