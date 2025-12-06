@@ -4,6 +4,7 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoProductoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoProductoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoProductoUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
@@ -11,6 +12,9 @@ import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -145,6 +149,37 @@ public class TipoProductoService {
             lista.add(datos);
         }
         return lista;
+    }
+
+    // ================== PAGINACIÓN ==================
+
+    public PagedResponse<TipoProductoResponseDTO> listarPaginado(int page, int size, String search) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<TipoProductoModel> resultado;
+
+        if (search == null || search.isBlank()) {
+            // Sin filtro -> paginar todo
+            resultado = tipoProductoRepository.findAll(pageable);
+        } else {
+            // Con filtro -> usar búsqueda paginada
+            resultado = tipoProductoRepository.findByNombreContainingIgnoreCasePaged(search, pageable);
+        }
+
+        // Convertir entidades a DTO
+        List<TipoProductoResponseDTO> contenido = resultado
+                .getContent()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                contenido,                  // Elementos de la página
+                resultado.getNumber() + 1, // Página actual (- 1 indexado)
+                resultado.getTotalPages(), // Total de páginas
+                resultado.getTotalElements() // Total de registros
+        );
     }
 
     // ================== HELPERS ==================

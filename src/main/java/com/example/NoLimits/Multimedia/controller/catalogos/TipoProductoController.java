@@ -21,6 +21,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,12 +62,41 @@ public class TipoProductoController {
             ),
             @ApiResponse(responseCode = "204", description = "No hay tipos de productos registrados.")
     })
+    
     public ResponseEntity<List<TipoProductoResponseDTO>> getAllTiposProductos() {
         List<TipoProductoResponseDTO> tipos = tipoProductoService.findAll();
         return tipos.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(tipos);
     }
+
+    // ================== LISTAR PAGINADO ==================
+
+    @GetMapping("/paginado")
+        @Operation(
+                summary = "Listar tipos de producto paginados",
+                description = "Devuelve una lista paginada de tipos de producto con filtros opcionales."
+        )
+        @ApiResponses(value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Página obtenida exitosamente.",
+                        content = @Content(
+                                mediaType = "application/json",
+                                schema = @Schema(implementation = TipoProductoResponseDTO.class)
+                        )
+                )
+        })
+        public ResponseEntity<PagedResponse<TipoProductoResponseDTO>> listarTiposProductoPaginado(
+                @RequestParam(defaultValue = "1") int page,
+                @RequestParam(defaultValue = "5") int size,
+                @RequestParam(defaultValue = "") String search
+        ) {
+        PagedResponse<TipoProductoResponseDTO> resultado =
+                tipoProductoService.listarPaginado(page, size, search);
+
+        return ResponseEntity.ok(resultado);
+        }
 
     // ================== OBTENER POR ID ==================
 
