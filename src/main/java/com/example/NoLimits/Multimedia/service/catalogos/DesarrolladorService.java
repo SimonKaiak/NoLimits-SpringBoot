@@ -4,11 +4,14 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladorRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladorResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladorUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladorRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -145,6 +148,31 @@ public class DesarrolladorService {
                 .stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    public PagedResponse<DesarrolladorResponseDTO> listarPaginado(int page, int size, String search) {
+
+    PageRequest pageable = PageRequest.of(page - 1, size);
+
+    Page<DesarrolladorModel> paginaBD;
+
+    if (search != null && !search.trim().isEmpty()) {
+        paginaBD = desarrolladorRepository.findByNombreContainingIgnoreCase(search.trim(), pageable);
+    } else {
+        paginaBD = desarrolladorRepository.findAll(pageable);
+    }
+
+    List<DesarrolladorResponseDTO> contenido = paginaBD.getContent()
+            .stream()
+            .map(this::toResponseDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            page,
+            paginaBD.getTotalPages(),
+            paginaBD.getTotalElements()
+        );
     }
 
     // ==========================

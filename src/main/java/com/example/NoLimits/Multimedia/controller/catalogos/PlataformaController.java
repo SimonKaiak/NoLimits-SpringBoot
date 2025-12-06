@@ -6,6 +6,7 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.PlataformaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.PlataformaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -42,6 +44,20 @@ public class PlataformaController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(lista);
+    }
+
+    // ================== LISTAR PAGINADO ==================
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar plataformas con paginación y búsqueda")
+    public ResponseEntity<PagedResponse<PlataformaResponseDTO>> listarPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        PagedResponse<PlataformaResponseDTO> resultado =
+                plataformaService.listarPaginado(page, size, search);
+
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/{id}")

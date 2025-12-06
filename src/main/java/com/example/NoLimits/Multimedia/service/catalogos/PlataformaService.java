@@ -4,10 +4,14 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.PlataformaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.PlataformaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.PlataformaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -83,5 +87,31 @@ public class PlataformaService {
         dto.setId(model.getId());
         dto.setNombre(model.getNombre());
         return dto;
+    }
+
+    // ========== PAGINACIÓN ==========
+
+    public PagedResponse<PlataformaResponseDTO> listarPaginado(int page, int size, String search) {
+
+    Pageable pageable = PageRequest.of(page - 1, size);
+    Page<PlataformaModel> pagina;
+
+    if (search != null && !search.isBlank()) {
+        pagina = plataformaRepository.findByNombreContainingIgnoreCase(search.trim(), pageable);
+    } else {
+        pagina = plataformaRepository.findAll(pageable);
+    }
+
+    List<PlataformaResponseDTO> contenido = pagina.getContent()
+            .stream()
+            .map(this::toResponseDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            pagina.getNumber() + 1,
+            pagina.getTotalPages(),
+            pagina.getTotalElements()
+        );
     }
 }

@@ -4,12 +4,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoEmpresaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoEmpresaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoEmpresaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoEmpresaRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.TiposEmpresaRepository;
@@ -77,5 +81,23 @@ public class TipoEmpresaService {
         dto.setId(model.getId());
         dto.setNombre(model.getNombre());
         return dto;
+    }
+
+    public PagedResponse<TipoEmpresaResponseDTO> findAllPaged(int pagina, int size) {
+    Pageable pageable = PageRequest.of(pagina - 1, size);
+
+    Page<TipoEmpresaModel> page = repository.findAll(pageable);
+
+    List<TipoEmpresaResponseDTO> contenido = page.getContent()
+            .stream()
+            .map(this::toDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            pagina,
+            page.getTotalPages(),
+            page.getTotalElements()
+        );
     }
 }

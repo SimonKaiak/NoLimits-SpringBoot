@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoPagoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoPagoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoPagoUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoPagoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,6 +46,14 @@ public class MetodoPagoController {
     public ResponseEntity<List<MetodoPagoResponseDTO>> getAllMetodosPago() {
         List<MetodoPagoResponseDTO> metodos = metodoPagoService.findAll();
         return metodos.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(metodos);
+    }
+
+    @GetMapping("/paginado")
+    public ResponseEntity<PagedResponse<MetodoPagoResponseDTO>> findAllPaged(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(metodoPagoService.findAllPaged(page, size));
     }
 
     // Obtener un método de pago por ID

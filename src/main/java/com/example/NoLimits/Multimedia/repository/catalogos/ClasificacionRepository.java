@@ -3,6 +3,7 @@ package com.example.NoLimits.Multimedia.repository.catalogos;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -96,4 +97,10 @@ public interface ClasificacionRepository extends JpaRepository<ClasificacionMode
      Útil para evitar duplicados al crear o editar.
     */
     boolean existsByNombreIgnoreCase(String nombre);
+
+    // Busqueda paginada
+    Page<ClasificacionModel> findByNombreContainingIgnoreCase(
+            String nombre,
+            org.springframework.data.domain.Pageable pageable
+    );
 }

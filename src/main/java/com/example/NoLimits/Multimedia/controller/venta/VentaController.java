@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.venta.request.VentaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.venta.response.VentaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.venta.update.VentaUpdateDTO;
@@ -90,6 +93,7 @@ public class VentaController {
 
      Si el servicio no encuentra la venta, se encargará de lanzar la excepción correspondiente.
     */
+
     @GetMapping("/{id}")
     @Operation(summary = "Buscar venta por ID", description = "Obtiene una venta por su ID")
     @ApiResponses({
@@ -99,6 +103,26 @@ public class VentaController {
     })
     public ResponseEntity<VentaResponseDTO> buscarVentaPorId(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.findById(id));
+    }
+
+    // === PAGINADO ===
+    @GetMapping("/mis-compras/paginado")
+    @Operation(summary = "Listar mis compras con paginación real")
+    public ResponseEntity<PagedResponse<VentaResponseDTO>> misComprasPaginado(
+            HttpSession session,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+
+        Long usuarioId = (Long) session.getAttribute("usuarioId");
+        if (usuarioId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        PagedResponse<VentaResponseDTO> response =
+                ventaService.findMisComprasPaged(usuarioId, page, size);
+
+        return ResponseEntity.ok(response);
     }
 
     /*

@@ -6,6 +6,7 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.GeneroRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.GeneroResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.GeneroUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.GeneroService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -52,6 +54,20 @@ public class GeneroController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(generos);
+    }
+
+    // ================== LISTAR PAGINADO ==================
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar géneros con paginación y búsqueda")
+    public ResponseEntity<PagedResponse<GeneroResponseDTO>> listarPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        PagedResponse<GeneroResponseDTO> resultado =
+                generoService.listarPaginado(page, size, search);
+
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/{id}")

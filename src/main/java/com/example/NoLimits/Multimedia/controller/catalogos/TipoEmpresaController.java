@@ -1,7 +1,5 @@
 package com.example.NoLimits.Multimedia.controller.catalogos;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,11 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoEmpresaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoEmpresaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoEmpresaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoEmpresaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,9 +32,19 @@ public class TipoEmpresaController {
     private TipoEmpresaService tipoEmpresaService;
 
     @GetMapping
-    @Operation(summary = "Listar todos los tipos de empresa")
-    public List<TipoEmpresaResponseDTO> findAll() {
-        return tipoEmpresaService.findAll();
+    @Operation(summary = "Listar tipos de empresa con paginación")
+    public ResponseEntity<PagedResponse<TipoEmpresaResponseDTO>> findAllPaged(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        PagedResponse<TipoEmpresaResponseDTO> respuesta =
+                tipoEmpresaService.findAllPaged(page, size);
+
+        if (respuesta.getContenido().isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(respuesta);
     }
 
     @GetMapping("/{id}")

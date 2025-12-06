@@ -4,11 +4,16 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoEnvioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoEnvioUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.MetodoEnvioRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
 
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -49,6 +54,31 @@ public class MetodoEnvioService {
 
     public MetodoEnvioResponseDTO findById(Long id) {
         return toResponseDTO(findEntityById(id));
+    }
+
+    // ================== PAGINACIÓN REAL ==================
+
+    public PagedResponse<MetodoEnvioResponseDTO> findAllPaged(int page, int size, String search) {
+
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+
+    Page<MetodoEnvioModel> result;
+
+    if (search == null || search.trim().isEmpty()) {
+        result = metodoEnvioRepository.findAll(pageable);
+    } else {
+        result = metodoEnvioRepository.findByNombreContainingIgnoreCase(search.trim(), pageable);
+    }
+
+    List<MetodoEnvioResponseDTO> contenido =
+            result.getContent().stream().map(this::toResponseDTO).toList();
+
+    return new PagedResponse<>(
+            contenido,
+            page,
+            result.getTotalPages(),
+            result.getTotalElements()
+        );
     }
 
     // ================== CREAR ==================

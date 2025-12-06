@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.EstadoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.EstadoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.EstadoUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.EstadoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,6 +46,20 @@ public class EstadoController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(estados);
+    }
+
+    // ================== LISTAR PAGINADO ==================
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar estados con paginación y búsqueda")
+    public ResponseEntity<PagedResponse<EstadoResponseDTO>> listarPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        PagedResponse<EstadoResponseDTO> resultado =
+                estadoService.listarPaginado(page, size, search);
+
+        return ResponseEntity.ok(resultado);
     }
 
     // ================== BUSCAR POR ID ==================

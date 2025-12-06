@@ -4,10 +4,14 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.EstadoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.EstadoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.EstadoUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.EstadoRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -232,5 +236,33 @@ public class EstadoService {
         }
 
         return lista;
+    }
+
+    // ================== PAGINACIÓN ==================
+
+    public PagedResponse<EstadoResponseDTO> listarPaginado(int page, int size, String search) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<EstadoModel> paginaEstados;
+
+        if (search != null && !search.isBlank()) {
+            paginaEstados = estadoRepository.findByNombreContainingIgnoreCase(search.trim(), pageable);
+        } else {
+            paginaEstados = estadoRepository.findAll(pageable);
+        }
+
+        List<EstadoResponseDTO> contenido = paginaEstados
+                .getContent()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                contenido,
+                paginaEstados.getNumber() + 1,  // página actual (1-based)
+                paginaEstados.getTotalPages(),  // total de páginas
+                paginaEstados.getTotalElements() // total de registros
+        );
     }
 }

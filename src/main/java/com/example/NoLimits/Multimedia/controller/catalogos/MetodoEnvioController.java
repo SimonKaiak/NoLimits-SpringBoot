@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoEnvioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoEnvioUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoEnvioService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,18 @@ public class MetodoEnvioController {
     public ResponseEntity<List<MetodoEnvioResponseDTO>> listar() {
         List<MetodoEnvioResponseDTO> metodos = metodoEnvioService.findAll();
         return metodos.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(metodos);
+    }
+
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar métodos de envío con paginación real")
+    public ResponseEntity<PagedResponse<MetodoEnvioResponseDTO>> listarPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        return ResponseEntity.ok(
+            metodoEnvioService.findAllPaged(page, size, search)
+        );
     }
 
     @GetMapping("/{id}")

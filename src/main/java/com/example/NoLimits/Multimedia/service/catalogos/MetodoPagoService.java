@@ -1,12 +1,17 @@
 package com.example.NoLimits.Multimedia.service.catalogos;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.MetodoPagoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoPagoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoPagoUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoPagoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.MetodoPagoRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
@@ -57,6 +62,26 @@ public class MetodoPagoService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public PagedResponse<MetodoPagoResponseDTO> findAllPaged(int page, int size) {
+
+    
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("nombre").ascending());
+
+    Page<MetodoPagoModel> resultado = metodoPagoRepository.findAll(pageable);
+
+    List<MetodoPagoResponseDTO> contenido = resultado.getContent()
+            .stream()
+            .map(this::toResponse)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            resultado.getNumber() + 1,   // página actual
+            resultado.getTotalPages(),   // total páginas
+            resultado.getTotalElements() // total elementos
+        );
     }
 
     public MetodoPagoResponseDTO findById(Long id) {

@@ -3,6 +3,7 @@ package com.example.NoLimits.Multimedia.repository.catalogos;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,7 @@ public interface GeneroRepository extends JpaRepository<GeneroModel, Long> {
     """)
     List<Object[]> obtenerGenerosResumen();
 
+    List<GeneroModel> findByNombreContainingIgnoreCase(String nombre, Pageable pageable);
     List<GeneroModel> findByNombreContainingIgnoreCase(String nombre);
 
     Optional<GeneroModel> findByNombreIgnoreCase(String nombre);

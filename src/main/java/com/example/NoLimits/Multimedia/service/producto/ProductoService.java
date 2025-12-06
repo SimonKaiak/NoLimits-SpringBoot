@@ -11,6 +11,13 @@ import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoReposito
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -308,5 +315,27 @@ public class ProductoService {
 
         // plataformas/géneros/empresas/desarrolladores/imagenes (si los mapeas luego)
         return dto;
+    }
+
+    // ================= PAGINACIÓN =================
+
+    public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
+
+        // page viene desde el controlador comenzando en 1, pero PageRequest usa 0-based
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+
+        Page<ProductoModel> result = productoRepository.findAll(pageable);
+
+        List<ProductoResponseDTO> contenido = result.getContent()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                contenido,               // lista de productos (DTO)
+                page,                    // página actual (1-based para el frontend)
+                result.getTotalPages(),  // total de páginas
+                result.getTotalElements()// total de elementos
+        );
     }
 }

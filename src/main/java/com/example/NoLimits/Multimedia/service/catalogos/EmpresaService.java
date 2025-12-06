@@ -4,11 +4,15 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.EmpresaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.EmpresaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.EmpresaRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -160,5 +164,24 @@ public class EmpresaService {
         // Verificar existencia primero
         findEntityById(id);
         empresaRepository.deleteById(id);
+    }
+
+    public PagedResponse<EmpresaResponseDTO> findAllPaged(int pagina, int size) {
+
+    Pageable pageable = PageRequest.of(pagina - 1, size);
+
+    Page<EmpresaModel> page = empresaRepository.findAll(pageable);
+
+    List<EmpresaResponseDTO> contenido = page.getContent()
+            .stream()
+            .map(this::toResponseDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            pagina,
+            page.getTotalPages(),
+            page.getTotalElements()
+        );
     }
 }

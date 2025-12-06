@@ -4,11 +4,15 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.ClasificacionRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.ClasificacionResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.ClasificacionUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -210,5 +214,36 @@ public class ClasificacionService {
         }
 
         return lista;
+    }
+
+    // ================== PAGINACIÓN ==================
+
+    public PagedResponse<ClasificacionResponseDTO> listarPaginado(int page, int size, String search) {
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<ClasificacionModel> paginaClasificaciones;
+
+        // Si no hay búsqueda, filtramos. Si no, listamos todo paginado.
+        if(search != null && !search.isBlank()) {
+            paginaClasificaciones = clasificacionRepository.findByNombreContainingIgnoreCase(search, pageable);
+        } else {
+            paginaClasificaciones = clasificacionRepository.findAll(pageable);
+        }
+
+        // Convertimos a DTO
+        List<ClasificacionResponseDTO> contenido = paginaClasificaciones
+                .getContent()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+
+        // Armamos la respuesta paginada
+        return new PagedResponse<>(
+            contenido,
+            paginaClasificaciones.getNumber() + 1,          // Página actual (1-based)
+            paginaClasificaciones.getTotalPages(),          // Total de páginas
+            paginaClasificaciones.getTotalElements()        // Total de registros
+        );
     }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.producto.request.DetalleVentaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.DetalleVentaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.venta.request.VentaRequestDTO;
@@ -29,6 +30,10 @@ import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -296,6 +301,25 @@ public class VentaService {
         // Gracias a CascadeType.ALL, al guardar la venta también se guardan los detalles
         VentaModel guardada = ventaRepository.save(venta);
         return toResponseDTO(guardada);
+    }
+
+    public PagedResponse<VentaResponseDTO> findMisComprasPaged(Long usuarioId, int page, int size) {
+
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("fechaCompra").descending());
+
+    Page<VentaModel> result = ventaRepository.findByUsuarioModel_Id(usuarioId, pageable);
+
+    List<VentaResponseDTO> contenido = result.getContent()
+            .stream()
+            .map(this::toResponseDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            page,
+            result.getTotalPages(),
+            result.getTotalElements()
+        );
     }
 
     /* ================= Helpers internos ================= */

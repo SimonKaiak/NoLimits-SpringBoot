@@ -4,6 +4,7 @@ package com.example.NoLimits.Multimedia.controller.catalogos;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.DesarrolladorRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.DesarrolladorResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.DesarrolladorUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.DesarrolladorService;
 
 import jakarta.validation.Valid;
@@ -41,6 +42,17 @@ public class DesarrolladorController {
         }
 
         return desarrolladorService.findByNombre(nombre);
+    }
+
+    // ================== PAGINADO ==================
+
+    @GetMapping("/paginado")
+    public PagedResponse<DesarrolladorResponseDTO> listarPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        return desarrolladorService.listarPaginado(page, size, search);
     }
 
     // ================== OBTENER POR ID ==================

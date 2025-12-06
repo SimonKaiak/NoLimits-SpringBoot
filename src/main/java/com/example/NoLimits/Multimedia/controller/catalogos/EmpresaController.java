@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,13 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.EmpresaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.EmpresaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.EmpresaService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/empresas")
@@ -32,11 +32,13 @@ public class EmpresaController {
     @Autowired
     private EmpresaService empresaService;
 
-    @GetMapping
-    @Operation(summary = "Listar todas las empresas")
-    public ResponseEntity<List<EmpresaResponseDTO>> findAll() {
-        List<EmpresaResponseDTO> empresas = empresaService.findAll();
-        return ResponseEntity.ok(empresas);
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar empresas con paginación real")
+    public ResponseEntity<PagedResponse<EmpresaResponseDTO>> findAll(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(empresaService.findAllPaged(page, size));
     }
 
     @GetMapping("/{id}")

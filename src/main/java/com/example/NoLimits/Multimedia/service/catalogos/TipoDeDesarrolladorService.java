@@ -4,13 +4,19 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.TipoDeDesarrolladorRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.TipoDeDesarrolladorResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.TipoDeDesarrolladorUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoDeDesarrolladorRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.TiposDeDesarrolladorRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
+
 
 import java.util.List;
 
@@ -23,6 +29,51 @@ public class TipoDeDesarrolladorService {
 
     @Autowired
     private TiposDeDesarrolladorRepository tiposDeDesarrolladorRepository;
+
+    public PagedResponse<TipoDeDesarrolladorResponseDTO> findAllPaged(int page, int size) {
+
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("nombre").ascending());
+
+    Page<TipoDeDesarrolladorModel> resultado =
+            tipoDeDesarrolladorRepository.findAll(pageable);
+
+    List<TipoDeDesarrolladorResponseDTO> contenido =
+            resultado.getContent().stream()
+                    .map(this::toResponseDTO)
+                    .toList();
+
+    return new PagedResponse<>(
+        contenido,
+        resultado.getNumber() + 1,     // página actual
+        resultado.getTotalPages(),     // total de páginas
+        resultado.getTotalElements()   // total de elementos
+    );
+
+}
+
+    /**
+     * Buscar por nombre con paginación real.
+     */
+    public PagedResponse<TipoDeDesarrolladorResponseDTO> findByNombrePaged(
+            String nombre, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("nombre").ascending());
+
+        Page<TipoDeDesarrolladorModel> pagina =
+                tipoDeDesarrolladorRepository.findByNombreContainingIgnoreCase(nombre, pageable);
+
+        List<TipoDeDesarrolladorResponseDTO> contenido = pagina.getContent()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+
+        return new PagedResponse<>(
+                contenido,
+                page,
+                pagina.getTotalPages(),
+                pagina.getTotalElements()
+        );
+    }
 
     public List<TipoDeDesarrolladorResponseDTO> findAll() {
         return tipoDeDesarrolladorRepository.findAll().stream()
@@ -100,4 +151,5 @@ public class TipoDeDesarrolladorService {
         dto.setNombre(model.getNombre());
         return dto;
     }
+
 }

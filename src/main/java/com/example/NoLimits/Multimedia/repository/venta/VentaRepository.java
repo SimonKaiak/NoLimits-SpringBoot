@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -44,4 +46,6 @@ public interface VentaRepository extends JpaRepository<VentaModel, Long> {
     // Combinados
     List<VentaModel> findByUsuarioModel_IdAndMetodoPagoModel_Id(Long idUsuario, Long idMetodoPago);
     long countByUsuarioModel_Id(Long usuarioId);
+
+    Page<VentaModel> findByUsuarioModel_Id(Long usuarioId, Pageable pageable);
 }

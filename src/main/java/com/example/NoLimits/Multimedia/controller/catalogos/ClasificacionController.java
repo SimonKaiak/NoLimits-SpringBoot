@@ -4,6 +4,7 @@ package com.example.NoLimits.Multimedia.controller.catalogos;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.ClasificacionRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.ClasificacionResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.ClasificacionUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.service.catalogos.ClasificacionService;
 
 // DTOs de entrada/salida para clasificaciones
@@ -91,6 +92,35 @@ public class ClasificacionController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(lista);
+    }
+
+    // ================== LISTAR PAGINADO ==================
+    
+    @GetMapping("/paginado")
+    @Operation(
+            summary = "Listar clasificaciones paginadas",
+            description = "Devuelve una página de clasificaciones con filtros opcionales por nombre."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+                responseCode = "200",
+                description = "Página de clasificaciones obtenida exitosamente.",
+                content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(implementation = PagedResponse.class)
+                )
+        ),
+    })
+    public ResponseEntity<PagedResponse<ClasificacionResponseDTO>> listarPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String search 
+    ) {
+
+        PagedResponse<ClasificacionResponseDTO> resultado =
+                clasificacionService.listarPaginado(page, size, search);
+
+        return ResponseEntity.ok(resultado);
     }
 
     // ================== OBTENER POR ID ==================

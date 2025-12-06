@@ -1,5 +1,6 @@
 package com.example.NoLimits.Multimedia.controller.producto;
 
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -520,4 +522,15 @@ public class ProductoController {
         }
         return ResponseEntity.ok(resumen);
         }
+
+        @GetMapping("/paginacion")
+        @Operation(summary = "Listar productos con paginación real")
+        public ResponseEntity<PagedResponse<ProductoResponseDTO>> listarProductosPaginado(
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "5") int size
+        ) {
+        PagedResponse<ProductoResponseDTO> response = productoService.findAllPaged(page, size);
+        return ResponseEntity.ok(response);
+        }
+
 }
