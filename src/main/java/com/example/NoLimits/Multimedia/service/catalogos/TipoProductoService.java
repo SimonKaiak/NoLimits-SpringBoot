@@ -164,7 +164,7 @@ public class TipoProductoService {
             resultado = tipoProductoRepository.findAll(pageable);
         } else {
             // Con filtro -> usar búsqueda paginada
-            resultado = tipoProductoRepository.findByNombreContainingIgnoreCasePaged(search, pageable);
+            resultado = tipoProductoRepository.findByNombreContainingIgnoreCase(search, pageable);
         }
 
         // Convertir entidades a DTO
