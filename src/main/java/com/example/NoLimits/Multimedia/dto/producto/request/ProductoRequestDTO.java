@@ -1,55 +1,75 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/dto/producto/request/ProductoRequestDTO.java
 package com.example.NoLimits.Multimedia.dto.producto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-@Schema(description = "DTO para crear un producto.")
+@Schema(description = "DTO de entrada para crear/actualizar productos.")
 public class ProductoRequestDTO {
 
-    @NotBlank(message = "El nombre del producto es obligatorio.")
-    @Size(min = 2, max = 100)
-    @Schema(example = "Spider-Man (2002)")
+    @Schema(description = "Nombre del producto", example = "Spider-Man (2002)")
     private String nombre;
 
-    @NotNull(message = "El precio es obligatorio.")
-    @Schema(example = "12990")
+    @Schema(description = "Precio del producto", example = "12990")
     private Double precio;
 
-    @NotNull
-    @Schema(description = "ID del tipo de producto", example = "1")
+    @Schema(description = "ID del tipo de producto", example = "2")
     private Long tipoProductoId;
 
-    @Schema(description = "ID de clasificación", example = "2")
+    @Schema(description = "ID de la clasificación", example = "3")
     private Long clasificacionId;
 
-    @NotNull
     @Schema(description = "ID del estado", example = "1")
     private Long estadoId;
 
-    // ==================== SAGAS ====================
+    /* ====== Sagas ====== */
 
     @Schema(
-            description = "Nombre de la saga a la que pertenece el producto (solo se usa en películas).",
-            example = "Spiderman"
+            description = "Nombre de la saga a la que pertenece el producto.",
+            example = "Minecraft"
     )
     private String saga;
 
     @Schema(
-            description = "Ruta/URL de la portada representativa de la saga.",
-            example = "/assets/img/sagas/spidermanSaga.webp"
+            description = "Ruta/URL de la portada de la saga.",
+            example = "sagas/SagaMinecraft.webp"
     )
     private String portadaSaga;
 
-    // ==================== Relaciones N:M ====================
+    /* ====== Relaciones N:M (IDs) ====== */
 
+    @Schema(
+            description = "IDs de plataformas asociadas al producto.",
+            example = "[1, 2]"
+    )
     private List<Long> plataformasIds;
+
+    @Schema(
+            description = "IDs de géneros asociados al producto.",
+            example = "[3, 4]"
+    )
     private List<Long> generosIds;
+
+    @Schema(
+            description = "IDs de empresas asociadas al producto.",
+            example = "[5]"
+    )
     private List<Long> empresasIds;
+
+    @Schema(
+            description = "IDs de desarrolladores asociados al producto.",
+            example = "[7, 8]"
+    )
     private List<Long> desarrolladoresIds;
+
+    /* ====== Imágenes ====== */
+
+    @Schema(
+            description = "Rutas/URLs de las imágenes del producto.",
+            example = "[\"peliculas/minecraft/PMinecraft.webp\"]"
+    )
+    private List<String> imagenesRutas;
 }

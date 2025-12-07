@@ -1,31 +1,23 @@
 package com.example.NoLimits.Multimedia.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
+import com.example.NoLimits.Multimedia.dto.producto.mapper.ProductoMapper;
 import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
+import com.example.NoLimits.Multimedia.model.catalogos.*;
+import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
-import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
-import com.example.NoLimits.Multimedia.repository.catalogos.EstadoRepository;
-import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.*;
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
-
-import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
-
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,12 +39,25 @@ public class ProductoService {
     @Autowired
     private EstadoRepository estadoRepository;
 
+    // Repositorios de catálogos N:M (ajusta los nombres si en tu proyecto son otros)
+    @Autowired
+    private PlataformaRepository plataformaRepository;
+
+    @Autowired
+    private GeneroRepository generoRepository;
+
+    @Autowired
+    private EmpresaRepository empresaRepository;
+
+    @Autowired
+    private DesarrolladorRepository desarrolladorRepository;
+
     /* ================= CRUD BÁSICO ================= */
 
     public List<ProductoResponseDTO> findAll() {
         return productoRepository.findAll()
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -60,7 +65,7 @@ public class ProductoService {
         ProductoModel model = productoRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
-        return toResponseDTO(model);
+        return ProductoMapper.toResponseDTO(model);
     }
 
     public ProductoResponseDTO save(ProductoRequestDTO dto) {
@@ -81,7 +86,7 @@ public class ProductoService {
         applyRequestToModel(dto, producto);
 
         ProductoModel guardado = productoRepository.save(producto);
-        return toResponseDTO(guardado);
+        return ProductoMapper.toResponseDTO(guardado);
     }
 
     // PUT: reemplaza datos principales
@@ -105,10 +110,10 @@ public class ProductoService {
         applyRequestToModel(dto, productoExistente);
 
         ProductoModel actualizado = productoRepository.save(productoExistente);
-        return toResponseDTO(actualizado);
+        return ProductoMapper.toResponseDTO(actualizado);
     }
 
-    // PATCH: solo campos no nulos
+    // PATCH: solo campos no nulos (no toca las listas N:M)
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
         ProductoModel productoExistente = productoRepository.findById(id)
                 .orElseThrow(() ->
@@ -150,11 +155,10 @@ public class ProductoService {
         }
 
         ProductoModel actualizado = productoRepository.save(productoExistente);
-        return toResponseDTO(actualizado);
+        return ProductoMapper.toResponseDTO(actualizado);
     }
 
     public void deleteById(Long id) {
-        // Verifica existencia
         productoRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
@@ -174,42 +178,42 @@ public class ProductoService {
     public List<ProductoResponseDTO> findByNombre(String nombre) {
         return productoRepository.findByNombre(nombre)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<ProductoResponseDTO> findByNombreContainingIgnoreCase(String nombre) {
         return productoRepository.findByNombreContainingIgnoreCase(nombre)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<ProductoResponseDTO> findByTipoProducto(Long tipoProductoId) {
         return productoRepository.findByTipoProducto_Id(tipoProductoId)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<ProductoResponseDTO> findByClasificacion(Long clasificacionId) {
         return productoRepository.findByClasificacion_Id(clasificacionId)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<ProductoResponseDTO> findByEstado(Long estadoId) {
         return productoRepository.findByEstado_Id(estadoId)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<ProductoResponseDTO> findByTipoProductoAndEstado(Long tipoProductoId, Long estadoId) {
         return productoRepository.findByTipoProducto_IdAndEstado_Id(tipoProductoId, estadoId)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -218,14 +222,14 @@ public class ProductoService {
     public List<ProductoResponseDTO> findBySaga(String saga) {
         return productoRepository.findBySaga(saga)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<ProductoResponseDTO> findBySagaIgnoreCase(String saga) {
         return productoRepository.findBySagaIgnoreCase(saga)
                 .stream()
-                .map(this::toResponseDTO)
+                .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -258,84 +262,137 @@ public class ProductoService {
         return lista;
     }
 
-    /* ================= MAPEO ENTIDAD <-> DTO ================= */
+    /* ================= MAPEO DTO -> ENTIDAD ================= */
 
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
+
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
 
-        // saga y portadaSaga desde el request
+        // saga y portadaSaga
         producto.setSaga(dto.getSaga());
         producto.setPortadaSaga(dto.getPortadaSaga());
 
-        producto.setTipoProducto(
-                tipoProductoRepository.findById(dto.getTipoProductoId())
-                        .orElseThrow(() -> new RecursoNoEncontradoException(
-                                "Tipo de producto no encontrado con ID: " + dto.getTipoProductoId()))
-        );
+        // Tipo, clasificación y estado
+        TipoProductoModel tipo = tipoProductoRepository.findById(dto.getTipoProductoId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Tipo de producto no encontrado con ID: " + dto.getTipoProductoId()));
 
-        producto.setClasificacion(
-                clasificacionRepository.findById(dto.getClasificacionId())
-                        .orElseThrow(() -> new RecursoNoEncontradoException(
-                                "Clasificación no encontrada con ID: " + dto.getClasificacionId()))
-        );
+        ClasificacionModel clasificacion = clasificacionRepository.findById(dto.getClasificacionId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Clasificación no encontrada con ID: " + dto.getClasificacionId()));
 
-        producto.setEstado(
-                estadoRepository.findById(dto.getEstadoId())
-                        .orElseThrow(() -> new RecursoNoEncontradoException(
-                                "Estado no encontrado con ID: " + dto.getEstadoId()))
-        );
+        EstadoModel estado = estadoRepository.findById(dto.getEstadoId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Estado no encontrado con ID: " + dto.getEstadoId()));
+
+        producto.setTipoProducto(tipo);
+        producto.setClasificacion(clasificacion);
+        producto.setEstado(estado);
+
+        // ===== Relaciones N:M =====
+        // Plataformas
+        if (dto.getPlataformasIds() != null) {
+            List<PlataformasModel> plataformas = dto.getPlataformasIds()
+                    .stream()
+                    .map(idPlat -> {
+                        PlataformaModel plat = plataformaRepository.findById(idPlat)
+                                .orElseThrow(() -> new RecursoNoEncontradoException(
+                                        "Plataforma no encontrada con ID: " + idPlat));
+                        PlataformasModel puente = new PlataformasModel();
+                        puente.setProducto(producto);
+                        puente.setPlataforma(plat);
+                        return puente;
+                    })
+                    .collect(Collectors.toList());
+            producto.setPlataformas(plataformas);
+        }
+
+        // Géneros
+        if (dto.getGenerosIds() != null) {
+            List<GenerosModel> generos = dto.getGenerosIds()
+                    .stream()
+                    .map(idGen -> {
+                        GeneroModel gen = generoRepository.findById(idGen)
+                                .orElseThrow(() -> new RecursoNoEncontradoException(
+                                        "Género no encontrado con ID: " + idGen));
+                        GenerosModel puente = new GenerosModel();
+                        puente.setProducto(producto);
+                        puente.setGenero(gen);
+                        return puente;
+                    })
+                    .collect(Collectors.toList());
+            producto.setGeneros(generos);
+        }
+
+        // Empresas
+        if (dto.getEmpresasIds() != null) {
+            List<EmpresasModel> empresas = dto.getEmpresasIds()
+                    .stream()
+                    .map(idEmp -> {
+                        EmpresaModel emp = empresaRepository.findById(idEmp)
+                                .orElseThrow(() -> new RecursoNoEncontradoException(
+                                        "Empresa no encontrada con ID: " + idEmp));
+                        EmpresasModel puente = new EmpresasModel();
+                        puente.setProducto(producto);
+                        puente.setEmpresa(emp);
+                        return puente;
+                    })
+                    .collect(Collectors.toList());
+            producto.setEmpresas(empresas);
+        }
+
+        // Desarrolladores
+        if (dto.getDesarrolladoresIds() != null) {
+            List<DesarrolladoresModel> devs = dto.getDesarrolladoresIds()
+                    .stream()
+                    .map(idDev -> {
+                        DesarrolladorModel dev = desarrolladorRepository.findById(idDev)
+                                .orElseThrow(() -> new RecursoNoEncontradoException(
+                                        "Desarrollador no encontrado con ID: " + idDev));
+                        DesarrolladoresModel puente = new DesarrolladoresModel();
+                        puente.setProducto(producto);
+                        puente.setDesarrollador(dev);
+                        return puente;
+                    })
+                    .collect(Collectors.toList());
+            producto.setDesarrolladores(devs);
+        }
+
+        // Imágenes (rutas simples)
+        if (dto.getImagenesRutas() != null) {
+            List<ImagenesModel> imagenes = dto.getImagenesRutas()
+                    .stream()
+                    .map(ruta -> {
+                        ImagenesModel img = new ImagenesModel();
+                        img.setRuta(ruta);
+                        img.setAltText(producto.getNombre());
+                        img.setProducto(producto);
+                        return img;
+                    })
+                    .collect(Collectors.toList());
+            producto.setImagenes(imagenes);
+        }
     }
 
-    private ProductoResponseDTO toResponseDTO(ProductoModel model) {
-        ProductoResponseDTO dto = new ProductoResponseDTO();
-
-        dto.setId(model.getId());
-        dto.setNombre(model.getNombre());
-        dto.setPrecio(model.getPrecio());
-
-        // saga y portadaSaga hacia el response
-        dto.setSaga(model.getSaga());
-        dto.setPortadaSaga(model.getPortadaSaga());
-
-        if (model.getTipoProducto() != null) {
-            dto.setTipoProductoId(model.getTipoProducto().getId());
-            dto.setTipoProductoNombre(model.getTipoProducto().getNombre());
-        }
-
-        if (model.getClasificacion() != null) {
-            dto.setClasificacionId(model.getClasificacion().getId());
-            dto.setClasificacionNombre(model.getClasificacion().getNombre());
-        }
-
-        if (model.getEstado() != null) {
-            dto.setEstadoId(model.getEstado().getId());
-            dto.setEstadoNombre(model.getEstado().getNombre());
-        }
-
-        // plataformas/géneros/empresas/desarrolladores/imagenes (si los mapeas luego)
-        return dto;
-    }
-
-    // ================= PAGINACIÓN =================
+    /* ================= PAGINACIÓN ================= */
 
     public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
 
-        // page viene desde el controlador comenzando en 1, pero PageRequest usa 0-based
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
 
         Page<ProductoModel> result = productoRepository.findAll(pageable);
 
         List<ProductoResponseDTO> contenido = result.getContent()
                 .stream()
-                .map(this::toResponseDTO)
-                .toList();
+                .map(ProductoMapper::toResponseDTO)
+                .collect(Collectors.toList());
 
         return new PagedResponse<>(
-                contenido,               // lista de productos (DTO)
-                page,                    // página actual (1-based para el frontend)
-                result.getTotalPages(),  // total de páginas
-                result.getTotalElements()// total de elementos
+                contenido,
+                page,
+                result.getTotalPages(),
+                result.getTotalElements()
         );
     }
 }
