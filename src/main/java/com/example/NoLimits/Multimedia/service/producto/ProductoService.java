@@ -104,7 +104,7 @@ public class ProductoService {
         }
 
         if (dto.getEstadoId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
+            throw new RecursoNoEncontradoException("Debe indicar un estadao válido.");
         }
 
         applyRequestToModel(dto, productoExistente);
@@ -119,33 +119,150 @@ public class ProductoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Producto no encontrado con ID: " + id));
 
-        // ... lo que ya tienes (nombre, precio, etc.)
-
-        // ================== PATCH de plataformas (N:M) ==================
-        if (dto.getPlataformasIds() != null) {
-            // Limpio la lista actual (para que no queden duplicados)
-            if (productoExistente.getPlataformas() != null) {
-                productoExistente.getPlataformas().clear();
-            } else {
-                productoExistente.setPlataformas(new ArrayList<>());
-            }
-
-            List<PlataformasModel> nuevasPlataformas = dto.getPlataformasIds()
-                    .stream()
-                    .map(idPlat -> {
-                        PlataformaModel plat = plataformaRepository.findById(idPlat)
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                        "Plataforma no encontrada con ID: " + idPlat));
-                        PlataformasModel puente = new PlataformasModel();
-                        puente.setProducto(productoExistente);
-                        puente.setPlataforma(plat);
-                        return puente;
-                    })
-                    .collect(Collectors.toList());
-
-            productoExistente.getPlataformas().addAll(nuevasPlataformas);
+        // ================== CAMPOS SIMPLES ==================
+        if (dto.getNombre() != null) {
+            productoExistente.setNombre(dto.getNombre());
         }
 
+        if (dto.getPrecio() != null) {
+            productoExistente.setPrecio(dto.getPrecio());
+        }
+
+        if (dto.getSaga() != null) {
+            productoExistente.setSaga(dto.getSaga());
+        }
+
+        if (dto.getPortadaSaga() != null) {
+            productoExistente.setPortadaSaga(dto.getPortadaSaga());
+        }
+
+        // ================== N:1 (FKs) ==================
+        if (dto.getTipoProductoId() != null) {
+            TipoProductoModel tipo = tipoProductoRepository.findById(dto.getTipoProductoId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Tipo de producto no encontrado con ID: " + dto.getTipoProductoId()));
+            productoExistente.setTipoProducto(tipo);
+        }
+
+        if (dto.getClasificacionId() != null) {
+            ClasificacionModel clasificacion = clasificacionRepository.findById(dto.getClasificacionId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Clasificación no encontrada con ID: " + dto.getClasificacionId()));
+            productoExistente.setClasificacion(clasificacion);
+        }
+
+        if (dto.getEstadoId() != null) {
+            EstadoModel estado = estadoRepository.findById(dto.getEstadoId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Estado no encontrado con ID: " + dto.getEstadoId()));
+            productoExistente.setEstado(estado);
+        }
+
+        // ================== N:M: PLATAFORMAS ==================
+        if (dto.getPlataformasIds() != null) {
+            if (productoExistente.getPlataformas() == null) {
+                productoExistente.setPlataformas(new ArrayList<>());
+            } else {
+                productoExistente.getPlataformas().clear();
+            }
+
+            if (!dto.getPlataformasIds().isEmpty()) {
+                List<PlataformasModel> nuevasPlataformas = dto.getPlataformasIds()
+                        .stream()
+                        .map(idPlat -> {
+                            PlataformaModel plat = plataformaRepository.findById(idPlat)
+                                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                                            "Plataforma no encontrada con ID: " + idPlat));
+                            PlataformasModel puente = new PlataformasModel();
+                            puente.setProducto(productoExistente);
+                            puente.setPlataforma(plat);
+                            return puente;
+                        })
+                        .collect(Collectors.toList());
+
+                productoExistente.getPlataformas().addAll(nuevasPlataformas);
+            }
+        }
+
+        // ================== N:M: GÉNEROS ==================
+        if (dto.getGenerosIds() != null) {
+            if (productoExistente.getGeneros() == null) {
+                productoExistente.setGeneros(new ArrayList<>());
+            } else {
+                productoExistente.getGeneros().clear();
+            }
+
+            if (!dto.getGenerosIds().isEmpty()) {
+                List<GenerosModel> nuevosGeneros = dto.getGenerosIds()
+                        .stream()
+                        .map(idGen -> {
+                            GeneroModel gen = generoRepository.findById(idGen)
+                                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                                            "Género no encontrado con ID: " + idGen));
+                            GenerosModel puente = new GenerosModel();
+                            puente.setProducto(productoExistente);
+                            puente.setGenero(gen);
+                            return puente;
+                        })
+                        .collect(Collectors.toList());
+
+                productoExistente.getGeneros().addAll(nuevosGeneros);
+            }
+        }
+
+        // ================== N:M: EMPRESAS ==================
+        if (dto.getEmpresasIds() != null) {
+            if (productoExistente.getEmpresas() == null) {
+                productoExistente.setEmpresas(new ArrayList<>());
+            } else {
+                productoExistente.getEmpresas().clear();
+            }
+
+            if (!dto.getEmpresasIds().isEmpty()) {
+                List<EmpresasModel> nuevasEmpresas = dto.getEmpresasIds()
+                        .stream()
+                        .map(idEmp -> {
+                            EmpresaModel emp = empresaRepository.findById(idEmp)
+                                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                                            "Empresa no encontrada con ID: " + idEmp));
+                            EmpresasModel puente = new EmpresasModel();
+                            puente.setProducto(productoExistente);
+                            puente.setEmpresa(emp);
+                            return puente;
+                        })
+                        .collect(Collectors.toList());
+
+                productoExistente.getEmpresas().addAll(nuevasEmpresas);
+            }
+        }
+
+        // ================== N:M: DESARROLLADORES ==================
+        if (dto.getDesarrolladoresIds() != null) {
+            if (productoExistente.getDesarrolladores() == null) {
+                productoExistente.setDesarrolladores(new ArrayList<>());
+            } else {
+                productoExistente.getDesarrolladores().clear();
+            }
+
+            if (!dto.getDesarrolladoresIds().isEmpty()) {
+                List<DesarrolladoresModel> nuevosDevs = dto.getDesarrolladoresIds()
+                        .stream()
+                        .map(idDev -> {
+                            DesarrolladorModel dev = desarrolladorRepository.findById(idDev)
+                                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                                            "Desarrollador no encontrado con ID: " + idDev));
+                            DesarrolladoresModel puente = new DesarrolladoresModel();
+                            puente.setProducto(productoExistente);
+                            puente.setDesarrollador(dev);
+                            return puente;
+                        })
+                        .collect(Collectors.toList());
+
+                productoExistente.getDesarrolladores().addAll(nuevosDevs);
+            }
+        }
+
+        // ================== GUARDAR Y DEVOLVER ==================
         ProductoModel actualizado = productoRepository.save(productoExistente);
         return ProductoMapper.toResponseDTO(actualizado);
     }
