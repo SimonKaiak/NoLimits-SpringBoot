@@ -51,7 +51,7 @@ public class PlataformaController {
     @Operation(summary = "Listar plataformas con paginación y búsqueda")
     public ResponseEntity<PagedResponse<PlataformaResponseDTO>> listarPaginado(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "4") int size,
             @RequestParam(defaultValue = "") String search
     ) {
         PagedResponse<PlataformaResponseDTO> resultado =

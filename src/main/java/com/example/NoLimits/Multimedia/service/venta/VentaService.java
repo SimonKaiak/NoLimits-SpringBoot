@@ -303,6 +303,25 @@ public class VentaService {
         return toResponseDTO(guardada);
     }
 
+    public PagedResponse<VentaResponseDTO> findAllPaged(int page, int size) {
+
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("fechaCompra").descending());
+
+    Page<VentaModel> result = ventaRepository.findAll(pageable);
+
+    List<VentaResponseDTO> contenido = result.getContent()
+            .stream()
+            .map(this::toResponseDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            page,
+            result.getTotalPages(),
+            result.getTotalElements()
+        );
+    }
+    
     public PagedResponse<VentaResponseDTO> findMisComprasPaged(Long usuarioId, int page, int size) {
 
     Pageable pageable = PageRequest.of(page - 1, size, Sort.by("fechaCompra").descending());

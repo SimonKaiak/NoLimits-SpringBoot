@@ -89,7 +89,7 @@ public class TipoProductoController {
         })
         public ResponseEntity<PagedResponse<TipoProductoResponseDTO>> listarTiposProductoPaginado(
                 @RequestParam(defaultValue = "1") int page,
-                @RequestParam(defaultValue = "5") int size,
+                @RequestParam(defaultValue = "4") int size,
                 @RequestParam(defaultValue = "") String search
         ) {
         PagedResponse<TipoProductoResponseDTO> resultado =

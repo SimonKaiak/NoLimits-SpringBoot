@@ -38,7 +38,7 @@ public class MetodoEnvioController {
     @Operation(summary = "Listar métodos de envío con paginación real")
     public ResponseEntity<PagedResponse<MetodoEnvioResponseDTO>> listarPaginado(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "4") int size,
             @RequestParam(defaultValue = "") String search
     ) {
         return ResponseEntity.ok(

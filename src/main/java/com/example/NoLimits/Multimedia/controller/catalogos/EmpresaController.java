@@ -36,7 +36,7 @@ public class EmpresaController {
     @Operation(summary = "Listar empresas con paginación real")
     public ResponseEntity<PagedResponse<EmpresaResponseDTO>> findAll(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "4") int size
     ) {
         return ResponseEntity.ok(empresaService.findAllPaged(page, size));
     }

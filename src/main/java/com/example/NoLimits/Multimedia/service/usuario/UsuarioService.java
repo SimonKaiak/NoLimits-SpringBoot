@@ -6,16 +6,26 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
+import com.example.NoLimits.Multimedia.model.ubicacion.ComunaModel;
+import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
+import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
+import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 
@@ -40,6 +50,12 @@ public class UsuarioService {
 
     @Autowired
     private VentaRepository ventaRepository;
+
+    @Autowired
+    private DireccionRepository direccionRepository;
+
+    @Autowired
+    private ComunaRepository comunaRepository;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -69,39 +85,79 @@ public class UsuarioService {
      - Correo no duplicado (se normaliza en minúsculas).
     */
     public UsuarioResponseDTO save(UsuarioRequestDTO dto) {
-        if (dto.getPassword() != null && dto.getPassword().length() > 10) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
-        }
 
-        if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "El correo es obligatorio");
-        }
-
-        String correo = dto.getCorreo().trim().toLowerCase();
-
-        if (usuarioRepository.existsByCorreo(correo)) {
-            throw new ResponseStatusException(
-                HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
-        }
-
-        UsuarioModel usuario = new UsuarioModel();
-        usuario.setNombre(dto.getNombre());
-        usuario.setApellidos(dto.getApellidos());
-        usuario.setCorreo(correo);
-        usuario.setTelefono(dto.getTelefono());
-        usuario.setPassword(dto.getPassword());
-
-        if (dto.getRolId() != null) {
-            RolModel rol = new RolModel();
-            rol.setId(dto.getRolId());
-            usuario.setRol(rol);
-        }
-
-        UsuarioModel guardado = usuarioRepository.save(usuario);
-        return toResponseDTO(guardado);
+    // ===================== VALIDACIONES BÁSICAS =====================
+    if (dto.getPassword() != null && dto.getPassword().length() > 10) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
     }
+
+    if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "El correo es obligatorio");
+    }
+
+    String correo = dto.getCorreo().trim().toLowerCase();
+
+    if (usuarioRepository.existsByCorreo(correo)) {
+        throw new ResponseStatusException(
+            HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
+    }
+
+
+    // ===================== CREAR USUARIO =====================
+    UsuarioModel usuario = new UsuarioModel();
+    usuario.setNombre(dto.getNombre());
+    usuario.setApellidos(dto.getApellidos());
+    usuario.setCorreo(correo);
+    usuario.setTelefono(dto.getTelefono());
+    usuario.setPassword(dto.getPassword());
+
+    // Rol
+    if (dto.getRolId() != null) {
+        RolModel rol = new RolModel();
+        rol.setId(dto.getRolId());
+        usuario.setRol(rol);
+    }
+
+    // Guardar usuario sin dirección primero (para obtener ID)
+    UsuarioModel usuarioGuardado = usuarioRepository.save(usuario);
+
+
+    // ===================== CREAR DIRECCIÓN =====================
+    DireccionRequestDTO d = dto.getDireccion();
+
+    if (d != null) {
+
+        // 1. Buscar comuna
+        ComunaModel comuna = comunaRepository.findById(d.getComunaId())
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Comuna no encontrada"));
+
+        // 2. Crear objeto dirección
+        DireccionModel direccion = new DireccionModel();
+        direccion.setCalle(d.getCalle());
+        direccion.setNumero(d.getNumero());
+        direccion.setComplemento(d.getComplemento());
+        direccion.setCodigoPostal(d.getCodigoPostal());
+        direccion.setActivo(d.getActivo() == null ? true : d.getActivo());
+        direccion.setComuna(comuna);
+
+        // 3. Asociar usuario ↔ dirección
+        direccion.setUsuarioModel(usuarioGuardado);
+
+        // 4. Guardar dirección
+        direccionRepository.save(direccion);
+
+        // 5. Relacionar dirección en el modelo del usuario
+        usuarioGuardado.setDireccion(direccion);
+    }
+
+
+    // ===================== RESPUESTA =====================
+    return toResponseDTO(usuarioGuardado);
+}
+
 
     /*
      Eliminar un usuario por ID.
@@ -244,34 +300,30 @@ public class UsuarioService {
      - rolId
     */
     public UsuarioResponseDTO patch(long id, UsuarioUpdateDTO d) {
+
         UsuarioModel u = getUsuarioOrThrow(id);
 
         // Nombre
-        if (d.getNombre() != null) {
-            String v = d.getNombre().trim();
-            if (!v.isEmpty()) {
-                u.setNombre(v);
-            }
+        if (d.getNombre() != null && !d.getNombre().trim().isEmpty()) {
+            u.setNombre(d.getNombre().trim());
         }
 
         // Apellidos
-        if (d.getApellidos() != null) {
-            String v = d.getApellidos().trim();
-            if (!v.isEmpty()) {
-                u.setApellidos(v);
-            }
+        if (d.getApellidos() != null && !d.getApellidos().trim().isEmpty()) {
+            u.setApellidos(d.getApellidos().trim());
         }
 
-        // Correo (normalizado y sin duplicar)
-        if (d.getCorreo() != null) {
+        // Correo
+        if (d.getCorreo() != null && !d.getCorreo().trim().isEmpty()) {
             String nuevo = d.getCorreo().trim().toLowerCase();
-            if (!nuevo.isEmpty() && !nuevo.equalsIgnoreCase(u.getCorreo())) {
-                if (usuarioRepository.existsByCorreo(nuevo)) {
-                    throw new ResponseStatusException(
-                        HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
-                }
-                u.setCorreo(nuevo);
+
+            if (!nuevo.equalsIgnoreCase(u.getCorreo()) &&
+                usuarioRepository.existsByCorreo(nuevo)) {
+
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
             }
+            u.setCorreo(nuevo);
         }
 
         // Teléfono
@@ -279,8 +331,8 @@ public class UsuarioService {
             u.setTelefono(d.getTelefono());
         }
 
-        // Password (con máximo de caracteres)
-        if (d.getPassword() != null) {
+        // Password
+        if (d.getPassword() != null && !d.getPassword().isEmpty()) {
             if (d.getPassword().length() > 10) {
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
@@ -288,15 +340,72 @@ public class UsuarioService {
             u.setPassword(d.getPassword());
         }
 
-        // Rol (usando rolId)
+        // Rol
         if (d.getRolId() != null) {
             RolModel nuevoRol = new RolModel();
             nuevoRol.setId(d.getRolId());
             u.setRol(nuevoRol);
         }
 
+        // ================================================
+        // ACTUALIZAR DIRECCIÓN (nuevo)
+        // ================================================
+        if (d.getDireccion() != null) {
+
+            DireccionRequestDTO dir = d.getDireccion();
+
+            // Buscar comuna
+            ComunaModel comuna = comunaRepository.findById(dir.getComunaId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Comuna no encontrada"));
+
+            DireccionModel direccion;
+
+            // Si el usuario YA tiene dirección → se actualiza
+            if (u.getDireccion() != null) {
+                direccion = u.getDireccion();
+            } else {
+                // Si no tiene dirección → se crea una nueva
+                direccion = new DireccionModel();
+                direccion.setUsuarioModel(u);
+            }
+
+            direccion.setCalle(dir.getCalle());
+            direccion.setNumero(dir.getNumero());
+            direccion.setComplemento(dir.getComplemento());
+            direccion.setCodigoPostal(dir.getCodigoPostal());
+            direccion.setActivo(dir.getActivo() == null ? true : dir.getActivo());
+            direccion.setComuna(comuna);
+
+            // Guardar dirección
+            direccionRepository.save(direccion);
+
+            // Relacionar en usuario
+            u.setDireccion(direccion);
+        }
+
+        // Guardar usuario
         UsuarioModel guardado = usuarioRepository.save(u);
         return toResponseDTO(guardado);
+    }
+
+    public PagedResponse<UsuarioResponseDTO> findAllPaged(int page, int size) {
+
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+
+    Page<UsuarioModel> result = usuarioRepository.findAll(pageable);
+
+    List<UsuarioResponseDTO> contenido = result.getContent()
+            .stream()
+            .map(this::toResponseDTO)
+            .toList();
+
+    return new PagedResponse<>(
+            contenido,
+            page,
+            result.getTotalPages(),
+            result.getTotalElements()
+        );
     }
 
     /* ================= Resumen para reportes / admin ================= */

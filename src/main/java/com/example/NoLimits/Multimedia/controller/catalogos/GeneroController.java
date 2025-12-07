@@ -61,7 +61,7 @@ public class GeneroController {
     @Operation(summary = "Listar géneros con paginación y búsqueda")
     public ResponseEntity<PagedResponse<GeneroResponseDTO>> listarPaginado(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "4") int size,
             @RequestParam(defaultValue = "") String search
     ) {
         PagedResponse<GeneroResponseDTO> resultado =

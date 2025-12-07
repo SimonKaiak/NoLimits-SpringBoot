@@ -53,7 +53,7 @@ public class EstadoController {
     @Operation(summary = "Listar estados con paginación y búsqueda")
     public ResponseEntity<PagedResponse<EstadoResponseDTO>> listarPaginado(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "4") int size,
             @RequestParam(defaultValue = "") String search
     ) {
         PagedResponse<EstadoResponseDTO> resultado =

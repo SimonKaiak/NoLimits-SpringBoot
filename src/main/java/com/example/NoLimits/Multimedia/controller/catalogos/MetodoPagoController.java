@@ -51,7 +51,7 @@ public class MetodoPagoController {
     @GetMapping("/paginado")
     public ResponseEntity<PagedResponse<MetodoPagoResponseDTO>> findAllPaged(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "4") int size
     ) {
         return ResponseEntity.ok(metodoPagoService.findAllPaged(page, size));
     }

@@ -1,3 +1,4 @@
+// Ruta: backend/src/main/java/com/example/NoLimits/Multimedia/controller/usuario/UsuarioController.java
 package com.example.NoLimits.Multimedia.controller.usuario;
 
 import java.util.List;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
@@ -64,6 +67,19 @@ public class UsuarioController {
         return usuarios.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(usuarios);
+    }
+
+    /**
+     * Listar usuarios con paginación real.
+     */
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar usuarios con paginación real")
+    public ResponseEntity<PagedResponse<UsuarioResponseDTO>> listarUsuariosPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "4") int size
+    ) {
+        PagedResponse<UsuarioResponseDTO> response = usuarioService.findAllPaged(page, size);
+        return ResponseEntity.ok(response);
     }
 
     /**

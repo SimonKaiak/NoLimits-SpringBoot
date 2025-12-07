@@ -22,7 +22,7 @@ public class DireccionRequestDTO {
     @Schema(example = "13101", description = "ID de la comuna a la que pertenece la dirección")
     private Long comunaId;
 
-    @Schema(example = "5", description = "ID del usuario dueño de esta dirección")
+    @Schema(hidden = true, example = "5", description = "ID del usuario dueño de esta dirección")
     private Long usuarioId;
 
     @Schema(example = "true", description = "Si no se envía, se puede asumir true por defecto")

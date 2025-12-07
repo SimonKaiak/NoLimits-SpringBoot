@@ -70,6 +70,16 @@ public class ProductoController {
         return ResponseEntity.ok(productos);
     }
 
+    @GetMapping("/paginacion")
+    @Operation(summary = "Listar productos con paginación real")
+    public ResponseEntity<PagedResponse<ProductoResponseDTO>> listarProductosPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        PagedResponse<ProductoResponseDTO> response = productoService.findAllPaged(page, size);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     @Operation(
             summary = "Buscar producto por ID.",
@@ -546,16 +556,6 @@ public class ProductoController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(resumen);
-    }
-
-    @GetMapping("/paginacion")
-    @Operation(summary = "Listar productos con paginación real")
-    public ResponseEntity<PagedResponse<ProductoResponseDTO>> listarProductosPaginado(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
-    ) {
-        PagedResponse<ProductoResponseDTO> response = productoService.findAllPaged(page, size);
-        return ResponseEntity.ok(response);
     }
 
 }

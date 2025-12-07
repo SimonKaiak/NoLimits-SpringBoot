@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.dto.usuario.request;
 
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -42,4 +45,8 @@ public class UsuarioRequestDTO {
             example = "1"
     )
     private Long rolId;
+
+    @NotNull(message = "La dirección es obligatoria.")
+    @Valid
+    private DireccionRequestDTO direccion;
 }

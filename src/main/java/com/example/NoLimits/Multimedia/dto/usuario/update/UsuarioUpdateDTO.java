@@ -1,5 +1,7 @@
 package com.example.NoLimits.Multimedia.dto.usuario.update;
 
+import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -27,4 +29,7 @@ public class UsuarioUpdateDTO {
         example = "2"
     )
     private Long rolId;
+
+    @Schema(description = "Datos de dirección del usuario", example = "Av. Avenida 921")
+    private DireccionRequestDTO direccion;
 }

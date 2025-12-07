@@ -35,7 +35,7 @@ public class TipoEmpresaController {
     @Operation(summary = "Listar tipos de empresa con paginación")
     public ResponseEntity<PagedResponse<TipoEmpresaResponseDTO>> findAllPaged(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "4") int size
     ) {
         PagedResponse<TipoEmpresaResponseDTO> respuesta =
                 tipoEmpresaService.findAllPaged(page, size);

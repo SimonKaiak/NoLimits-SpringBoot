@@ -33,7 +33,7 @@ public class TipoDeDesarrolladorController {
     @GetMapping("/paginado")
     public ResponseEntity<PagedResponse<TipoDeDesarrolladorResponseDTO>> findAll(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "4") int size
     ) {
         return ResponseEntity.ok(service.findAllPaged(page, size));
     }

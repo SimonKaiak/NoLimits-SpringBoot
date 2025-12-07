@@ -88,6 +88,16 @@ public class VentaController {
                 : ResponseEntity.ok(ventas);
     }
 
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar ventas con paginación real")
+    public ResponseEntity<PagedResponse<VentaResponseDTO>> listarVentasPaginado(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "4") int size
+    ) {
+        PagedResponse<VentaResponseDTO> response = ventaService.findAllPaged(page, size);
+        return ResponseEntity.ok(response);
+    }
+
     /*
      Busca una venta específica usando su ID.
 
@@ -111,10 +121,11 @@ public class VentaController {
     public ResponseEntity<PagedResponse<VentaResponseDTO>> misComprasPaginado(
             HttpSession session,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "4") int size 
     ) {
 
         Long usuarioId = (Long) session.getAttribute("usuarioId");
+
         if (usuarioId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
