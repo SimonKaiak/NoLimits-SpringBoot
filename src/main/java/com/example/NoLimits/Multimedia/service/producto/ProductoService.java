@@ -116,42 +116,34 @@ public class ProductoService {
     // PATCH: solo campos no nulos (no toca las listas N:M)
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
         ProductoModel productoExistente = productoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Producto no encontrado con ID: " + id));
 
-        if (dto.getNombre() != null) {
-            productoExistente.setNombre(dto.getNombre());
-        }
-        if (dto.getPrecio() != null) {
-            productoExistente.setPrecio(dto.getPrecio());
-        }
-        if (dto.getTipoProductoId() != null) {
-            productoExistente.setTipoProducto(
-                    tipoProductoRepository.findById(dto.getTipoProductoId())
-                            .orElseThrow(() -> new RecursoNoEncontradoException(
-                                    "Tipo de producto no encontrado con ID: " + dto.getTipoProductoId()))
-            );
-        }
-        if (dto.getClasificacionId() != null) {
-            productoExistente.setClasificacion(
-                    clasificacionRepository.findById(dto.getClasificacionId())
-                            .orElseThrow(() -> new RecursoNoEncontradoException(
-                                    "Clasificación no encontrada con ID: " + dto.getClasificacionId()))
-            );
-        }
-        if (dto.getEstadoId() != null) {
-            productoExistente.setEstado(
-                    estadoRepository.findById(dto.getEstadoId())
-                            .orElseThrow(() -> new RecursoNoEncontradoException(
-                                    "Estado no encontrado con ID: " + dto.getEstadoId()))
-            );
-        }
-        // PATCH de saga y portadaSaga
-        if (dto.getSaga() != null) {
-            productoExistente.setSaga(dto.getSaga());
-        }
-        if (dto.getPortadaSaga() != null) {
-            productoExistente.setPortadaSaga(dto.getPortadaSaga());
+        // ... lo que ya tienes (nombre, precio, etc.)
+
+        // ================== PATCH de plataformas (N:M) ==================
+        if (dto.getPlataformasIds() != null) {
+            // Limpio la lista actual (para que no queden duplicados)
+            if (productoExistente.getPlataformas() != null) {
+                productoExistente.getPlataformas().clear();
+            } else {
+                productoExistente.setPlataformas(new ArrayList<>());
+            }
+
+            List<PlataformasModel> nuevasPlataformas = dto.getPlataformasIds()
+                    .stream()
+                    .map(idPlat -> {
+                        PlataformaModel plat = plataformaRepository.findById(idPlat)
+                                .orElseThrow(() -> new RecursoNoEncontradoException(
+                                        "Plataforma no encontrada con ID: " + idPlat));
+                        PlataformasModel puente = new PlataformasModel();
+                        puente.setProducto(productoExistente);
+                        puente.setPlataforma(plat);
+                        return puente;
+                    })
+                    .collect(Collectors.toList());
+
+            productoExistente.getPlataformas().addAll(nuevasPlataformas);
         }
 
         ProductoModel actualizado = productoRepository.save(productoExistente);
