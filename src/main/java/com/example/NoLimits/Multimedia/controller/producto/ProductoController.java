@@ -476,6 +476,27 @@ public class ProductoController {
         return ResponseEntity.ok(sagas);
     }
 
+    @GetMapping("/sagas/resumen")
+    @Operation(
+            summary = "Listar sagas con su portada.",
+            description = "Devuelve una lista de objetos { nombre, portadaSaga } para cada saga distinta."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Listado de sagas obtenido exitosamente.",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(responseCode = "204", description = "No hay sagas registradas.")
+    })
+    public ResponseEntity<List<Map<String, Object>>> listarSagasConPortada() {
+        List<Map<String, Object>> sagas = productoService.obtenerSagasConPortada();
+        if (sagas.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(sagas);
+    }
+
     @GetMapping("/sagas/tipo/{tipoProductoId}")
     @Operation(
             summary = "Listar nombres de sagas por tipo de producto.",

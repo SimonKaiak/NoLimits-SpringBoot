@@ -86,4 +86,15 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
           AND p.tipoProducto.id = :tipoProductoId
     """)
     List<String> findDistinctSagasByTipoProductoId(Long tipoProductoId);
+
+    // Listado de sagas con una portada asociada (si existe)
+    @Query("""
+        SELECT p.saga, MAX(p.portadaSaga)
+        FROM ProductoModel p
+        WHERE p.saga IS NOT NULL
+          AND p.saga <> ''
+        GROUP BY p.saga
+    """)
+    List<Object[]> findDistinctSagasWithPortada();
+
 }

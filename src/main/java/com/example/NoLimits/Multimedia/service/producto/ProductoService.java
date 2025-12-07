@@ -211,6 +211,21 @@ public class ProductoService {
 
     /* ================= SAGAS ================= */
 
+    // Sagas con su portada (si existe)
+    public List<Map<String, Object>> obtenerSagasConPortada() {
+        List<Object[]> filas = productoRepository.findDistinctSagasWithPortada();
+        List<Map<String, Object>> lista = new ArrayList<>();
+
+        for (Object[] fila : filas) {
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("nombre", fila[0]);        // saga (String)
+            datos.put("portadaSaga", fila[1]);   // portada (String o null)
+            lista.add(datos);
+        }
+
+        return lista;
+    }
+
     public List<ProductoResponseDTO> findBySaga(String saga) {
         return productoRepository.findBySaga(saga)
                 .stream()
