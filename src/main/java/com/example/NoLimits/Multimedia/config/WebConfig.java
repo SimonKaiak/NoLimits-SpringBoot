@@ -27,8 +27,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
 
-        // Se aplica la configuración CORS a todas las rutas que comiencen con /api/
-        registry.addMapping("/api/**")
+        // Se aplica la configuración CORS a todas las rutas del backend
+        // (incluye /api/**, /v1/** y cualquier otro path expuesto por tus controladores)
+        registry.addMapping("/**")
 
                 // Dominios permitidos para consumir la API
                 // localhost: entorno de desarrollo
