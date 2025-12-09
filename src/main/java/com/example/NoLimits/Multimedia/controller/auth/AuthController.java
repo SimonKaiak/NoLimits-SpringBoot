@@ -4,8 +4,8 @@ package com.example.NoLimits.Multimedia.controller.auth;
 
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
+import com.example.NoLimits.Multimedia.security.JwtUtil;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,6 +31,9 @@ public class AuthController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     /*
      LOGIN REAL
 
@@ -39,53 +42,44 @@ public class AuthController {
      Si todo es correcto, guarda el ID del usuario en la sesión.
     */
     @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @RequestBody Map<String, String> body,
-            HttpSession session) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
 
         String correo = body.get("correo");
         String password = body.get("password");
 
-        // Validación básica: ambos campos son obligatorios
         if (correo == null || password == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Correo y contraseña son obligatorios");
+            return ResponseEntity.badRequest().body("Correo y contraseña obligatorios");
         }
 
-        // Búsqueda del usuario por correo en la base de datos
         UsuarioModel usuario = usuarioRepository
                 .findByCorreo(correo.trim().toLowerCase())
                 .orElse(null);
 
-        // Si no existe el usuario o la contraseña no coincide, se rechaza el login
         if (usuario == null || !usuario.getPassword().equals(password)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Correo o contraseña incorrectos");
         }
 
-        // Si las credenciales son correctas, se guarda el ID del usuario en la sesión
-        session.setAttribute("usuarioId", usuario.getId());
+        String rol = usuario.getRol().getNombre();
 
-        // Se devuelven datos básicos del usuario al frontend
+        String token = jwtUtil.generateToken(usuario.getCorreo(), rol);
+
         return ResponseEntity.ok(Map.of(
+                "token", token,
                 "id", usuario.getId(),
                 "nombre", usuario.getNombre(),
                 "apellidos", usuario.getApellidos(),
                 "correo", usuario.getCorreo(),
                 "rolId", usuario.getRol().getId(),
-                "rolNombre", usuario.getRol().getNombre()
+                "rolNombre", rol
         ));
     }
 
     /*
      LOGOUT
-
-     Este método elimina la sesión actual del usuario.
-     Al invalidar la sesión, el usuario deja de estar autenticado.
     */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpSession session) {
-        session.invalidate();
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok().body("Logout OK");
     }
 }
