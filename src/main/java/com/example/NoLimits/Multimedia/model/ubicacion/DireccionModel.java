@@ -2,6 +2,8 @@ package com.example.NoLimits.Multimedia.model.ubicacion;
 
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,6 +63,7 @@ public class DireccionModel {
 
     @OneToOne
     @JoinColumn(name = "usuario_id", unique = true)
+    @JsonIgnore
     @Schema(
             description = "Usuario al que pertenece la dirección (solo ID al crear/editar)",
             example = "{\"id\": 5}",
