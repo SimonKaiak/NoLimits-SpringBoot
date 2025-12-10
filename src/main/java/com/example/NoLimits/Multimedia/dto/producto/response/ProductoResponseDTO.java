@@ -38,17 +38,20 @@ public class ProductoResponseDTO {
 
     // ==================== SAGAS ====================
 
-    @Schema(
-            description = "Nombre de la saga a la que pertenece el producto.",
-            example = "Spiderman"
-    )
-    private String saga;
+        @Schema(
+                description = "Nombre de la saga a la que pertenece el producto. Puede ser null.",
+                example = "Spiderman",
+                nullable = true
+        )
+        private String saga;
 
-    @Schema(
-            description = "Ruta/URL de la portada representativa de la saga.",
-            example = "/assets/img/sagas/spidermanSaga.webp"
-    )
-    private String portadaSaga;
+        @Schema(
+                description = "Ruta/URL de la portada representativa de la saga. Puede ser null.",
+                example = "/assets/img/sagas/spidermanSaga.webp",
+                nullable = true
+        )
+        private String portadaSaga;
+
 
     // ==================== Relaciones N:M (nombres) ====================
 

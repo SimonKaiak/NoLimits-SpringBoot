@@ -26,17 +26,20 @@ public class ProductoUpdateDTO {
 
     // ==================== SAGAS ====================
 
-    @Schema(
-            description = "Nuevo nombre de la saga (si deseas cambiarla).",
-            example = "El Señor de los Anillos"
-    )
-    private String saga;
+        @Schema(
+                description = "Nuevo nombre de la saga (si deseas cambiarla). Puede ser null.",
+                example = "El Señor de los Anillos",
+                nullable = true
+        )
+        private String saga;
 
-    @Schema(
-            description = "Nueva ruta/URL de la portada representativa de la saga.",
-            example = "/assets/img/sagas/lotrSaga.webp"
-    )
-    private String portadaSaga;
+        @Schema(
+                description = "Nueva ruta/URL de la portada representativa de la saga. Puede ser null.",
+                example = "/assets/img/sagas/lotrSaga.webp",
+                nullable = true
+        )
+        private String portadaSaga;
+
 
     // ==================== Relaciones N:M ====================
 

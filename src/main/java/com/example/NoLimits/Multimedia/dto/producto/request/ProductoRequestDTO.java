@@ -25,19 +25,21 @@ public class ProductoRequestDTO {
     @Schema(description = "ID del estado", example = "1")
     private Long estadoId;
 
-    /* ====== Sagas ====== */
+        /* ====== Sagas ====== */
 
-    @Schema(
-            description = "Nombre de la saga a la que pertenece el producto.",
-            example = "Minecraft"
-    )
-    private String saga;
+        @Schema(
+        description = "Nombre de la saga a la que pertenece el producto. Opcional.",
+        example = "Minecraft",
+        nullable = true
+        )
+        private String saga;
 
-    @Schema(
-            description = "Ruta/URL de la portada de la saga.",
-            example = "sagas/SagaMinecraft.webp"
-    )
-    private String portadaSaga;
+        @Schema(
+        description = "Ruta/URL de la portada de la saga. Opcional.",
+        example = "sagas/SagaMinecraft.webp",
+        nullable = true
+        )
+        private String portadaSaga;
 
     /* ====== Relaciones N:M (IDs) ====== */
 

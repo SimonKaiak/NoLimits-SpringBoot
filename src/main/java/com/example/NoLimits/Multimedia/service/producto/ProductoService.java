@@ -6,18 +6,40 @@ import com.example.NoLimits.Multimedia.dto.producto.mapper.ProductoMapper;
 import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
-import com.example.NoLimits.Multimedia.model.catalogos.*;
+import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
+import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
+import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladoresModel;
+import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
+import com.example.NoLimits.Multimedia.model.catalogos.EmpresasModel;
+import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
+import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
+import com.example.NoLimits.Multimedia.model.catalogos.GenerosModel;
+import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
+import com.example.NoLimits.Multimedia.model.catalogos.PlataformasModel;
+import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
-import com.example.NoLimits.Multimedia.repository.catalogos.*;
+import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladorRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.EmpresaRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.EstadoRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.GeneroRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,12 +150,25 @@ public class ProductoService {
             productoExistente.setPrecio(dto.getPrecio());
         }
 
+        // Saga
         if (dto.getSaga() != null) {
-            productoExistente.setSaga(dto.getSaga());
+            // Si viene string vacío o solo espacios -> lo dejamos en null
+            String sagaNormalizada = dto.getSaga().trim();
+            if (sagaNormalizada.isEmpty()) {
+                productoExistente.setSaga(null);
+            } else {
+                productoExistente.setSaga(sagaNormalizada);
+            }
         }
 
+        // Portada saga
         if (dto.getPortadaSaga() != null) {
-            productoExistente.setPortadaSaga(dto.getPortadaSaga());
+            String portadaNormalizada = dto.getPortadaSaga().trim();
+            if (portadaNormalizada.isEmpty()) {
+                productoExistente.setPortadaSaga(null);
+            } else {
+                productoExistente.setPortadaSaga(portadaNormalizada);
+            }
         }
 
         // ================== N:1 (FKs) ==================

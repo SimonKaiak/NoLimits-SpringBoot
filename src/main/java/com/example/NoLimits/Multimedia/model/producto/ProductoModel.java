@@ -54,17 +54,21 @@ public class ProductoModel {
 
     /* ====== Campos para sagas (solo aplica a películas) ====== */
 
-    @Column(name = "saga", length = 100)
+    // Saga
+    @Column(name = "saga", length = 100, nullable = true)
     @Schema(
         description = "Nombre de la saga a la que pertenece el producto (solo para películas).",
-        example = "Spiderman"
+        example = "Spiderman",
+        nullable = true
     )
     private String saga;
 
-    @Column(name = "portada_saga", length = 255)
+    // Portada saga
+    @Column(name = "portada_saga", length = 255, nullable = true)
     @Schema(
         description = "Ruta o URL de la imagen usada como portada de la saga.",
-        example = "/assets/img/sagas/spidermanSaga.webp"
+        example = "/assets/img/sagas/spidermanSaga.webp",
+        nullable = true
     )
     private String portadaSaga;
 
