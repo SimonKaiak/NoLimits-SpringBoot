@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.NoLimits.Multimedia.model.RolModel;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.VentaModel;
+import com.example.NoLimits.Multimedia.repository.RolRepository;
 import com.example.NoLimits.Multimedia.repository.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.VentaRepository;
 
@@ -27,6 +28,9 @@ public class UsuarioService {
 
     @Autowired
     private VentaRepository ventaRepository;
+
+    @Autowired
+    private RolRepository rolRepository;
 
     // Obtener todos los usuarios
     public List<UsuarioModel> findAll() {
@@ -61,6 +65,44 @@ public class UsuarioService {
         usuario.setCorreo(correo);
         return usuarioRepository.save(usuario);
     }
+
+    public UsuarioModel saveConRolId(UsuarioModel usuario, Long rolId) {
+
+        // ===== Validaciones actuales =====
+        if (usuario.getPassword() != null && usuario.getPassword().length() > 10) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
+        }
+
+        if (usuario.getCorreo() == null || usuario.getCorreo().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "El correo es obligatorio");
+        }
+
+        String correo = usuario.getCorreo().trim().toLowerCase();
+
+        if (usuarioRepository.existsByCorreo(correo)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
+        }
+
+        // ===== Validación rolId =====
+        if (rolId == null) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "rolId es obligatorio");
+        }
+
+        RolModel rol = rolRepository.findById(rolId)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "No existe el rol con ID: " + rolId));
+
+        // ===== Seteos finales =====
+        usuario.setCorreo(correo);
+        usuario.setRol(rol); // CLAVE: ahora rol NO es null
+
+        return usuarioRepository.save(usuario);
+    }
+
 
     // Eliminar un usuario (bloquear si tiene ventas asociadas)
     public void deleteById(Long id) {

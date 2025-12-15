@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin; // NUEVO: para permitir peticiones desde React.
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.UsuarioCreateRequest;
 import com.example.NoLimits.Multimedia.model.UsuarioModel;
 import com.example.NoLimits.Multimedia.service.UsuarioService;
 
@@ -86,35 +87,19 @@ public class UsuarioController {
 
     // Crear usuario
     @PostMapping
-    @Operation(
-        summary = "Crear usuario",
-        description = "Registra un nuevo usuario.",
-        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            required = true,
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = UsuarioModel.class),
-                examples = @ExampleObject(
-                    name = "Nuevo usuario",
-                    value = """
-                    {
-                      "nombre": "Lucas",
-                      "apellidos": "Fernández",
-                      "correo": "lucas@example.com",
-                      "telefono": 912345678,
-                      "password": "clave123"
-                    }
-                    """
-                )
-            )
-        ),
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Usuario creado",
-                content = @Content(schema = @Schema(implementation = UsuarioModel.class))),
-            @ApiResponse(responseCode = "409", description = "Correo ya registrado"),
-            @ApiResponse(responseCode = "400", description = "Error de validación")
-        }
-    )
+    public ResponseEntity<UsuarioModel> crearUsuario(@RequestBody UsuarioCreateRequest req) {
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setNombre(req.getNombre());
+        usuario.setApellidos(req.getApellidos());
+        usuario.setCorreo(req.getCorreo());
+        usuario.setTelefono(req.getTelefono());
+        usuario.setPassword(req.getPassword());
+
+        UsuarioModel nuevoUsuario = usuarioService.saveConRolId(usuario, req.getRolId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
+    }
+    
     public ResponseEntity<UsuarioModel> crearUsuario(@RequestBody UsuarioModel usuario) {
         UsuarioModel nuevoUsuario = usuarioService.save(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
