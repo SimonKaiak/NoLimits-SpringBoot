@@ -28,6 +28,7 @@ import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
+import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -56,6 +57,9 @@ public class UsuarioService {
 
     @Autowired
     private ComunaRepository comunaRepository;
+
+    @Autowired
+    private RolRepository rolRepository;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -113,12 +117,22 @@ public class UsuarioService {
     usuario.setTelefono(dto.getTelefono());
     usuario.setPassword(dto.getPassword());
 
-    // Rol
+    // ===================== ROL (VALIDADO + DEFAULT) =====================
+    RolModel rol;
+
     if (dto.getRolId() != null) {
-        RolModel rol = new RolModel();
-        rol.setId(dto.getRolId());
-        usuario.setRol(rol);
+        rol = rolRepository.findById(dto.getRolId())
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Rol no encontrado con ID: " + dto.getRolId()
+            ));
+    } else {
+    rol = rolRepository.findByNombreIgnoreCase("ROLE_USER")
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Rol por defecto ROLE_USER no existe. Ejecuta RolesSeeder."
+            ));
     }
+    usuario.setRol(rol);
 
     // Guardar usuario sin dirección primero (para obtener ID)
     UsuarioModel usuarioGuardado = usuarioRepository.save(usuario);
@@ -277,8 +291,10 @@ public class UsuarioService {
         u.setPassword(d.getPassword());
 
         if (d.getRolId() != null) {
-            RolModel nuevoRol = new RolModel();
-            nuevoRol.setId(d.getRolId());
+            RolModel nuevoRol = rolRepository.findById(d.getRolId())
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Rol no encontrado con ID: " + d.getRolId()
+                ));
             u.setRol(nuevoRol);
         }
 
@@ -342,8 +358,10 @@ public class UsuarioService {
 
         // Rol
         if (d.getRolId() != null) {
-            RolModel nuevoRol = new RolModel();
-            nuevoRol.setId(d.getRolId());
+            RolModel nuevoRol = rolRepository.findById(d.getRolId())
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Rol no encontrado con ID: " + d.getRolId()
+                ));
             u.setRol(nuevoRol);
         }
 
