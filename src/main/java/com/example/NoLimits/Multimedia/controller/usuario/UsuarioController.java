@@ -3,10 +3,13 @@ package com.example.NoLimits.Multimedia.controller.usuario;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.core.Authentication;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +33,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 /**
@@ -58,6 +60,7 @@ public class UsuarioController {
      * Si la lista está vacía, se responde con 204 (sin contenido).
      */
     @GetMapping
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
         summary = "Listar todos los usuarios",
         description = "Obtiene una lista de todos los usuarios registrados."
@@ -72,6 +75,7 @@ public class UsuarioController {
     /**
      * Listar usuarios con paginación real.
      */
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/paginado")
     @Operation(summary = "Listar usuarios con paginación real")
     public ResponseEntity<PagedResponse<UsuarioResponseDTO>> listarUsuariosPaginado(
@@ -89,6 +93,7 @@ public class UsuarioController {
      * Si no se encuentra, el service lanza 404.
      */
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
         summary = "Buscar usuario por ID",
         description = "Obtiene un usuario específico por su ID."
@@ -303,18 +308,15 @@ public class UsuarioController {
      * Si no hay usuario en sesión, responde con 401 (no autorizado).
      */
     @GetMapping("/me")
-    @Operation(
-        summary = "Obtener mi perfil",
-        description = "Devuelve los datos del usuario asociado a la sesión actual."
-    )
-    public ResponseEntity<UsuarioResponseDTO> obtenerMiPerfil(HttpSession session) {
-        Long usuarioId = (Long) session.getAttribute("usuarioId");
-
-        if (usuarioId == null) {
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UsuarioResponseDTO> obtenerMiPerfil() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UsuarioResponseDTO usuario = usuarioService.findById(usuarioId);
+        String correo = (String) auth.getPrincipal(); // lo pones tú en JwtFilter
+        UsuarioResponseDTO usuario = usuarioService.findByCorreo(correo);
         return ResponseEntity.ok(usuario);
     }
 
@@ -325,21 +327,23 @@ public class UsuarioController {
      * de la sesión (usuario actualmente autenticado).
      */
     @PatchMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
         summary = "Actualizar mi perfil",
-        description = "Actualiza algunos campos del usuario asociado a la sesión actual."
+        description = "Actualiza algunos campos del usuario autenticado por JWT."
     )
-    public ResponseEntity<UsuarioResponseDTO> actualizarMiPerfilSesion(
-            @RequestBody UsuarioUpdateDTO cambios,
-            HttpSession session) {
+    public ResponseEntity<UsuarioResponseDTO> actualizarMiPerfil(
+            @RequestBody UsuarioUpdateDTO cambios) {
 
-        Long usuarioId = (Long) session.getAttribute("usuarioId");
-
-        if (usuarioId == null) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UsuarioResponseDTO actualizado = usuarioService.patch(usuarioId, cambios);
+        String correo = (String) auth.getPrincipal();
+        UsuarioResponseDTO usuario = usuarioService.findByCorreo(correo);
+
+        UsuarioResponseDTO actualizado = usuarioService.patch(usuario.getId(), cambios);
         return ResponseEntity.ok(actualizado);
     }
 }
