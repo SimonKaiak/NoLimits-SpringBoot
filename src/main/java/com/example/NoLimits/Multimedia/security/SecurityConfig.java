@@ -26,27 +26,38 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                 // Si entran al root "/", manda al Swagger
-                if ("/".equals(request.getRequestURI())) {
-                    response.sendRedirect("/doc/swagger-ui.html");
-                    return;
-                }
+                if ("/".equals(request.getRequestURI()) && "GET".equalsIgnoreCase(request.getMethod())) {
+                response.sendRedirect("/doc/swagger-ui.html");
+                return;
+            }
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
             }))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // IMPORTANTE: permitir el root
-                .requestMatchers(HttpMethod.GET, "/").permitAll()
+            // Públicos
+            .requestMatchers("/").permitAll()
+            .requestMatchers("/api/v1/auth/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
 
-                // Endpoints públicos
-                .requestMatchers("/api/v1/auth/login").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/doc/**").permitAll()
+            .requestMatchers(
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/doc/**",
+                "/actuator/health",
+                "/actuator/info"
+            ).permitAll()
 
-                // Catálogo público (solo GET)
-                .requestMatchers(HttpMethod.GET, "/api/v1/productos", "/api/v1/productos/**").permitAll()
+            // Catálogo público
+            .requestMatchers(
+                HttpMethod.GET,
+                "/api/v1/productos",
+                "/api/v1/productos/**"
+            ).permitAll()
 
-                .anyRequest().authenticated()
-            )
+            // Todo lo demás con JWT
+            .anyRequest().authenticated()
+        )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
