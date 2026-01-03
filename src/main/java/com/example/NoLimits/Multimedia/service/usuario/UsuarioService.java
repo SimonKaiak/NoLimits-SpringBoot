@@ -91,9 +91,9 @@ public class UsuarioService {
     public UsuarioResponseDTO save(UsuarioRequestDTO dto) {
 
     // ===================== VALIDACIONES BÁSICAS =====================
-    if (dto.getPassword() != null && dto.getPassword().length() > 10) {
+    if (dto.getPassword() != null && (dto.getPassword().length() < 8 || dto.getPassword().length() > 255)) {
         throw new ResponseStatusException(
-            HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
+            HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
     }
 
     if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
@@ -279,9 +279,9 @@ public class UsuarioService {
                 HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
         }
 
-        if (d.getPassword() != null && d.getPassword().length() > 10) {
+        if (d.getPassword() != null && (d.getPassword().length() < 8 || d.getPassword().length() > 255)) {
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
+                HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
         }
 
         u.setNombre(d.getNombre());
@@ -349,9 +349,9 @@ public class UsuarioService {
 
         // Password
         if (d.getPassword() != null && !d.getPassword().isEmpty()) {
-            if (d.getPassword().length() > 10) {
+            if (d.getPassword().length() < 8 || d.getPassword().length() > 255) {
                 throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "La contraseña debe tener máximo 10 caracteres");
+                    HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
             }
             u.setPassword(d.getPassword());
         }

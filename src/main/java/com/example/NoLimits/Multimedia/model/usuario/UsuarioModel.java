@@ -77,10 +77,9 @@ public class UsuarioModel {
      * - Máximo 10 caracteres (según restricción definida).
      * - WRITE_ONLY en JSON: se puede enviar desde el frontend, pero no se devuelve nunca en respuestas.
      */
-    @Column(length = 10, nullable = false)
+    @Column(length = 255, nullable = false)
     @NotBlank(message = "El usuario requiere de una contraseña.")
-    @Size(max = 10, message = "La contraseña debe tener como máximo 10 caracteres.")
-    @Schema(description = "Contraseña del usuario (máx. 10 caracteres)", example = "clave1234")
+    @Size(min = 8, max = 255, message = "La contraseña debe tener entre 8 y 255 caracteres.")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
