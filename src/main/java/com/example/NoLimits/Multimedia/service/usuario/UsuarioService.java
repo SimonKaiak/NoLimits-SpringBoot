@@ -84,7 +84,7 @@ public class UsuarioService {
      Guardar un nuevo usuario.
 
      Validaciones:
-     - Contraseña máximo 10 caracteres.
+     - Contraseña máximo 255 caracteres.
      - Correo obligatorio.
      - Correo no duplicado (se normaliza en minúsculas).
     */
@@ -143,12 +143,15 @@ public class UsuarioService {
 
     if (d != null) {
 
-        // 1. Buscar comuna
+        if (d.getComunaId() == null) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La comunaId es obligatoria en dirección.");
+        }
+
         ComunaModel comuna = comunaRepository.findById(d.getComunaId())
                 .orElseThrow(() -> new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Comuna no encontrada"));
 
-        // 2. Crear objeto dirección
         DireccionModel direccion = new DireccionModel();
         direccion.setCalle(d.getCalle());
         direccion.setNumero(d.getNumero());
@@ -156,18 +159,14 @@ public class UsuarioService {
         direccion.setCodigoPostal(d.getCodigoPostal());
         direccion.setActivo(d.getActivo() == null ? true : d.getActivo());
         direccion.setComuna(comuna);
-
-        // 3. Asociar usuario ↔ dirección
         direccion.setUsuarioModel(usuarioGuardado);
 
-        // 4. Guardar dirección
         direccionRepository.save(direccion);
 
-        // 5. Relacionar dirección en el modelo del usuario
+        // recomendado: guardar también el usuario si tu relación NO tiene cascade
         usuarioGuardado.setDireccion(direccion);
+        usuarioRepository.save(usuarioGuardado);
     }
-
-
     // ===================== RESPUESTA =====================
     return toResponseDTO(usuarioGuardado);
 }
@@ -257,7 +256,7 @@ public class UsuarioService {
      Reglas:
      - Todos los campos deben venir informados: nombre, apellidos, correo, teléfono, password, rolId.
      - El correo se normaliza en minúsculas y debe seguir siendo único.
-     - La contraseña máximo 10 caracteres.
+     - La contraseña máximo 255 caracteres.
     */
     public UsuarioResponseDTO update(long id, UsuarioUpdateDTO d) {
         UsuarioModel u = getUsuarioOrThrow(id);
@@ -312,7 +311,7 @@ public class UsuarioService {
      - apellidos
      - correo (validando duplicados)
      - teléfono
-     - password (máx. 10 caracteres)
+     - password (máx. 255 caracteres)
      - rolId
     */
     public UsuarioResponseDTO patch(long id, UsuarioUpdateDTO d) {
@@ -372,10 +371,23 @@ public class UsuarioService {
 
             DireccionRequestDTO dir = d.getDireccion();
 
-            // Buscar comuna
+            // 1 Validar comuna
+            if (dir.getComunaId() == null) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "La comunaId es obligatoria en dirección.");
+            }
+
+            // 2 Validar calle y número
+            if (dir.getCalle() == null || dir.getCalle().trim().isEmpty()
+            || dir.getNumero() == null || dir.getNumero().trim().isEmpty()) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "La calle y el número son obligatorios en dirección.");
+            }
+
+            // 3 Buscar comuna
             ComunaModel comuna = comunaRepository.findById(dir.getComunaId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Comuna no encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Comuna no encontrada"));
 
             DireccionModel direccion;
 

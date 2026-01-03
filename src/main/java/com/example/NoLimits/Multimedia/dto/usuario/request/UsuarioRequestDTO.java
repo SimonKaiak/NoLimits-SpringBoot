@@ -31,13 +31,17 @@ public class UsuarioRequestDTO {
     @Schema(description = "Número de teléfono del usuario", example = "987654321")
     private Long telefono;
 
-    @NotBlank(message = "La contraseña es obligatoria.")
-    @Size(max = 10, message = "La contraseña debe tener como máximo 10 caracteres.")
-    @Schema(
-            description = "Contraseña del usuario (máx. 10 caracteres)",
-            example = "clave1234"
-    )
-    private String password;
+        @NotBlank(message = "La contraseña es obligatoria.")
+        @Size(
+        min = 8,
+        max = 255,
+        message = "La contraseña debe tener entre 8 y 255 caracteres."
+        )
+        @Schema(
+        description = "Contraseña del usuario (mín. 8 y máx. 255 caracteres)",
+        example = "ClaveSegura123!"
+        )
+        private String password;
 
     @NotNull(message = "El rol es obligatorio.")
     @Schema(
@@ -46,7 +50,10 @@ public class UsuarioRequestDTO {
     )
     private Long rolId;
 
-    @NotNull(message = "La dirección es obligatoria.")
-    @Valid
-    private DireccionRequestDTO direccion;
+    @Schema(
+        description = "Dirección del usuario (opcional; se asigna en Perfil)",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
+        @Valid
+        private DireccionRequestDTO direccion;
 }
