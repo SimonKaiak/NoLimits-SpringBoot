@@ -22,3 +22,14 @@
 # y no son necesarios en el control de versiones.
 # Evita subir información sensible o ruido al repositorio.
 *.log
+
+# IDEs / Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven Wrapper logs o similares
+mvn-log.txt
