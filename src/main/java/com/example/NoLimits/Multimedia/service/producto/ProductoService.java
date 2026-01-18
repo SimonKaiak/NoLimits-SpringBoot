@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/producto/ProductoService.java
 package com.example.NoLimits.Multimedia.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -39,7 +40,6 @@ public class ProductoService {
     @Autowired
     private EstadoRepository estadoRepository;
 
-    // Repositorios de catálogos N:M (ajusta los nombres si en tu proyecto son otros)
     @Autowired
     private PlataformaRepository plataformaRepository;
 
@@ -113,7 +113,7 @@ public class ProductoService {
         return ProductoMapper.toResponseDTO(actualizado);
     }
 
-    // PATCH: solo campos no nulos (no toca las listas N:M)
+    // PATCH: solo campos no nulos
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
         ProductoModel productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -134,6 +134,15 @@ public class ProductoService {
 
         if (dto.getPortadaSaga() != null) {
             productoExistente.setPortadaSaga(dto.getPortadaSaga());
+        }
+
+        // ✅ NUEVO: campos HUB (redirigir)
+        if (dto.getUrlCompra() != null) {
+            productoExistente.setUrlCompra(dto.getUrlCompra());
+        }
+
+        if (dto.getLabelCompra() != null) {
+            productoExistente.setLabelCompra(dto.getLabelCompra());
         }
 
         // ================== N:1 (FKs) ==================
@@ -267,22 +276,64 @@ public class ProductoService {
         return ProductoMapper.toResponseDTO(actualizado);
     }
 
-    public void deleteById(Long id) {
-        productoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+    /* ================= SAGAS ================= */
 
-        boolean tieneMovimientos = !detalleVentaRepository.findByProducto_Id(id).isEmpty();
-        if (tieneMovimientos) {
-            throw new IllegalStateException(
-                    "No se puede eliminar: el producto tiene movimientos en ventas."
-            );
-        }
-
-        productoRepository.deleteById(id);
+    public List<ProductoResponseDTO> findBySaga(String saga) {
+        return productoRepository.findBySaga(saga)
+                .stream()
+                .map(ProductoMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    /* ================= BÚSQUEDAS ================= */
+    public List<ProductoResponseDTO> findBySagaIgnoreCase(String saga) {
+        return productoRepository.findBySagaIgnoreCase(saga)
+                .stream()
+                .map(ProductoMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> obtenerSagasDistinct() {
+        return productoRepository.findDistinctSagas();
+    }
+
+    public List<String> obtenerSagasDistinctPorTipoProducto(Long tipoProductoId) {
+        return productoRepository.findDistinctSagasByTipoProductoId(tipoProductoId);
+    }
+
+    public List<Map<String, Object>> obtenerSagasConPortada() {
+        List<Object[]> filas = productoRepository.findDistinctSagasWithPortada();
+        List<Map<String, Object>> lista = new ArrayList<>();
+
+        for (Object[] fila : filas) {
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("nombre", fila[0]);
+            datos.put("portadaSaga", fila[1]);
+            lista.add(datos);
+        }
+
+        return lista;
+    }
+
+    public List<Map<String, Object>> obtenerProductosConDatos() {
+        List<Object[]> resultados = productoRepository.obtenerProductosResumen();
+        List<Map<String, Object>> lista = new ArrayList<>();
+
+        for (Object[] fila : resultados) {
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("ID", fila[0]);
+            datos.put("Nombre", fila[1]);
+            datos.put("Precio", fila[2]);
+            datos.put("Tipo Producto", fila[3]);
+            datos.put("Estado", fila[4]);
+            datos.put("Saga", fila[5]);
+            datos.put("Portada Saga", fila[6]);
+            lista.add(datos);
+        }
+
+        return lista;
+    }
+
+    // ================= BÚSQUEDAS / FILTROS (PARA EL CONTROLLER) =================
 
     public List<ProductoResponseDTO> findByNombre(String nombre) {
         return productoRepository.findByNombre(nombre)
@@ -326,64 +377,19 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
-    /* ================= SAGAS ================= */
+    public void deleteById(Long id) {
+        productoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-    // Sagas con su portada (si existe)
-    public List<Map<String, Object>> obtenerSagasConPortada() {
-        List<Object[]> filas = productoRepository.findDistinctSagasWithPortada();
-        List<Map<String, Object>> lista = new ArrayList<>();
-
-        for (Object[] fila : filas) {
-            Map<String, Object> datos = new HashMap<>();
-            datos.put("nombre", fila[0]);        // saga (String)
-            datos.put("portadaSaga", fila[1]);   // portada (String o null)
-            lista.add(datos);
+        boolean tieneMovimientos = !detalleVentaRepository.findByProducto_Id(id).isEmpty();
+        if (tieneMovimientos) {
+            throw new IllegalStateException(
+                    "No se puede eliminar: el producto tiene movimientos en ventas."
+            );
         }
 
-        return lista;
-    }
-
-    public List<ProductoResponseDTO> findBySaga(String saga) {
-        return productoRepository.findBySaga(saga)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<ProductoResponseDTO> findBySagaIgnoreCase(String saga) {
-        return productoRepository.findBySagaIgnoreCase(saga)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<String> obtenerSagasDistinct() {
-        return productoRepository.findDistinctSagas();
-    }
-
-    public List<String> obtenerSagasDistinctPorTipoProducto(Long tipoProductoId) {
-        return productoRepository.findDistinctSagasByTipoProductoId(tipoProductoId);
-    }
-
-    /* ================= RESUMEN ================= */
-
-    public List<Map<String, Object>> obtenerProductosConDatos() {
-        List<Object[]> resultados = productoRepository.obtenerProductosResumen();
-        List<Map<String, Object>> lista = new ArrayList<>();
-
-        for (Object[] fila : resultados) {
-            Map<String, Object> datos = new HashMap<>();
-            datos.put("ID", fila[0]);
-            datos.put("Nombre", fila[1]);
-            datos.put("Precio", fila[2]);
-            datos.put("Tipo Producto", fila[3]);
-            datos.put("Estado", fila[4]);
-            // Nuevos campos: saga y portadaSaga
-            datos.put("Saga", fila[5]);
-            datos.put("Portada Saga", fila[6]);
-            lista.add(datos);
-        }
-        return lista;
+        productoRepository.deleteById(id);
     }
 
     /* ================= MAPEO DTO -> ENTIDAD ================= */
@@ -392,6 +398,10 @@ public class ProductoService {
 
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
+
+        // ✅ NUEVO: campos HUB (redirigir)
+        producto.setUrlCompra(dto.getUrlCompra());
+        producto.setLabelCompra(dto.getLabelCompra());
 
         // saga y portadaSaga
         producto.setSaga(dto.getSaga());
@@ -415,7 +425,6 @@ public class ProductoService {
         producto.setEstado(estado);
 
         // ===== Relaciones N:M =====
-        // Plataformas
         if (dto.getPlataformasIds() != null) {
             List<PlataformasModel> plataformas = dto.getPlataformasIds()
                     .stream()
@@ -432,7 +441,6 @@ public class ProductoService {
             producto.setPlataformas(plataformas);
         }
 
-        // Géneros
         if (dto.getGenerosIds() != null) {
             List<GenerosModel> generos = dto.getGenerosIds()
                     .stream()
@@ -449,7 +457,6 @@ public class ProductoService {
             producto.setGeneros(generos);
         }
 
-        // Empresas
         if (dto.getEmpresasIds() != null) {
             List<EmpresasModel> empresas = dto.getEmpresasIds()
                     .stream()
@@ -466,7 +473,6 @@ public class ProductoService {
             producto.setEmpresas(empresas);
         }
 
-        // Desarrolladores
         if (dto.getDesarrolladoresIds() != null) {
             List<DesarrolladoresModel> devs = dto.getDesarrolladoresIds()
                     .stream()
@@ -483,7 +489,6 @@ public class ProductoService {
             producto.setDesarrolladores(devs);
         }
 
-        // Imágenes (rutas simples)
         if (dto.getImagenesRutas() != null) {
             List<ImagenesModel> imagenes = dto.getImagenesRutas()
                     .stream()

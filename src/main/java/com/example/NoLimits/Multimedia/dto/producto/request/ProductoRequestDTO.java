@@ -25,6 +25,9 @@ public class ProductoRequestDTO {
     @Schema(description = "ID del estado", example = "1")
     private Long estadoId;
 
+    private String urlCompra;
+    private String labelCompra;
+
     /* ====== Sagas ====== */
 
     @Schema(

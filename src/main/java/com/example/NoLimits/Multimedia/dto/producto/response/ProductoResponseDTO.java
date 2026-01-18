@@ -50,6 +50,9 @@ public class ProductoResponseDTO {
     )
     private String portadaSaga;
 
+    private String urlCompra;
+    private String labelCompra;
+
     // ==================== Relaciones N:M (nombres) ====================
 
     @Schema(description = "Lista de plataformas asociadas al producto.")

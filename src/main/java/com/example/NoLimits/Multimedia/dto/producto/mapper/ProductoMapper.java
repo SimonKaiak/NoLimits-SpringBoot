@@ -27,6 +27,8 @@ public class ProductoMapper {
         dto.setId(model.getId());
         dto.setNombre(model.getNombre());
         dto.setPrecio(model.getPrecio());
+        dto.setUrlCompra(model.getUrlCompra());
+        dto.setLabelCompra(model.getLabelCompra());
 
         // Datos del tipo de producto
         if (model.getTipoProducto() != null) {

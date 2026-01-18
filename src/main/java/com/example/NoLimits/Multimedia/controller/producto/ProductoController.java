@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/producto/ProductoController.java
 package com.example.NoLimits.Multimedia.controller.producto;
 
 import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
@@ -76,11 +77,16 @@ public class ProductoController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
+        // Opcional: evitar page <= 0 o size <= 0
+        if (page < 1) page = 1;
+        if (size < 1) size = 5;
+
         PagedResponse<ProductoResponseDTO> response = productoService.findAllPaged(page, size);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
+    // ✅ FIX CLAVE: el id solo acepta números, así no choca con /sagas/... ni /saga/...
+    @GetMapping("/{id:\\d+}")
     @Operation(
             summary = "Buscar producto por ID.",
             description = "Obtiene un producto específico por su ID."
@@ -216,17 +222,6 @@ public class ProductoController {
                     )
             )
     )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Producto actualizado exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
-    })
     public ResponseEntity<ProductoResponseDTO> actualizarProducto(
             @PathVariable Long id,
             @Valid @RequestBody ProductoRequestDTO productoDetalles) {
@@ -268,17 +263,6 @@ public class ProductoController {
                     )
             )
     )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Producto actualizado parcialmente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
-    })
     public ResponseEntity<ProductoResponseDTO> editarProducto(
             @PathVariable Long id,
             @RequestBody ProductoUpdateDTO productoDetalles) {
@@ -291,11 +275,6 @@ public class ProductoController {
             summary = "Eliminar un producto.",
             description = "Elimina un producto por su ID. Falla si el producto tiene ventas asociadas."
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Producto eliminado exitosamente."),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado."),
-            @ApiResponse(responseCode = "409", description = "No se puede eliminar: el producto tiene movimientos en ventas.")
-    })
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -304,279 +283,93 @@ public class ProductoController {
     // ========================= BÚSQUEDAS / FILTROS =========================
 
     @GetMapping("/nombre/{nombre}")
-    @Operation(
-            summary = "Buscar productos por nombre exacto.",
-            description = "Obtiene una lista de productos que coincidan exactamente con el nombre."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos con ese nombre.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorNombre(@PathVariable String nombre) {
         List<ProductoResponseDTO> productos = productoService.findByNombre(nombre);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     @GetMapping("/nombre/contiene/{nombre}")
-    @Operation(
-            summary = "Buscar productos por coincidencia en el nombre.",
-            description = "Obtiene productos cuyo nombre contenga el texto indicado (búsqueda case-insensitive)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese criterio.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorNombreContiene(@PathVariable String nombre) {
         List<ProductoResponseDTO> productos = productoService.findByNombreContainingIgnoreCase(nombre);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     @GetMapping("/tipo/{tipoProductoId}")
-    @Operation(
-            summary = "Buscar productos por tipo.",
-            description = "Obtiene una lista de productos que pertenezcan a un tipo específico."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese tipo.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorTipo(@PathVariable Long tipoProductoId) {
         List<ProductoResponseDTO> productos = productoService.findByTipoProducto(tipoProductoId);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     @GetMapping("/clasificacion/{clasificacionId}")
-    @Operation(
-            summary = "Buscar productos por clasificación.",
-            description = "Obtiene productos asociados a una clasificación específica."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos para esa clasificación.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorClasificacion(@PathVariable Long clasificacionId) {
         List<ProductoResponseDTO> productos = productoService.findByClasificacion(clasificacionId);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     @GetMapping("/estado/{estadoId}")
-    @Operation(
-            summary = "Buscar productos por estado.",
-            description = "Obtiene productos filtrados por estado (ej: Activo, Descontinuado, Agotado)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese estado.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorEstado(@PathVariable Long estadoId) {
         List<ProductoResponseDTO> productos = productoService.findByEstado(estadoId);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     @GetMapping("/tipo/{tipoProductoId}/estado/{estadoId}")
-    @Operation(
-            summary = "Buscar productos por tipo y estado.",
-            description = "Obtiene productos que pertenezcan a un tipo específico y se encuentren en determinado estado."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos para esos filtros.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorTipoYEstado(
             @PathVariable Long tipoProductoId,
             @PathVariable Long estadoId) {
 
         List<ProductoResponseDTO> productos = productoService.findByTipoProductoAndEstado(tipoProductoId, estadoId);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     // ========================= SAGAS =========================
 
     @GetMapping("/sagas")
-    @Operation(
-            summary = "Listar nombres de sagas.",
-            description = "Devuelve una lista de nombres de sagas distintas registradas en productos (solo valores no vacíos)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Listado de sagas obtenido exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = String.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No hay sagas registradas.")
-    })
     public ResponseEntity<List<String>> listarSagas() {
         List<String> sagas = productoService.obtenerSagasDistinct();
-        if (sagas.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (sagas.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(sagas);
     }
 
     @GetMapping("/sagas/resumen")
-    @Operation(
-            summary = "Listar sagas con su portada.",
-            description = "Devuelve una lista de objetos { nombre, portadaSaga } para cada saga distinta."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Listado de sagas obtenido exitosamente.",
-                    content = @Content(mediaType = "application/json")
-            ),
-            @ApiResponse(responseCode = "204", description = "No hay sagas registradas.")
-    })
     public ResponseEntity<List<Map<String, Object>>> listarSagasConPortada() {
         List<Map<String, Object>> sagas = productoService.obtenerSagasConPortada();
-        if (sagas.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (sagas.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(sagas);
     }
 
     @GetMapping("/sagas/tipo/{tipoProductoId}")
-    @Operation(
-            summary = "Listar nombres de sagas por tipo de producto.",
-            description = "Devuelve una lista de nombres de sagas filtradas por el tipo de producto (por ejemplo, solo películas)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Listado de sagas obtenido exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = String.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No hay sagas para el tipo de producto indicado.")
-    })
     public ResponseEntity<List<String>> listarSagasPorTipoProducto(@PathVariable Long tipoProductoId) {
         List<String> sagas = productoService.obtenerSagasDistinctPorTipoProducto(tipoProductoId);
-        if (sagas.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (sagas.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(sagas);
     }
 
-    // Ruta tradicional que ya tenías: /sagas/{saga}
     @GetMapping("/sagas/{saga}")
-    @Operation(
-            summary = "Buscar productos por saga.",
-            description = "Obtiene productos que pertenezcan a una saga específica (búsqueda case-insensitive)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Productos encontrados para la saga indicada.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No se encontraron productos para esa saga.")
-    })
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorSaga(@PathVariable String saga) {
         List<ProductoResponseDTO> productos = productoService.findBySagaIgnoreCase(saga);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
-    // Alias estilo nuevo: /saga/{saga} (opcional, por si tu frontend lo usa)
     @GetMapping("/saga/{saga}")
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorSagaAlias(@PathVariable String saga) {
         List<ProductoResponseDTO> productos = productoService.findBySagaIgnoreCase(saga);
-        if (productos.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(productos);
     }
 
     // ========================= RESUMEN =========================
 
     @GetMapping("/resumen")
-    @Operation(
-            summary = "Obtener resumen de productos.",
-            description = "Devuelve un resumen liviano de los productos (ID, nombre, precio, tipo, estado, saga y portada de saga)."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Resumen obtenido exitosamente.",
-                    content = @Content(mediaType = "application/json")
-            ),
-            @ApiResponse(responseCode = "204", description = "No hay productos para mostrar en el resumen.")
-    })
     public ResponseEntity<List<Map<String, Object>>> obtenerResumenProductos() {
         List<Map<String, Object>> resumen = productoService.obtenerProductosConDatos();
-        if (resumen.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        if (resumen.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(resumen);
     }
-
 }

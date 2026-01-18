@@ -68,6 +68,17 @@ public class ProductoModel {
     )
     private String portadaSaga;
 
+    
+    @Column(name = "url_compra", length = 500)
+    @Size(max = 500, message = "La URL no puede superar 500 caracteres.")
+    @Schema(description = "URL externa para redirigir (Steam, Netflix, etc.)", example = "https://store.steampowered.com/app/1817070/Marvels_SpiderMan_Remastered/")
+    private String urlCompra;
+
+    @Column(name = "label_compra", length = 60)
+    @Size(max = 60, message = "El label no puede superar 60 caracteres.")
+    @Schema(description = "Texto del botón de redirección", example = "Ver en Steam")
+    private String labelCompra;
+
     /* ====== Relaciones N:1 ====== */
 
     @ManyToOne(optional = false)
@@ -106,10 +117,13 @@ public class ProductoModel {
     @Schema(description = "Imágenes asociadas al producto", accessMode = Schema.AccessMode.READ_ONLY)
     private List<ImagenesModel> imagenes;
 
-    @OneToMany(mappedBy = "producto")
-    @JsonIgnore
-    @Schema(description = "Detalles de venta donde aparece este producto", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<DetalleVentaModel> detallesVenta;
+    /*  Backend no maneja Venta.
+
+        @OneToMany(mappedBy = "producto")
+        @JsonIgnore
+        @Schema(description = "Detalles de venta donde aparece este producto", accessMode = Schema.AccessMode.READ_ONLY)
+        private List<DetalleVentaModel> detallesVenta;
+    */
 
     /* ====== Relaciones N:M vía tablas puente ====== */
 

@@ -24,6 +24,9 @@ public class ProductoUpdateDTO {
     @Schema(description = "Nuevo ID del estado", example = "1")
     private Long estadoId;
 
+    private String urlCompra;
+    private String labelCompra;
+
     // ==================== SAGAS ====================
 
     @Schema(
