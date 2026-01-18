@@ -33,4 +33,5 @@ public interface UsuarioRepository extends JpaRepository<UsuarioModel, Long> {
     boolean existsByRol_Id(Long rolId);
 
     List<UsuarioModel> findByNombreContainingIgnoreCase(String nombre);
+    boolean existsByCorreoIgnoreCase(String correo);
 }

@@ -19,12 +19,12 @@ public interface RolRepository extends JpaRepository<RolModel, Long> {
     List<Object[]> obtenerRolesResumen();
 
     List<RolModel> findByNombreContainingIgnoreCase(String nombre);
+
     Optional<RolModel> findByNombreIgnoreCase(String nombre);
 
     boolean existsByNombre(String nombre);
     boolean existsByNombreIgnoreCase(String nombre);
 
-    // Para bloquear borrado de Rol si tiene usuarios asociados
     @Query("""
         SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END
         FROM UsuarioModel u
