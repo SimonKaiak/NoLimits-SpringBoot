@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/config/AdminInitializer.java
 package com.example.NoLimits.Multimedia.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,25 +18,33 @@ public class AdminInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        RolModel adminRol = rolRepository.findByNombreIgnoreCase("ADMIN")
-                .orElse(null);
-
+        RolModel adminRol = rolRepository.findByNombreIgnoreCase("ADMIN").orElse(null);
         if (adminRol == null) {
             System.out.println("❌ No existe el rol ADMIN. Crea el rol primero.");
             return;
         }
 
-        if (!usuarioRepository.existsByCorreoIgnoreCase("nolimits@gmail.com")) {
-            UsuarioModel admin = new UsuarioModel();
-            admin.setNombre("Admin");
-            admin.setApellidos("NoLimits");
-            admin.setCorreo("nolimits@gmail.com");
-            admin.setTelefono(911111111L);
-            admin.setPassword("53176ben10");
-            admin.setRol(adminRol);
+        final String correo = "nolimits@gmail.com";
+        final String password = "53176ben10";
 
-            usuarioRepository.save(admin);
-            System.out.println("✅ ADMIN PERMANENTE CREADO: nolimits@gmail.com");
+        UsuarioModel admin = usuarioRepository.findByCorreoIgnoreCase(correo).orElse(null);
+
+        if (admin == null) {
+            admin = new UsuarioModel();
+            System.out.println("🆕 Creando admin...");
+        } else {
+            System.out.println("♻️ Admin ya existía, actualizando password/rol...");
         }
+
+        admin.setNombre("Admin");
+        admin.setApellidos("NoLimits");
+        admin.setCorreo(correo.trim().toLowerCase());
+        admin.setTelefono(911111111L);
+        admin.setPassword(password);
+        admin.setRol(adminRol);
+
+        usuarioRepository.save(admin);
+
+        System.out.println("✅ Admin listo: " + correo);
     }
 }

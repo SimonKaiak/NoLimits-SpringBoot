@@ -478,12 +478,10 @@ public class UsuarioService {
     public UsuarioResponseDTO login(String correo, String password) {
         UsuarioModel usuario = getUsuarioByCorreoOrThrow(correo);
 
-        // Aquí podrías aplicar hashing en vez de comparar texto plano
-        if (!usuario.getPassword().equals(password)) {
-            throw new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED,
-                "Credenciales inválidas"
-            );
+        String passIn = (password == null) ? "" : password.trim();
+
+        if (usuario.getPassword() == null || !usuario.getPassword().equals(passIn)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
         }
 
         return toResponseDTO(usuario);
@@ -498,11 +496,13 @@ public class UsuarioService {
     }
 
     private UsuarioModel getUsuarioByCorreoOrThrow(String correoUsuario) {
-        String correo = (correoUsuario == null)
-                ? null
-                : correoUsuario.trim().toLowerCase();
+        if (correoUsuario == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo es obligatorio");
+        }
 
-        return usuarioRepository.findByCorreo(correo)
+        String correo = correoUsuario.trim();
+
+        return usuarioRepository.findByCorreoIgnoreCase(correo)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
     }
