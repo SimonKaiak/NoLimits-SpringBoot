@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/config/AdminInitializer.java
 package com.example.NoLimits.Multimedia.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
