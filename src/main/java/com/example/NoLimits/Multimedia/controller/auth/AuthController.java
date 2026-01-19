@@ -51,7 +51,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Correo y contraseña obligatorios");
         }
 
-        String correoIn = correo.trim();          // NO forces lower acá; deja que ignoreCase haga la pega
+        String correoIn = correo.trim();          
         String passIn = password.trim();
 
         UsuarioModel usuario = usuarioRepository
