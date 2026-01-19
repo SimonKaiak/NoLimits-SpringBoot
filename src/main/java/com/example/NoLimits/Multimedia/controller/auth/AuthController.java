@@ -51,16 +51,19 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Correo y contraseña obligatorios");
         }
 
+        String correoIn = correo.trim();          // NO forces lower acá; deja que ignoreCase haga la pega
+        String passIn = password.trim();
+
         UsuarioModel usuario = usuarioRepository
-                .findByCorreo(correo.trim().toLowerCase())
+                .findByCorreoIgnoreCase(correoIn)
                 .orElse(null);
 
-        if (usuario == null || !usuario.getPassword().equals(password)) {
+        if (usuario == null || usuario.getPassword() == null || !usuario.getPassword().equals(passIn)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Correo o contraseña incorrectos");
         }
 
-        String rol = usuario.getRol().getNombre();
+        String rol = (usuario.getRol() != null) ? usuario.getRol().getNombre() : "ROLE_USER";
 
         String token = jwtUtil.generateToken(usuario.getCorreo(), rol);
 
