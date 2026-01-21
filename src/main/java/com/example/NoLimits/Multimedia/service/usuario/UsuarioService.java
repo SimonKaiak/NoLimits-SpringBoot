@@ -364,54 +364,66 @@ public class UsuarioService {
             u.setRol(nuevoRol);
         }
 
-        // ================================================
-        // ACTUALIZAR DIRECCIÓN (nuevo)
+       // ================================================
+        // ACTUALIZAR DIRECCIÓN (PATCH: todo opcional)
         // ================================================
         if (d.getDireccion() != null) {
 
             DireccionRequestDTO dir = d.getDireccion();
 
-            // 1 Validar comuna
-            if (dir.getComunaId() == null) {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "La comunaId es obligatoria en dirección.");
-            }
+            boolean tieneAlgo =
+                (dir.getComunaId() != null) ||
+                (dir.getCalle() != null && !dir.getCalle().trim().isEmpty()) ||
+                (dir.getNumero() != null && !dir.getNumero().trim().isEmpty()) ||
+                (dir.getComplemento() != null && !dir.getComplemento().trim().isEmpty()) ||
+                (dir.getCodigoPostal() != null && !dir.getCodigoPostal().trim().isEmpty()) ||
+                (dir.getActivo() != null);
 
-            // 2 Validar calle y número
-            if (dir.getCalle() == null || dir.getCalle().trim().isEmpty()
-            || dir.getNumero() == null || dir.getNumero().trim().isEmpty()) {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "La calle y el número son obligatorios en dirección.");
-            }
-
-            // 3 Buscar comuna
-            ComunaModel comuna = comunaRepository.findById(dir.getComunaId())
-                .orElseThrow(() -> new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Comuna no encontrada"));
-
-            DireccionModel direccion;
-
-            // Si el usuario YA tiene dirección → se actualiza
-            if (u.getDireccion() != null) {
-                direccion = u.getDireccion();
+            // si viene {} (vacío), no hacemos nada
+            if (!tieneAlgo) {
+                // no tocar dirección
             } else {
-                // Si no tiene dirección → se crea una nueva
-                direccion = new DireccionModel();
+
+                DireccionModel direccion = (u.getDireccion() != null)
+                    ? u.getDireccion()
+                    : new DireccionModel();
+
                 direccion.setUsuarioModel(u);
+
+                // comuna opcional: si viene, se valida y se actualiza
+                if (dir.getComunaId() != null) {
+                    ComunaModel comuna = comunaRepository.findById(dir.getComunaId())
+                        .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Comuna no encontrada"));
+                    direccion.setComuna(comuna);
+                }
+
+                // calle opcional: si viene no vacía, se actualizag
+                if (dir.getCalle() != null && !dir.getCalle().trim().isEmpty()) {
+                    direccion.setCalle(dir.getCalle().trim());
+                }
+
+                // número opcional: si viene no vacío, se actualiza
+                if (dir.getNumero() != null && !dir.getNumero().trim().isEmpty()) {
+                    direccion.setNumero(dir.getNumero().trim());
+                }
+
+                // campos opcionales: si vienen (aunque vengan vacíos, tú decides)
+                if (dir.getComplemento() != null) {
+                    direccion.setComplemento(dir.getComplemento());
+                }
+
+                if (dir.getCodigoPostal() != null) {
+                    direccion.setCodigoPostal(dir.getCodigoPostal());
+                }
+
+                if (dir.getActivo() != null) {
+                    direccion.setActivo(dir.getActivo());
+                }
+
+                direccionRepository.save(direccion);
+                u.setDireccion(direccion);
             }
-
-            direccion.setCalle(dir.getCalle());
-            direccion.setNumero(dir.getNumero());
-            direccion.setComplemento(dir.getComplemento());
-            direccion.setCodigoPostal(dir.getCodigoPostal());
-            direccion.setActivo(dir.getActivo() == null ? true : dir.getActivo());
-            direccion.setComuna(comuna);
-
-            // Guardar dirección
-            direccionRepository.save(direccion);
-
-            // Relacionar en usuario
-            u.setDireccion(direccion);
         }
 
         // Guardar usuario
