@@ -2,11 +2,13 @@ package com.example.NoLimits.Multimedia.repository.producto;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
@@ -23,6 +25,21 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         JOIN p.estado e
     """)
     List<Object[]> obtenerProductosResumen();
+
+    @Query("""
+        SELECT DISTINCT p
+        FROM ProductoModel p
+        LEFT JOIN FETCH p.imagenes
+    """)
+    List<ProductoModel> findAllWithImagenes();
+    
+    @Query("""
+        SELECT p
+        FROM ProductoModel p
+        LEFT JOIN FETCH p.imagenes
+        WHERE p.id = :id
+    """)
+    Optional<ProductoModel> findByIdWithImagenes(@Param("id") Long id);
 
     // =========================================================
     // BÚSQUEDAS POR NOMBRE

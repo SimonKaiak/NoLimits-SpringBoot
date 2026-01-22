@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/producto/ProductoService.java
 package com.example.NoLimits.Multimedia.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -55,14 +54,14 @@ public class ProductoService {
     /* ================= CRUD BÁSICO ================= */
 
     public List<ProductoResponseDTO> findAll() {
-        return productoRepository.findAll()
+        return productoRepository.findAllWithImagenes()
                 .stream()
                 .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public ProductoResponseDTO findById(Long id) {
-        ProductoModel model = productoRepository.findById(id)
+        ProductoModel model = productoRepository.findByIdWithImagenes(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
         return ProductoMapper.toResponseDTO(model);
