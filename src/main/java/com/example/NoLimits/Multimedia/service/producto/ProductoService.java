@@ -1,3 +1,4 @@
+// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/producto/ProductoService.java
 package com.example.NoLimits.Multimedia.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -85,12 +86,17 @@ public class ProductoService {
         applyRequestToModel(dto, producto);
 
         ProductoModel guardado = productoRepository.save(producto);
-        return ProductoMapper.toResponseDTO(guardado);
+
+        ProductoModel recargado = productoRepository.findByIdWithImagenes(guardado.getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Producto no encontrado con ID: " + guardado.getId()));
+
+        return ProductoMapper.toResponseDTO(recargado);
     }
 
     // PUT: reemplaza datos principales
     public ProductoResponseDTO update(Long id, ProductoRequestDTO dto) {
-        ProductoModel productoExistente = productoRepository.findById(id)
+        ProductoModel productoExistente = productoRepository.findByIdWithImagenes(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
@@ -108,13 +114,18 @@ public class ProductoService {
 
         applyRequestToModel(dto, productoExistente);
 
-        ProductoModel actualizado = productoRepository.save(productoExistente);
-        return ProductoMapper.toResponseDTO(actualizado);
+        productoRepository.save(productoExistente);
+
+        ProductoModel recargado = productoRepository.findByIdWithImagenes(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+
+        return ProductoMapper.toResponseDTO(recargado);
     }
 
     // PATCH: solo campos no nulos
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
-        ProductoModel productoExistente = productoRepository.findById(id)
+        ProductoModel productoExistente = productoRepository.findByIdWithImagenes(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Producto no encontrado con ID: " + id));
 
@@ -270,9 +281,43 @@ public class ProductoService {
             }
         }
 
-        // ================== GUARDAR Y DEVOLVER ==================
-        ProductoModel actualizado = productoRepository.save(productoExistente);
-        return ProductoMapper.toResponseDTO(actualizado);
+        // ================== IMÁGENES ==================
+        if (dto.getImagenesRutas() != null) {
+
+            // si no existe la lista, crearla; si existe, reemplazar
+            if (productoExistente.getImagenes() == null) {
+                productoExistente.setImagenes(new ArrayList<>());
+            } else {
+                productoExistente.getImagenes().clear();
+            }
+
+            // si viene vacía [], queda sin imágenes (válido)
+            if (!dto.getImagenesRutas().isEmpty()) {
+                List<ImagenesModel> nuevasImagenes = dto.getImagenesRutas()
+                        .stream()
+                        .map(ruta -> {
+                            ImagenesModel img = new ImagenesModel();
+                            img.setRuta(ruta);
+                            img.setAltText(productoExistente.getNombre());
+                            img.setProducto(productoExistente);
+                            return img;
+                        })
+                        .collect(Collectors.toList());
+
+                productoExistente.getImagenes().addAll(nuevasImagenes);
+            }
+        }
+
+        // ================== GUARDAR ==================
+        productoRepository.save(productoExistente);
+
+        // ================== RECARGAR CON IMÁGENES ==================
+        ProductoModel recargado = productoRepository.findByIdWithImagenes(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Producto no encontrado con ID: " + id));
+
+        // ================== DEVOLVER ==================
+        return ProductoMapper.toResponseDTO(recargado);
     }
 
     /* ================= SAGAS ================= */
@@ -331,7 +376,7 @@ public class ProductoService {
 
         return lista;
     }
-
+    
     // ================= BÚSQUEDAS / FILTROS (PARA EL CONTROLLER) =================
 
     public List<ProductoResponseDTO> findByNombre(String nombre) {

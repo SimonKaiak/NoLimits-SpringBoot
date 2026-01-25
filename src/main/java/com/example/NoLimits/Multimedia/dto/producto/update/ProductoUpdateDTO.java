@@ -24,6 +24,12 @@ public class ProductoUpdateDTO {
     @Schema(description = "Nuevo ID del estado", example = "1")
     private Long estadoId;
 
+    @Schema(
+            description = "Rutas/URLs de las imágenes del producto (si se envía, reemplaza las actuales).", 
+            example = "[\"https://.../img1.webp\", \"https://.../img2.webp\"]"
+    )
+    private List<String> imagenesRutas;
+
     private String urlCompra;
     private String labelCompra;
 

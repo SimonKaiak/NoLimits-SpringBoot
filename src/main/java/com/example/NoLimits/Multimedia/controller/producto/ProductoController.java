@@ -265,7 +265,7 @@ public class ProductoController {
     )
     public ResponseEntity<ProductoResponseDTO> editarProducto(
             @PathVariable Long id,
-            @RequestBody ProductoUpdateDTO productoDetalles) {
+            @Valid @RequestBody ProductoUpdateDTO productoDetalles) {
 
         return ResponseEntity.ok(productoService.patch(id, productoDetalles));
     }
