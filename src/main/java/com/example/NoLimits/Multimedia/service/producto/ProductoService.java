@@ -534,7 +534,15 @@ public class ProductoService {
         }
 
         if (dto.getImagenesRutas() != null) {
-            List<ImagenesModel> imagenes = dto.getImagenesRutas()
+
+            if(producto.getImagenes() == null) {
+                producto.setImagenes(new ArrayList<>());
+            } else {
+                producto.getImagenes().clear();
+            }
+
+            if(!dto.getImagenesRutas().isEmpty()){
+                List<ImagenesModel> imagenes = dto.getImagenesRutas()
                     .stream()
                     .map(ruta -> {
                         ImagenesModel img = new ImagenesModel();
@@ -544,7 +552,10 @@ public class ProductoService {
                         return img;
                     })
                     .collect(Collectors.toList());
-            producto.setImagenes(imagenes);
+
+                producto.getImagenes().addAll(imagenes);
+            }
+            
         }
     }
 
