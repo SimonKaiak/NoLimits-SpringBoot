@@ -34,12 +34,41 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
     List<ProductoModel> findAllWithImagenes();
     
     @Query("""
-        SELECT p
+        SELECT DISTINCT p
         FROM ProductoModel p
         LEFT JOIN FETCH p.imagenes
         WHERE p.id = :id
     """)
     Optional<ProductoModel> findByIdWithImagenes(@Param("id") Long id);
+
+    @Query("""
+        select distinct p from ProductoModel p
+        left join fetch p.imagenes
+        left join fetch p.plataformas pp
+        left join fetch pp.plataforma
+        left join fetch p.generos gg
+        left join fetch gg.genero
+        left join fetch p.empresas ee
+        left join fetch ee.empresa
+        left join fetch p.desarrolladores dd
+        left join fetch dd.desarrollador
+    """)
+     List<ProductoModel> findAllFull();
+
+     @Query("""
+        select distinct p from ProductoModel p
+        left join fetch p.imagenes
+        left join fetch p.plataformas pp
+        left join fetch pp.plataforma
+        left join fetch p.generos gg
+        left join fetch gg.genero
+        left join fetch p.empresas ee
+        left join fetch ee.empresa
+        left join fetch p.desarrolladores dd
+        left join fetch dd.desarrollador
+        where p.id = :id
+    """)
+    Optional<ProductoModel> findByIdFull(@Param("id") Long id);
 
     // =========================================================
     // BÚSQUEDAS POR NOMBRE

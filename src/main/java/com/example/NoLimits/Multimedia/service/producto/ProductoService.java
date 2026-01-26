@@ -55,14 +55,14 @@ public class ProductoService {
     /* ================= CRUD BÁSICO ================= */
 
     public List<ProductoResponseDTO> findAll() {
-        return productoRepository.findAllWithImagenes()
+        return productoRepository.findAllFull()
                 .stream()
                 .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public ProductoResponseDTO findById(Long id) {
-        ProductoModel model = productoRepository.findByIdWithImagenes(id)
+        ProductoModel model = productoRepository.findByIdFull(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
         return ProductoMapper.toResponseDTO(model);
@@ -87,7 +87,7 @@ public class ProductoService {
 
         ProductoModel guardado = productoRepository.save(producto);
 
-        ProductoModel recargado = productoRepository.findByIdWithImagenes(guardado.getId())
+        ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Producto no encontrado con ID: " + guardado.getId()));
 
@@ -96,7 +96,7 @@ public class ProductoService {
 
     // PUT: reemplaza datos principales
     public ProductoResponseDTO update(Long id, ProductoRequestDTO dto) {
-        ProductoModel productoExistente = productoRepository.findByIdWithImagenes(id)
+        ProductoModel productoExistente = productoRepository.findByIdFull(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
@@ -116,7 +116,7 @@ public class ProductoService {
 
         productoRepository.save(productoExistente);
 
-        ProductoModel recargado = productoRepository.findByIdWithImagenes(id)
+        ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
@@ -125,7 +125,7 @@ public class ProductoService {
 
     // PATCH: solo campos no nulos
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
-        ProductoModel productoExistente = productoRepository.findByIdWithImagenes(id)
+        ProductoModel productoExistente = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Producto no encontrado con ID: " + id));
 
@@ -311,8 +311,8 @@ public class ProductoService {
         // ================== GUARDAR ==================
         productoRepository.save(productoExistente);
 
-        // ================== RECARGAR CON IMÁGENES ==================
-        ProductoModel recargado = productoRepository.findByIdWithImagenes(id)
+        // ================== RECARGAR COMPLETO ==================
+        ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Producto no encontrado con ID: " + id));
 
