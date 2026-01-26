@@ -1,6 +1,9 @@
 package com.example.NoLimits.Multimedia.model.producto;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
 import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladoresModel;
@@ -115,7 +118,7 @@ public class ProductoModel {
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Imágenes asociadas al producto", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<ImagenesModel> imagenes;
+    private List<ImagenesModel> imagenes = new ArrayList<>();
 
     /*  Backend no maneja Venta.
 
@@ -130,22 +133,23 @@ public class ProductoModel {
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con plataformas (puente 'plataformas')", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<PlataformasModel> plataformas;
+    private Set<PlataformasModel> plataformas = new HashSet<>();
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con géneros (puente 'generos')", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<GenerosModel> generos;
+    private Set<GenerosModel> generos = new HashSet<>();
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con empresas (puente 'empresas')", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<EmpresasModel> empresas;
+    private Set<EmpresasModel> empresas = new HashSet<>();
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Schema(description = "Relación con desarrolladores (puente 'desarrolladores')", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<DesarrolladoresModel> desarrolladores;
+    private Set<DesarrolladoresModel> desarrolladores = new HashSet<>();
+
 
     /* ====== Reglas simples ====== */
     public void aplicarDescuento(double porcentaje) {
