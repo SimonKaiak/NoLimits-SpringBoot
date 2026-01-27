@@ -28,25 +28,34 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "productos")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 @Schema(description = "Producto vendible en la plataforma (película, videojuego, accesorio).")
 public class ProductoModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @ToString.Include
     @Schema(description = "ID del producto", example = "10")
     private Long id;
 
     @Column(nullable = false, length = 100)
     @NotBlank(message = "El nombre del producto es obligatorio.")
     @Size(min = 2, max = 100)
+    @ToString.Include
     @Schema(description = "Nombre del producto", example = "Spider-Man (2002)")
     private String nombre;
 
