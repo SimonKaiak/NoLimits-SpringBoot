@@ -1,6 +1,8 @@
 package com.example.NoLimits.Multimedia.model.catalogos;
 
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,11 +12,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @Entity
@@ -27,7 +31,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"producto","genero"})
+@ToString(exclude = {"producto", "genero"})
 @Schema(description = "Tabla puente entre Producto y Género.")
 public class GenerosModel {
 
@@ -39,9 +43,22 @@ public class GenerosModel {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "producto_id", nullable = false)
+    @NotNull(message = "El producto es obligatorio en la relación Producto-Género.")
+    @JsonIgnore
+    @Schema(
+        description = "Producto asociado (solo ID al crear/editar).",
+        example = "{\"id\": 10}",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
     private ProductoModel producto;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "genero_id", nullable = false)
+    @NotNull(message = "El género es obligatorio en la relación Producto-Género.")
+    @Schema(
+        description = "Género asociado (solo ID al crear/editar).",
+        example = "{\"id\": 1}",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
     private GeneroModel genero;
 }

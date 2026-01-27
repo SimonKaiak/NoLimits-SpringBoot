@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/service/producto/ProductoService.java
 package com.example.NoLimits.Multimedia.service.producto;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
@@ -25,32 +24,17 @@ import java.util.stream.Collectors;
 @Transactional
 public class ProductoService {
 
-    @Autowired
-    private ProductoRepository productoRepository;
+    @Autowired private ProductoRepository productoRepository;
+    @Autowired private DetalleVentaRepository detalleVentaRepository;
 
-    @Autowired
-    private DetalleVentaRepository detalleVentaRepository;
+    @Autowired private TipoProductoRepository tipoProductoRepository;
+    @Autowired private ClasificacionRepository clasificacionRepository;
+    @Autowired private EstadoRepository estadoRepository;
 
-    @Autowired
-    private TipoProductoRepository tipoProductoRepository;
-
-    @Autowired
-    private ClasificacionRepository clasificacionRepository;
-
-    @Autowired
-    private EstadoRepository estadoRepository;
-
-    @Autowired
-    private PlataformaRepository plataformaRepository;
-
-    @Autowired
-    private GeneroRepository generoRepository;
-
-    @Autowired
-    private EmpresaRepository empresaRepository;
-
-    @Autowired
-    private DesarrolladorRepository desarrolladorRepository;
+    @Autowired private PlataformaRepository plataformaRepository;
+    @Autowired private GeneroRepository generoRepository;
+    @Autowired private EmpresaRepository empresaRepository;
+    @Autowired private DesarrolladorRepository desarrolladorRepository;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -63,24 +47,12 @@ public class ProductoService {
 
     public ProductoResponseDTO findById(Long id) {
         ProductoModel model = productoRepository.findByIdFull(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
         return ProductoMapper.toResponseDTO(model);
     }
 
     public ProductoResponseDTO save(ProductoRequestDTO dto) {
-
-        if (dto.getTipoProductoId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar un tipo de producto válido.");
-        }
-
-        if (dto.getClasificacionId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar una clasificación válida.");
-        }
-
-        if (dto.getEstadoId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
-        }
+        validarRequestObligatorio(dto);
 
         ProductoModel producto = new ProductoModel();
         applyRequestToModel(dto, producto);
@@ -88,8 +60,7 @@ public class ProductoService {
         ProductoModel guardado = productoRepository.save(producto);
 
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "Producto no encontrado con ID: " + guardado.getId()));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -97,28 +68,15 @@ public class ProductoService {
     // PUT: reemplaza datos principales
     public ProductoResponseDTO update(Long id, ProductoRequestDTO dto) {
         ProductoModel productoExistente = productoRepository.findByIdFull(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        if (dto.getTipoProductoId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar un tipo de producto válido.");
-        }
-
-        if (dto.getClasificacionId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar una clasificación válida.");
-        }
-
-        if (dto.getEstadoId() == null) {
-            throw new RecursoNoEncontradoException("Debe indicar un estadao válido.");
-        }
+        validarRequestObligatorio(dto);
 
         applyRequestToModel(dto, productoExistente);
-
         productoRepository.save(productoExistente);
 
         ProductoModel recargado = productoRepository.findByIdFull(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -126,34 +84,17 @@ public class ProductoService {
     // PATCH: solo campos no nulos
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
         ProductoModel productoExistente = productoRepository.findByIdFull(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         // ================== CAMPOS SIMPLES ==================
-        if (dto.getNombre() != null) {
-            productoExistente.setNombre(dto.getNombre());
-        }
+        if (dto.getNombre() != null) productoExistente.setNombre(dto.getNombre());
+        if (dto.getPrecio() != null) productoExistente.setPrecio(dto.getPrecio());
+        if (dto.getSaga() != null) productoExistente.setSaga(dto.getSaga());
+        if (dto.getPortadaSaga() != null) productoExistente.setPortadaSaga(dto.getPortadaSaga());
 
-        if (dto.getPrecio() != null) {
-            productoExistente.setPrecio(dto.getPrecio());
-        }
-
-        if (dto.getSaga() != null) {
-            productoExistente.setSaga(dto.getSaga());
-        }
-
-        if (dto.getPortadaSaga() != null) {
-            productoExistente.setPortadaSaga(dto.getPortadaSaga());
-        }
-
-        // ✅ NUEVO: campos HUB (redirigir)
-        if (dto.getUrlCompra() != null) {
-            productoExistente.setUrlCompra(dto.getUrlCompra());
-        }
-
-        if (dto.getLabelCompra() != null) {
-            productoExistente.setLabelCompra(dto.getLabelCompra());
-        }
+        // ✅ HUB (redirigir)
+        if (dto.getUrlCompra() != null) productoExistente.setUrlCompra(dto.getUrlCompra());
+        if (dto.getLabelCompra() != null) productoExistente.setLabelCompra(dto.getLabelCompra());
 
         // ================== N:1 (FKs) ==================
         if (dto.getTipoProductoId() != null) {
@@ -179,7 +120,8 @@ public class ProductoService {
 
         // ================== N:M: PLATAFORMAS ==================
         if (dto.getPlataformasIds() != null) {
-            productoExistente.getPlataformas().clear();
+            if (productoExistente.getPlataformas() == null) productoExistente.setPlataformas(new HashSet<>());
+            else productoExistente.getPlataformas().clear();
 
             if (!dto.getPlataformasIds().isEmpty()) {
                 Set<PlataformasModel> nuevasPlataformas = dto.getPlataformasIds()
@@ -201,7 +143,8 @@ public class ProductoService {
 
         // ================== N:M: GÉNEROS ==================
         if (dto.getGenerosIds() != null) {
-            productoExistente.getGeneros().clear();
+            if (productoExistente.getGeneros() == null) productoExistente.setGeneros(new HashSet<>());
+            else productoExistente.getGeneros().clear();
 
             if (!dto.getGenerosIds().isEmpty()) {
                 Set<GenerosModel> nuevosGeneros = dto.getGenerosIds()
@@ -223,7 +166,8 @@ public class ProductoService {
 
         // ================== N:M: EMPRESAS ==================
         if (dto.getEmpresasIds() != null) {
-            productoExistente.getEmpresas().clear();
+            if (productoExistente.getEmpresas() == null) productoExistente.setEmpresas(new HashSet<>());
+            else productoExistente.getEmpresas().clear();
 
             if (!dto.getEmpresasIds().isEmpty()) {
                 Set<EmpresasModel> nuevasEmpresas = dto.getEmpresasIds()
@@ -245,7 +189,8 @@ public class ProductoService {
 
         // ================== N:M: DESARROLLADORES ==================
         if (dto.getDesarrolladoresIds() != null) {
-            productoExistente.getDesarrolladores().clear();
+            if (productoExistente.getDesarrolladores() == null) productoExistente.setDesarrolladores(new HashSet<>());
+            else productoExistente.getDesarrolladores().clear();
 
             if (!dto.getDesarrolladoresIds().isEmpty()) {
                 Set<DesarrolladoresModel> nuevosDevs = dto.getDesarrolladoresIds()
@@ -267,13 +212,8 @@ public class ProductoService {
 
         // ================== IMÁGENES ==================
         if (dto.getImagenesRutas() != null) {
-
-            // si no existe la lista, crearla; si existe, reemplazar
-            if (productoExistente.getImagenes() == null) {
-                productoExistente.setImagenes(new ArrayList<>());
-            } else {
-                productoExistente.getImagenes().clear();
-            }
+            if (productoExistente.getImagenes() == null) productoExistente.setImagenes(new ArrayList<>());
+            else productoExistente.getImagenes().clear();
 
             // si viene vacía [], queda sin imágenes (válido)
             if (!dto.getImagenesRutas().isEmpty()) {
@@ -292,15 +232,12 @@ public class ProductoService {
             }
         }
 
-        // ================== GUARDAR ==================
+        // ================== GUARDAR + RECARGAR ==================
         productoRepository.save(productoExistente);
 
-        // ================== RECARGAR COMPLETO ==================
         ProductoModel recargado = productoRepository.findByIdFull(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        // ================== DEVOLVER ==================
         return ProductoMapper.toResponseDTO(recargado);
     }
 
@@ -338,7 +275,6 @@ public class ProductoService {
             datos.put("portadaSaga", fila[1]);
             lista.add(datos);
         }
-
         return lista;
     }
 
@@ -357,10 +293,9 @@ public class ProductoService {
             datos.put("Portada Saga", fila[6]);
             lista.add(datos);
         }
-
         return lista;
     }
-    
+
     // ================= BÚSQUEDAS / FILTROS (PARA EL CONTROLLER) =================
 
     public List<ProductoResponseDTO> findByNombre(String nombre) {
@@ -407,14 +342,11 @@ public class ProductoService {
 
     public void deleteById(Long id) {
         productoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         boolean tieneMovimientos = !detalleVentaRepository.findByProducto_Id(id).isEmpty();
         if (tieneMovimientos) {
-            throw new IllegalStateException(
-                    "No se puede eliminar: el producto tiene movimientos en ventas."
-            );
+            throw new IllegalStateException("No se puede eliminar: el producto tiene movimientos en ventas.");
         }
 
         productoRepository.deleteById(id);
@@ -423,11 +355,10 @@ public class ProductoService {
     /* ================= MAPEO DTO -> ENTIDAD ================= */
 
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
-
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
 
-        // ✅ NUEVO: campos HUB (redirigir)
+        // ✅ HUB (redirigir)
         producto.setUrlCompra(dto.getUrlCompra());
         producto.setLabelCompra(dto.getLabelCompra());
 
@@ -456,10 +387,12 @@ public class ProductoService {
 
         // PLATAFORMAS
         if (dto.getPlataformasIds() != null) {
-            producto.getPlataformas().clear();
+            if (producto.getPlataformas() == null) producto.setPlataformas(new HashSet<>());
+            else producto.getPlataformas().clear();
 
             if (!dto.getPlataformasIds().isEmpty()) {
-                Set<PlataformasModel> plataformas = dto.getPlataformasIds().stream()
+                Set<PlataformasModel> plataformas = dto.getPlataformasIds()
+                        .stream()
                         .map(idPlat -> {
                             PlataformaModel plat = plataformaRepository.findById(idPlat)
                                     .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -477,10 +410,12 @@ public class ProductoService {
 
         // GÉNEROS
         if (dto.getGenerosIds() != null) {
-            producto.getGeneros().clear();
+            if (producto.getGeneros() == null) producto.setGeneros(new HashSet<>());
+            else producto.getGeneros().clear();
 
             if (!dto.getGenerosIds().isEmpty()) {
-                Set<GenerosModel> generos = dto.getGenerosIds().stream()
+                Set<GenerosModel> generos = dto.getGenerosIds()
+                        .stream()
                         .map(idGen -> {
                             GeneroModel gen = generoRepository.findById(idGen)
                                     .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -498,10 +433,12 @@ public class ProductoService {
 
         // EMPRESAS
         if (dto.getEmpresasIds() != null) {
-            producto.getEmpresas().clear();
+            if (producto.getEmpresas() == null) producto.setEmpresas(new HashSet<>());
+            else producto.getEmpresas().clear();
 
             if (!dto.getEmpresasIds().isEmpty()) {
-                Set<EmpresasModel> empresas = dto.getEmpresasIds().stream()
+                Set<EmpresasModel> empresas = dto.getEmpresasIds()
+                        .stream()
                         .map(idEmp -> {
                             EmpresaModel emp = empresaRepository.findById(idEmp)
                                     .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -519,10 +456,12 @@ public class ProductoService {
 
         // DESARROLLADORES
         if (dto.getDesarrolladoresIds() != null) {
-            producto.getDesarrolladores().clear();
+            if (producto.getDesarrolladores() == null) producto.setDesarrolladores(new HashSet<>());
+            else producto.getDesarrolladores().clear();
 
             if (!dto.getDesarrolladoresIds().isEmpty()) {
-                Set<DesarrolladoresModel> devs = dto.getDesarrolladoresIds().stream()
+                Set<DesarrolladoresModel> devs = dto.getDesarrolladoresIds()
+                        .stream()
                         .map(idDev -> {
                             DesarrolladorModel dev = desarrolladorRepository.findById(idDev)
                                     .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -538,39 +477,44 @@ public class ProductoService {
             }
         }
 
-
+        // IMÁGENES
         if (dto.getImagenesRutas() != null) {
+            if (producto.getImagenes() == null) producto.setImagenes(new ArrayList<>());
+            else producto.getImagenes().clear();
 
-            if(producto.getImagenes() == null) {
-                producto.setImagenes(new ArrayList<>());
-            } else {
-                producto.getImagenes().clear();
-            }
-
-            if(!dto.getImagenesRutas().isEmpty()){
+            if (!dto.getImagenesRutas().isEmpty()) {
                 List<ImagenesModel> imagenes = dto.getImagenesRutas()
-                    .stream()
-                    .map(ruta -> {
-                        ImagenesModel img = new ImagenesModel();
-                        img.setRuta(ruta);
-                        img.setAltText(producto.getNombre());
-                        img.setProducto(producto);
-                        return img;
-                    })
-                    .collect(Collectors.toList());
+                        .stream()
+                        .map(ruta -> {
+                            ImagenesModel img = new ImagenesModel();
+                            img.setRuta(ruta);
+                            img.setAltText(producto.getNombre());
+                            img.setProducto(producto);
+                            return img;
+                        })
+                        .collect(Collectors.toList());
 
                 producto.getImagenes().addAll(imagenes);
             }
-            
+        }
+    }
+
+    private void validarRequestObligatorio(ProductoRequestDTO dto) {
+        if (dto.getTipoProductoId() == null) {
+            throw new RecursoNoEncontradoException("Debe indicar un tipo de producto válido.");
+        }
+        if (dto.getClasificacionId() == null) {
+            throw new RecursoNoEncontradoException("Debe indicar una clasificación válida.");
+        }
+        if (dto.getEstadoId() == null) {
+            throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
         }
     }
 
     /* ================= PAGINACIÓN ================= */
 
     public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
-
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-
         Page<ProductoModel> result = productoRepository.findAll(pageable);
 
         List<ProductoResponseDTO> contenido = result.getContent()
@@ -578,11 +522,6 @@ public class ProductoService {
                 .map(ProductoMapper::toResponseDTO)
                 .collect(Collectors.toList());
 
-        return new PagedResponse<>(
-                contenido,
-                page,
-                result.getTotalPages(),
-                result.getTotalElements()
-        );
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 }
