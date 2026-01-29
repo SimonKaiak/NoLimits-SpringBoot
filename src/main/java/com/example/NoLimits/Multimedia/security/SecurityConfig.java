@@ -37,6 +37,7 @@ public class SecurityConfig {
 
             // Públicos
             .requestMatchers("/").permitAll()
+            .requestMatchers("/health").permitAll()
             .requestMatchers("/api/v1/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
 
