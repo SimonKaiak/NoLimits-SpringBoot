@@ -5,6 +5,8 @@ import lombok.Data;
 
 import java.util.List;
 
+import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
+
 @Data
 @Schema(description = "DTO que representa un producto completo para el frontend.")
 public class ProductoResponseDTO {
@@ -50,9 +52,6 @@ public class ProductoResponseDTO {
     )
     private String portadaSaga;
 
-    private String urlCompra;
-    private String labelCompra;
-
     // ==================== Relaciones N:M (nombres) ====================
 
     @Schema(description = "Lista de plataformas asociadas al producto.")
@@ -74,4 +73,17 @@ public class ProductoResponseDTO {
             example = "[\"/assets/img/peliculas/spiderman1.webp\", \"/assets/img/peliculas/spiderman1-alt.webp\"]"
     )
     private List<String> imagenes;
+
+    // ==================== Links de compra ====================
+
+    @Schema(
+            description = "Links de compra por plataforma",
+            example = """
+            [
+              { "plataformaId": 1, "url": "https://store.steampowered.com/app/..." },
+              { "plataformaId": 2, "url": "https://www.playstation.com/..." }
+            ]
+            """
+    )
+    private List<LinkCompraDTO> linksCompra;
 }

@@ -80,17 +80,6 @@ public class ProductoModel {
     )
     private String portadaSaga;
 
-    
-    @Column(name = "url_compra", length = 500)
-    @Size(max = 500, message = "La URL no puede superar 500 caracteres.")
-    @Schema(description = "URL externa para redirigir (Steam, Netflix, etc.)", example = "https://store.steampowered.com/app/1817070/Marvels_SpiderMan_Remastered/")
-    private String urlCompra;
-
-    @Column(name = "label_compra", length = 60)
-    @Size(max = 60, message = "El label no puede superar 60 caracteres.")
-    @Schema(description = "Texto del botón de redirección", example = "Ver en Steam")
-    private String labelCompra;
-
     /* ====== Relaciones N:1 ====== */
 
     @ManyToOne(optional = false)
@@ -159,6 +148,9 @@ public class ProductoModel {
     @Schema(description = "Relación con desarrolladores (puente 'desarrolladores')", accessMode = Schema.AccessMode.READ_ONLY)
     private Set<DesarrolladoresModel> desarrolladores = new HashSet<>();
 
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<ProductoLinkCompraModel> linksCompra = new HashSet<>();
 
     /* ====== Reglas simples ====== */
     public void aplicarDescuento(double porcentaje) {

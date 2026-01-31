@@ -1,6 +1,7 @@
 // Ruta: src/main/java/com/example/NoLimits/Multimedia/dto/producto/mapper/ProductoMapper.java
 package com.example.NoLimits.Multimedia.dto.producto.mapper;
 
+import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 
@@ -27,8 +28,6 @@ public class ProductoMapper {
         dto.setId(model.getId());
         dto.setNombre(model.getNombre());
         dto.setPrecio(model.getPrecio());
-        dto.setUrlCompra(model.getUrlCompra());
-        dto.setLabelCompra(model.getLabelCompra());
 
         // Datos del tipo de producto
         if (model.getTipoProducto() != null) {
@@ -106,6 +105,21 @@ public class ProductoMapper {
                                 .stream()
                                 .map(img -> img.getRuta())
                                 .collect(Collectors.toList())
+        );
+
+        // ==================== Links de compra por plataforma ====================
+        dto.setLinksCompra(
+        model.getLinksCompra() == null ? java.util.List.of() :
+                model.getLinksCompra()
+                .stream()
+                .map(link -> {
+                        LinkCompraDTO l = new LinkCompraDTO();
+                        l.setPlataformaId(link.getPlataforma().getId());
+                        l.setUrl(link.getUrl());
+                        l.setLabel(link.getLabel());
+                        return l;
+                })
+                .collect(Collectors.toList())
         );
 
         return dto;

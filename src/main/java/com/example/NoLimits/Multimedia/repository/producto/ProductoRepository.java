@@ -52,6 +52,8 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         left join fetch ee.empresa
         left join fetch p.desarrolladores dd
         left join fetch dd.desarrollador
+        left join fetch p.linksCompra lc
+        left join fetch lc.plataforma
     """)
      List<ProductoModel> findAllFull();
 
@@ -66,6 +68,8 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         left join fetch ee.empresa
         left join fetch p.desarrolladores dd
         left join fetch dd.desarrollador
+        left join fetch p.linksCompra lc
+        left join fetch lc.plataforma
         where p.id = :id
     """)
     Optional<ProductoModel> findByIdFull(@Param("id") Long id);
@@ -142,5 +146,4 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         GROUP BY p.saga
     """)
     List<Object[]> findDistinctSagasWithPortada();
-
 }

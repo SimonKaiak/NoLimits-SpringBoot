@@ -5,6 +5,8 @@ import lombok.Data;
 
 import java.util.List;
 
+import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
+
 @Data
 @Schema(description = "DTO para actualizar un producto existente.")
 public class ProductoUpdateDTO {
@@ -25,13 +27,22 @@ public class ProductoUpdateDTO {
     private Long estadoId;
 
     @Schema(
-            description = "Rutas/URLs de las imágenes del producto (si se envía, reemplaza las actuales).", 
+            description = "Rutas/URLs de las imágenes del producto (si se envía, reemplaza las actuales).",
             example = "[\"https://.../img1.webp\", \"https://.../img2.webp\"]"
     )
     private List<String> imagenesRutas;
 
-    private String urlCompra;
-    private String labelCompra;
+    // ==================== LINKS COMPRA ====================
+    @Schema(
+            description = "Links de compra por plataforma (si se envía, reemplaza los actuales).",
+            example = """
+            [
+              { "plataformaId": 1, "url": "https://store.steampowered.com/app/...", "label": "Ver en Steam" },
+              { "plataformaId": 2, "url": "https://www.playstation.com/...", "label": "Ver en PlayStation" }
+            ]
+            """
+    )
+    private List<LinkCompraDTO> linksCompra;
 
     // ==================== SAGAS ====================
 

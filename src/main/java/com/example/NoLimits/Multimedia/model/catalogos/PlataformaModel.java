@@ -1,9 +1,12 @@
 package com.example.NoLimits.Multimedia.model.catalogos;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.example.NoLimits.Multimedia.model.producto.ProductoLinkCompraModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -38,4 +41,8 @@ public class PlataformaModel {
     @JsonIgnore
     @Schema(description = "Relaciones con productos (tabla puente 'plataformas')", accessMode = Schema.AccessMode.READ_ONLY)
     private List<PlataformasModel> productos;
+
+    @OneToMany(mappedBy = "plataforma", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ProductoLinkCompraModel> linksCompra = new ArrayList<>();
 }

@@ -25,9 +25,6 @@ public class ProductoRequestDTO {
     @Schema(description = "ID del estado", example = "1")
     private Long estadoId;
 
-    private String urlCompra;
-    private String labelCompra;
-
     /* ====== Sagas ====== */
 
     @Schema(
@@ -75,4 +72,17 @@ public class ProductoRequestDTO {
             example = "[\"peliculas/minecraft/PMinecraft.webp\"]"
     )
     private List<String> imagenesRutas;
+
+    /* ====== Links de compra por plataforma ====== */
+
+    @Schema(
+            description = "Links de compra asociados a plataformas",
+            example = """
+            [
+              { "plataformaId": 1, "url": "https://store.steampowered.com/app/..." },
+              { "plataformaId": 2, "url": "https://www.playstation.com/..." }
+            ]
+            """
+    )
+    private List<LinkCompraDTO> linksCompra;
 }

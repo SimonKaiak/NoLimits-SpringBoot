@@ -8,6 +8,7 @@ import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.*;
 import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
+import com.example.NoLimits.Multimedia.model.producto.ProductoLinkCompraModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.*;
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
@@ -92,9 +93,6 @@ public class ProductoService {
         if (dto.getSaga() != null) productoExistente.setSaga(dto.getSaga());
         if (dto.getPortadaSaga() != null) productoExistente.setPortadaSaga(dto.getPortadaSaga());
 
-        // ✅ HUB (redirigir)
-        if (dto.getUrlCompra() != null) productoExistente.setUrlCompra(dto.getUrlCompra());
-        if (dto.getLabelCompra() != null) productoExistente.setLabelCompra(dto.getLabelCompra());
 
         // ================== N:1 (FKs) ==================
         if (dto.getTipoProductoId() != null) {
@@ -232,6 +230,37 @@ public class ProductoService {
             }
         }
 
+        // ================== LINKS COMPRA ==================
+        if (dto.getLinksCompra() != null) {
+            productoExistente.getLinksCompra().clear(); 
+
+            if (!dto.getLinksCompra().isEmpty()) {
+                Set<ProductoLinkCompraModel> nuevosLinks = dto.getLinksCompra()
+                        .stream()
+                        .map(l -> {
+                            if (l.getPlataformaId() == null)
+                                throw new IllegalArgumentException("plataformaId es obligatorio");
+
+                            if (l.getUrl() == null || l.getUrl().isBlank())
+                                throw new IllegalArgumentException("url es obligatoria");
+
+                            PlataformaModel plat = plataformaRepository.findById(l.getPlataformaId())
+                                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                                            "Plataforma no encontrada con ID: " + l.getPlataformaId()));
+
+                            ProductoLinkCompraModel link = new ProductoLinkCompraModel();
+                            link.setProducto(productoExistente);
+                            link.setPlataforma(plat);
+                            link.setUrl(l.getUrl());
+                            link.setLabel(l.getLabel());
+                            return link;
+                        })
+                        .collect(Collectors.toSet());
+
+                productoExistente.getLinksCompra().addAll(nuevosLinks);
+            }
+        }
+
         // ================== GUARDAR + RECARGAR ==================
         productoRepository.save(productoExistente);
 
@@ -357,10 +386,6 @@ public class ProductoService {
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
-
-        // ✅ HUB (redirigir)
-        producto.setUrlCompra(dto.getUrlCompra());
-        producto.setLabelCompra(dto.getLabelCompra());
 
         // saga y portadaSaga
         producto.setSaga(dto.getSaga());
@@ -495,6 +520,39 @@ public class ProductoService {
                         .collect(Collectors.toList());
 
                 producto.getImagenes().addAll(imagenes);
+            }
+        }
+
+        // ================== LINKS COMPRA ==================
+        if (dto.getLinksCompra() != null) {
+            producto.getLinksCompra().clear();
+
+            if (!dto.getLinksCompra().isEmpty()) {
+                Set<ProductoLinkCompraModel> nuevosLinks = dto.getLinksCompra()
+                        .stream()
+                        .map(l -> {
+
+                            // VALIDACIONES
+                            if (l.getPlataformaId() == null)
+                                throw new IllegalArgumentException("plataformaId es obligatorio");
+
+                            if (l.getUrl() == null || l.getUrl().isBlank())
+                                throw new IllegalArgumentException("url es obligatoria");
+
+                            PlataformaModel plat = plataformaRepository.findById(l.getPlataformaId())
+                                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                                            "Plataforma no encontrada con ID: " + l.getPlataformaId()));
+
+                            ProductoLinkCompraModel link = new ProductoLinkCompraModel();
+                            link.setProducto(producto);
+                            link.setPlataforma(plat);
+                            link.setUrl(l.getUrl());
+                            link.setLabel(l.getLabel());
+                            return link;
+                        })
+                        .collect(Collectors.toSet());
+
+                producto.getLinksCompra().addAll(nuevosLinks);
             }
         }
     }
