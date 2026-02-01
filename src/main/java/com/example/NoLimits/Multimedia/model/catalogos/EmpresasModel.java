@@ -3,7 +3,6 @@ package com.example.NoLimits.Multimedia.model.catalogos;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,7 +11,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -23,42 +21,35 @@ import lombok.ToString;
 
 @Entity
 @Table(
-        name = "empresas",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"producto_id", "empresa_id"})
+    name = "empresas",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"producto_id", "empresa_id"})
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(exclude = {"producto", "empresa"})
-@Schema(description = "Tabla puente entre Producto y Empresa.")
 public class EmpresasModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
-    @Schema(description = "ID de la relación Producto-Empresa", example = "1")
     private Long id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "producto_id", nullable = false)
-    @NotNull(message = "La relación debe tener un producto asociado.")
     @JsonIgnore
-    @Schema(
-            description = "Producto asociado a la empresa",
-            example = "{\"id\": 10}",
-            accessMode = Schema.AccessMode.WRITE_ONLY
-    )
     private ProductoModel producto;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
-    @NotNull(message = "La relación debe tener una empresa asociada.")
-    @Schema(
-            description = "Empresa asociada al producto",
-            example = "{\"id\": 5}",
-            accessMode = Schema.AccessMode.WRITE_ONLY
-    )
     private EmpresaModel empresa;
+
+    @EqualsAndHashCode.Include
+    private Long productoId() {
+        return producto == null ? null : producto.getId();
+    }
+
+    @EqualsAndHashCode.Include
+    private Long empresaId() {
+        return empresa == null ? null : empresa.getId();
+    }
 }

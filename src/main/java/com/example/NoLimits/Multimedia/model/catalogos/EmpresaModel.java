@@ -3,7 +3,6 @@ package com.example.NoLimits.Multimedia.model.catalogos;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,46 +10,41 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "empresa")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Empresa (publisher, distribuidora, estudio, etc.).")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class EmpresaModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "ID de la empresa", example = "1")
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private Long id;
 
     @Column(length = 120, nullable = false, unique = true)
-    @NotBlank(message = "El nombre de la empresa es obligatorio.")
-    @Schema(description = "Nombre de la empresa", example = "Sony Pictures")
+    @ToString.Include
     private String nombre;
 
     @Column(nullable = false)
-    @Schema(description = "Indica si la empresa está activa", example = "true")
     private Boolean activo = true;
 
     @OneToMany(mappedBy = "empresa")
     @JsonIgnore
-    @Schema(
-            description = "Relaciones con productos (puente 'empresas')",
-            accessMode = Schema.AccessMode.READ_ONLY
-    )
     private List<EmpresasModel> productos;
 
     @OneToMany(mappedBy = "empresa")
     @JsonIgnore
-    @Schema(
-            description = "Relaciones con tipos de empresa (puente 'tipos_empresa')",
-            accessMode = Schema.AccessMode.READ_ONLY
-    )
     private List<TiposEmpresaModel> tipos;
 }
