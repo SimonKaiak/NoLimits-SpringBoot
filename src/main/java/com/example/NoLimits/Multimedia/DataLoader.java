@@ -472,7 +472,7 @@ public class DataLoader implements CommandLineRunner {
 
         // ================== ROLES ==================
         if (rolRepository.count() == 0) {
-            String[] rolesBase = { "ADMIN", "CLIENTE", "VENDEDOR" };
+            String[] rolesBase = { "ROLE_ADMIN", "ROLE_USER" };
 
             for (String nombre : rolesBase) {
                 RolModel rol = new RolModel();
@@ -484,8 +484,8 @@ public class DataLoader implements CommandLineRunner {
         }
 
         List<RolModel> roles = rolRepository.findAll();
-        RolModel rolCliente = roles.stream()
-                .filter(r -> r.getNombre().equalsIgnoreCase("CLIENTE"))
+        RolModel rolUser = roles.stream()
+                .filter(r -> r.getNombre().equalsIgnoreCase("ROLE_USER"))
                 .findFirst()
                 .orElse(roles.get(0));
 
@@ -540,7 +540,7 @@ public class DataLoader implements CommandLineRunner {
                 u.setCorreo("user" + i + "@example.com");
                 u.setTelefono(900000000L + random.nextInt(100000000));
                 u.setPassword("clave" + i);
-                u.setRol(rolCliente);
+                u.setRol(rolUser);
 
                 UsuarioModel usuarioGuardado = usuarioRepository.save(u);
 

@@ -14,20 +14,25 @@ public class RolesSeeder {
     CommandLineRunner seedRoles(RolRepository rolRepository) {
         return args -> {
 
-            if (rolRepository.count() == 0) {
+            boolean existeUser = rolRepository.findByNombreIgnoreCase("ROLE_USER").isPresent();
+            boolean existeAdmin = rolRepository.findByNombreIgnoreCase("ROLE_ADMIN").isPresent();
 
+            if (!existeUser) {
                 RolModel user = new RolModel();
                 user.setNombre("ROLE_USER");
                 user.setDescripcion("Rol por defecto para usuarios");
                 user.setActivo(true);
+                rolRepository.save(user);
+                System.out.println("✅ ROLE_USER creado");
+            }
 
+            if (!existeAdmin) {
                 RolModel admin = new RolModel();
                 admin.setNombre("ROLE_ADMIN");
                 admin.setDescripcion("Rol administrador del sistema");
                 admin.setActivo(true);
-
-                rolRepository.save(user);
                 rolRepository.save(admin);
+                System.out.println("✅ ROLE_ADMIN creado");
             }
         };
     }
