@@ -6,6 +6,7 @@ import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.security.JwtUtil;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,9 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     /*
      LOGIN REAL
 
@@ -58,7 +62,7 @@ public class AuthController {
                 .findByCorreoIgnoreCase(correoIn)
                 .orElse(null);
 
-        if (usuario == null || usuario.getPassword() == null || !usuario.getPassword().equals(passIn)) {
+        if (usuario == null || usuario.getPassword() == null || !passwordEncoder.matches(passIn, usuario.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Correo o contraseña incorrectos");
         }
