@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO;
@@ -60,6 +61,9 @@ public class UsuarioService {
 
     @Autowired
     private RolRepository rolRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -115,7 +119,7 @@ public class UsuarioService {
     usuario.setApellidos(dto.getApellidos());
     usuario.setCorreo(correo);
     usuario.setTelefono(dto.getTelefono());
-    usuario.setPassword(dto.getPassword());
+    usuario.setPassword(passwordEncoder.encode(dto.getPassword().trim()));
 
     // ===================== ROL (VALIDADO + DEFAULT) =====================
     RolModel rol;
@@ -287,7 +291,7 @@ public class UsuarioService {
         u.setApellidos(d.getApellidos());
         u.setCorreo(nuevoCorreo);
         u.setTelefono(d.getTelefono());
-        u.setPassword(d.getPassword());
+        u.setPassword(passwordEncoder.encode(d.getPassword().trim()));
 
         if (d.getRolId() != null) {
             RolModel nuevoRol = rolRepository.findById(d.getRolId())
@@ -352,7 +356,7 @@ public class UsuarioService {
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
             }
-            u.setPassword(d.getPassword());
+            u.setPassword(passwordEncoder.encode(d.getPassword().trim()));        
         }
 
         // Rol
@@ -492,7 +496,7 @@ public class UsuarioService {
 
         String passIn = (password == null) ? "" : password.trim();
 
-        if (usuario.getPassword() == null || !usuario.getPassword().equals(passIn)) {
+        if (usuario.getPassword() == null || !passwordEncoder.matches(passIn, usuario.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
         }
 
