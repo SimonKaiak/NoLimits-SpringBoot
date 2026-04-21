@@ -119,6 +119,18 @@ public class UsuarioController {
         return ResponseEntity.ok(data);
     }
 
+    @PostMapping("/registro")
+    @Operation(
+        summary = "Registro público de usuario",
+        description = "Registra un nuevo usuario público con rol ROLE_USER."
+    )
+    public ResponseEntity<UsuarioResponseDTO> registrarUsuarioPublico(
+            @Valid @RequestBody UsuarioRequestDTO usuario) {
+
+        UsuarioResponseDTO nuevoUsuario = usuarioService.save(usuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
+    }
+
     /**
      * Crear un nuevo usuario.
      *
@@ -126,24 +138,25 @@ public class UsuarioController {
      * Si todo sale bien, responde con 201 (creado) y el usuario resultante (UsuarioResponseDTO).
      */
     @PostMapping
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
-        summary = "Crear usuario",
-        description = "Registra un nuevo usuario.",
+        summary = "Crear usuario desde admin",
+        description = "Crea un usuario desde administración permitiendo indicar el rol.",
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = UsuarioRequestDTO.class),
                 examples = @ExampleObject(
-                    name = "Nuevo usuario",
+                    name = "Nuevo usuario admin",
                     value = """
                     {
-                      "nombre": "Lucas",
-                      "apellidos": "Fernández",
-                      "correo": "lucas@example.com",
-                      "telefono": 912345678,
-                      "password": "clave123",
-                      "rolId": 1
+                    "nombre": "Lucas",
+                    "apellidos": "Fernández",
+                    "correo": "lucas@example.com",
+                    "telefono": 912345678,
+                    "password": "clave12345",
+                    "rolId": 1
                     }
                     """
                 )
@@ -162,7 +175,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDTO> crearUsuario(
             @Valid @RequestBody UsuarioRequestDTO usuario) {
 
-        UsuarioResponseDTO nuevoUsuario = usuarioService.save(usuario);
+        UsuarioResponseDTO nuevoUsuario = usuarioService.saveDesdeAdmin(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
     }
 

@@ -85,6 +85,78 @@ public class UsuarioService {
         return toResponseDTO(usuario);
     }
 
+    public UsuarioResponseDTO saveDesdeAdmin(UsuarioRequestDTO dto) {
+
+        if (dto.getPassword() == null || dto.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña es obligatoria");
+        }
+
+        if (dto.getPassword().trim().length() < 8 || dto.getPassword().trim().length() > 255) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
+        }
+
+        if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "El correo es obligatorio");
+        }
+
+        String correo = dto.getCorreo().trim().toLowerCase();
+
+        if (usuarioRepository.existsByCorreo(correo)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
+        }
+
+        if (dto.getRolId() == null) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "El rolId es obligatorio para creación desde admin");
+        }
+
+        RolModel rol = rolRepository.findById(dto.getRolId())
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Rol no encontrado con ID: " + dto.getRolId()
+            ));
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setNombre(dto.getNombre());
+        usuario.setApellidos(dto.getApellidos());
+        usuario.setCorreo(correo);
+        usuario.setTelefono(dto.getTelefono());
+        usuario.setPassword(passwordEncoder.encode(dto.getPassword().trim()));
+        usuario.setRol(rol);
+
+        UsuarioModel usuarioGuardado = usuarioRepository.save(usuario);
+
+        DireccionRequestDTO d = dto.getDireccion();
+        if (d != null) {
+            if (d.getComunaId() == null) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "La comunaId es obligatoria en dirección.");
+            }
+
+            ComunaModel comuna = comunaRepository.findById(d.getComunaId())
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Comuna no encontrada"));
+
+            DireccionModel direccion = new DireccionModel();
+            direccion.setCalle(d.getCalle());
+            direccion.setNumero(d.getNumero());
+            direccion.setComplemento(d.getComplemento());
+            direccion.setCodigoPostal(d.getCodigoPostal());
+            direccion.setActivo(d.getActivo() == null ? true : d.getActivo());
+            direccion.setComuna(comuna);
+            direccion.setUsuarioModel(usuarioGuardado);
+
+            direccionRepository.save(direccion);
+            usuarioGuardado.setDireccion(direccion);
+            usuarioRepository.save(usuarioGuardado);
+        }
+
+        return toResponseDTO(usuarioGuardado);
+    }
+
     /*
      Guardar un nuevo usuario.
 
@@ -96,10 +168,15 @@ public class UsuarioService {
     public UsuarioResponseDTO save(UsuarioRequestDTO dto) {
 
     // ===================== VALIDACIONES BÁSICAS =====================
-    if (dto.getPassword() != null && (dto.getPassword().length() < 8 || dto.getPassword().length() > 255)) {
-        throw new ResponseStatusException(
-            HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
-    }
+        if (dto.getPassword() == null || dto.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña es obligatoria");
+        }
+
+        if (dto.getPassword().trim().length() < 8 || dto.getPassword().trim().length() > 255) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
+        }
 
     if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
         throw new ResponseStatusException(
@@ -122,21 +199,13 @@ public class UsuarioService {
     usuario.setTelefono(dto.getTelefono());
     usuario.setPassword(passwordEncoder.encode(dto.getPassword().trim()));
 
-    // ===================== ROL (VALIDADO + DEFAULT) =====================
-    RolModel rol;
+    // ===================== ROL (FORZAR USUARIO EN REGISTRO PÚBLICO) =====================
+    RolModel rol = rolRepository.findByNombreIgnoreCase("ROLE_USER")
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Rol por defecto ROLE_USER no existe. Ejecuta RolesSeeder."
+        ));
 
-    if (dto.getRolId() != null) {
-        rol = rolRepository.findById(dto.getRolId())
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Rol no encontrado con ID: " + dto.getRolId()
-            ));
-    } else {
-    rol = rolRepository.findByNombreIgnoreCase("ROLE_USER")
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Rol por defecto ROLE_USER no existe. Ejecuta RolesSeeder."
-            ));
-    }
     usuario.setRol(rol);
 
     // Guardar usuario sin dirección primero (para obtener ID)
