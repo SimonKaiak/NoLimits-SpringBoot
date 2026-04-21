@@ -13,7 +13,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO;
@@ -30,6 +29,8 @@ import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.transaction.Transactional;
 
@@ -356,7 +357,7 @@ public class UsuarioService {
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
             }
-            u.setPassword(passwordEncoder.encode(d.getPassword().trim()));        
+            u.setPassword(passwordEncoder.encode(d.getPassword().trim()));     
         }
 
         // Rol

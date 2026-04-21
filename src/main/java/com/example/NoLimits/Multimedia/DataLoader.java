@@ -64,6 +64,8 @@ import com.example.NoLimits.Multimedia.repository.ubicacion.RegionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import net.datafaker.Faker;
 
 /**
@@ -179,6 +181,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Autowired
     private DetalleVentaRepository detalleVentaRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Punto de entrada del cargador de datos.
@@ -539,7 +544,7 @@ public class DataLoader implements CommandLineRunner {
                 u.setApellidos(faker.name().lastName());
                 u.setCorreo("user" + i + "@example.com");
                 u.setTelefono(900000000L + random.nextInt(100000000));
-                u.setPassword("clave" + i);
+                u.setPassword(passwordEncoder.encode("clave123" + i));
                 u.setRol(rolUser);
 
                 UsuarioModel usuarioGuardado = usuarioRepository.save(u);
