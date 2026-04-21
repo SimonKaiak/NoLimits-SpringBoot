@@ -1,17 +1,20 @@
 package com.example.NoLimits.Multimedia.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Component
+@Profile("dev")
 @Order(2)
 public class AdminInitializer implements CommandLineRunner {
 
@@ -24,11 +27,19 @@ public class AdminInitializer implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Value("${app.admin.email}")
+    private String correo;
+
+    @Value("${app.admin.password}")
+    private String password;
+
     @Override
     public void run(String... args) {
 
-        final String correo = "nolimits@gmail.com";
-        final String password = "53176ben10";
+        if (correo == null || correo.isBlank() || password == null || password.isBlank()) {
+            System.out.println("⚠️ Credenciales de admin no configuradas. Se omite creación del admin.");
+            return;
+        }
 
         RolModel adminRol = rolRepository.findByNombreIgnoreCase("ROLE_ADMIN")
                 .orElseGet(() -> rolRepository.findByNombreIgnoreCase("ADMIN").orElse(null));
@@ -38,7 +49,7 @@ public class AdminInitializer implements CommandLineRunner {
             return;
         }
 
-        UsuarioModel admin = usuarioRepository.findByCorreoIgnoreCase(correo).orElse(null);
+        UsuarioModel admin = usuarioRepository.findByCorreoIgnoreCase(correo.trim().toLowerCase()).orElse(null);
 
         if (admin == null) {
             admin = new UsuarioModel();
