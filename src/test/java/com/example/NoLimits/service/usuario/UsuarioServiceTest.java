@@ -1,6 +1,7 @@
 package com.example.NoLimits.service.usuario;
 
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
@@ -8,12 +9,16 @@ import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
+import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
+import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
+import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.service.usuario.UsuarioService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -37,6 +42,18 @@ public class UsuarioServiceTest {
 
     @MockBean
     private VentaRepository ventaRepository;
+
+    @MockBean
+    private DireccionRepository direccionRepository;
+
+    @MockBean
+    private ComunaRepository comunaRepository;
+
+    @MockBean
+    private RolRepository rolRepository;
+
+    @MockBean
+    private PasswordEncoder passwordEncoder;
 
     // ============ HELPERS ============
 
@@ -63,6 +80,16 @@ public class UsuarioServiceTest {
         dto.setTelefono(123456789L);
         dto.setPassword("password");
         dto.setRolId(2L);
+        return dto;
+    }
+
+    private UsuarioRegistroDTO usuarioRegistroRequest() {
+        UsuarioRegistroDTO dto = new UsuarioRegistroDTO();
+        dto.setNombre("Juan");
+        dto.setApellidos("Pérez");
+        dto.setCorreo("correo@test.com");
+        dto.setTelefono(123456789L);
+        dto.setPassword("password");
         return dto;
     }
 
@@ -123,13 +150,20 @@ public class UsuarioServiceTest {
 
     @Test
     void testSave_OK() {
-        UsuarioRequestDTO dto = usuarioRequest();
+        UsuarioRegistroDTO dto = usuarioRegistroRequest();
+
+        RolModel rol = new RolModel();
+        rol.setId(2L);
+        rol.setNombre("ROLE_USER");
 
         when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(false);
+        when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rol));
+        when(passwordEncoder.encode("password")).thenReturn("hash_password");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> {
                     UsuarioModel u = inv.getArgument(0);
                     u.setId(1L);
+                    u.setRol(rol);
                     return u;
                 });
 
@@ -145,8 +179,8 @@ public class UsuarioServiceTest {
 
     @Test
     void testSave_PasswordLarga_Lanza400() {
-        UsuarioRequestDTO dto = usuarioRequest();
-        dto.setPassword("01234567890"); // 11 caracteres
+        UsuarioRegistroDTO dto = usuarioRegistroRequest();
+        dto.setPassword("1234567"); // 7 caracteres
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.save(dto));
@@ -156,7 +190,7 @@ public class UsuarioServiceTest {
 
     @Test
     void testSave_SinCorreo_Lanza400() {
-        UsuarioRequestDTO dto = usuarioRequest();
+        UsuarioRegistroDTO dto = usuarioRegistroRequest();
         dto.setCorreo("   ");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -168,7 +202,7 @@ public class UsuarioServiceTest {
 
     @Test
     void testSave_CorreoDuplicado_Lanza409() {
-        UsuarioRequestDTO dto = usuarioRequest();
+        UsuarioRegistroDTO dto = usuarioRegistroRequest();
 
         when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(true);
 
@@ -177,6 +211,33 @@ public class UsuarioServiceTest {
 
         assertEquals(409, ex.getStatusCode().value());
         verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void testSaveDesdeAdmin_OK() {
+        UsuarioRequestDTO dto = usuarioRequest();
+
+        RolModel rol = new RolModel();
+        rol.setId(2L);
+        rol.setNombre("CLIENTE");
+
+        when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(false);
+        when(rolRepository.findById(2L)).thenReturn(Optional.of(rol));
+        when(passwordEncoder.encode("password")).thenReturn("hash_password");
+        when(usuarioRepository.save(any(UsuarioModel.class)))
+                .thenAnswer(inv -> {
+                    UsuarioModel u = inv.getArgument(0);
+                    u.setId(1L);
+                    u.setRol(rol);
+                    return u;
+                });
+
+        UsuarioResponseDTO guardado = usuarioService.saveDesdeAdmin(dto);
+
+        assertNotNull(guardado);
+        assertEquals(1L, guardado.getId());
+        assertEquals("Juan", guardado.getNombre());
+        assertEquals(2L, guardado.getRolId());
     }
 
     // ============ DELETE ============
@@ -249,7 +310,7 @@ public class UsuarioServiceTest {
 
     @Test
     void testFindByCorreo_Existe() {
-        when(usuarioRepository.findByCorreo("correo@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
                 .thenReturn(Optional.of(usuarioEntity()));
 
         UsuarioResponseDTO dto = usuarioService.findByCorreo("  CORREO@test.com  ");
@@ -260,7 +321,7 @@ public class UsuarioServiceTest {
 
     @Test
     void testFindByCorreo_NoExiste() {
-        when(usuarioRepository.findByCorreo("correo@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
                 .thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class,
@@ -274,8 +335,14 @@ public class UsuarioServiceTest {
         UsuarioModel existente = usuarioEntity();
         UsuarioUpdateDTO datos = usuarioUpdateCompleto();
 
+        RolModel rolNuevo = new RolModel();
+        rolNuevo.setId(3L);
+        rolNuevo.setNombre("ADMIN");
+
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
+        when(rolRepository.findById(3L)).thenReturn(Optional.of(rolNuevo));
+        when(passwordEncoder.encode("newpass")).thenReturn("hash_newpass");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -319,7 +386,7 @@ public class UsuarioServiceTest {
     void testUpdate_PasswordLarga_Lanza400() {
         UsuarioModel existente = usuarioEntity();
         UsuarioUpdateDTO datos = usuarioUpdateCompleto();
-        datos.setPassword("12345678901"); // 11 chars
+        datos.setPassword("1234567"); // 7 caracteres
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
@@ -372,7 +439,7 @@ public class UsuarioServiceTest {
         UsuarioModel existente = usuarioEntity();
 
         UsuarioUpdateDTO patch = new UsuarioUpdateDTO();
-        patch.setPassword("12345678901"); // 11 chars
+        patch.setPassword("1234567"); // 7 caracteres
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
 
@@ -442,8 +509,9 @@ public class UsuarioServiceTest {
 
     @Test
     void testLogin_OK() {
-        when(usuarioRepository.findByCorreo("correo@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
                 .thenReturn(Optional.of(usuarioEntity()));
+        when(passwordEncoder.matches("password", "password")).thenReturn(true);
 
         UsuarioResponseDTO dto = usuarioService.login("correo@test.com", "password");
 
@@ -453,8 +521,9 @@ public class UsuarioServiceTest {
 
     @Test
     void testLogin_PasswordIncorrecta_Lanza401() {
-        when(usuarioRepository.findByCorreo("correo@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
                 .thenReturn(Optional.of(usuarioEntity()));
+        when(passwordEncoder.matches("otra", "password")).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.login("correo@test.com", "otra"));
@@ -464,7 +533,7 @@ public class UsuarioServiceTest {
 
     @Test
     void testLogin_CorreoNoExiste_Lanza404() {
-        when(usuarioRepository.findByCorreo("correo@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
                 .thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class,
