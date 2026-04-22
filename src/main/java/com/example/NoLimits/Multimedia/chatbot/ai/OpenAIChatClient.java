@@ -68,3 +68,5 @@ public class OpenAIChatClient {
         return texto;
     }
 }
+
+// Test
