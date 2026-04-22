@@ -25,6 +25,7 @@ import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
 import com.example.NoLimits.Multimedia.service.usuario.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -125,7 +126,7 @@ public class UsuarioController {
         description = "Registra un nuevo usuario público con rol ROLE_USER."
     )
     public ResponseEntity<UsuarioResponseDTO> registrarUsuarioPublico(
-            @Valid @RequestBody UsuarioRequestDTO usuario) {
+            @Valid @RequestBody UsuarioRegistroDTO usuario) {
 
         UsuarioResponseDTO nuevoUsuario = usuarioService.save(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);

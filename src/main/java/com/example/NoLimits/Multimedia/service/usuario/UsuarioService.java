@@ -19,6 +19,7 @@ import com.example.NoLimits.Multimedia.dto.ubicacion.request.DireccionRequestDTO
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
 import com.example.NoLimits.Multimedia.model.ubicacion.ComunaModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
@@ -130,6 +131,76 @@ public class UsuarioService {
         UsuarioModel usuarioGuardado = usuarioRepository.save(usuario);
 
         DireccionRequestDTO d = dto.getDireccion();
+            if (d != null) {
+                if (d.getComunaId() == null) {
+                    throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "La comunaId es obligatoria en dirección.");
+                }
+
+                ComunaModel comuna = comunaRepository.findById(d.getComunaId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Comuna no encontrada"));
+
+                DireccionModel direccion = new DireccionModel();
+                direccion.setCalle(d.getCalle());
+                direccion.setNumero(d.getNumero());
+                direccion.setComplemento(d.getComplemento());
+                direccion.setCodigoPostal(d.getCodigoPostal());
+                direccion.setActivo(d.getActivo() == null ? true : d.getActivo());
+                direccion.setComuna(comuna);
+                direccion.setUsuarioModel(usuarioGuardado);
+
+                direccionRepository.save(direccion);
+                usuarioGuardado.setDireccion(direccion);
+                usuarioRepository.save(usuarioGuardado);
+            }
+
+            return toResponseDTO(usuarioGuardado);
+        }
+
+        public UsuarioResponseDTO save(UsuarioRegistroDTO dto) {
+
+        if (dto.getPassword() == null || dto.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña es obligatoria");
+        }
+
+        if (dto.getPassword().trim().length() < 8 || dto.getPassword().trim().length() > 255) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
+        }
+
+        if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "El correo es obligatorio");
+        }
+
+        String correo = dto.getCorreo().trim().toLowerCase();
+
+        if (usuarioRepository.existsByCorreo(correo)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
+        }
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setNombre(dto.getNombre());
+        usuario.setApellidos(dto.getApellidos());
+        usuario.setCorreo(correo);
+        usuario.setTelefono(dto.getTelefono());
+        usuario.setPassword(passwordEncoder.encode(dto.getPassword().trim()));
+
+        RolModel rol = rolRepository.findByNombreIgnoreCase("ROLE_USER")
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Rol por defecto ROLE_USER no existe. Ejecuta RolesSeeder."
+            ));
+
+        usuario.setRol(rol);
+
+        UsuarioModel usuarioGuardado = usuarioRepository.save(usuario);
+
+        DireccionRequestDTO d = dto.getDireccion();
+
         if (d != null) {
             if (d.getComunaId() == null) {
                 throw new ResponseStatusException(
@@ -156,95 +227,6 @@ public class UsuarioService {
 
         return toResponseDTO(usuarioGuardado);
     }
-
-    /*
-     Guardar un nuevo usuario.
-
-     Validaciones:
-     - Contraseña máximo 255 caracteres.
-     - Correo obligatorio.
-     - Correo no duplicado (se normaliza en minúsculas).
-    */
-    public UsuarioResponseDTO save(UsuarioRequestDTO dto) {
-
-    // ===================== VALIDACIONES BÁSICAS =====================
-        if (dto.getPassword() == null || dto.getPassword().trim().isEmpty()) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "La contraseña es obligatoria");
-        }
-
-        if (dto.getPassword().trim().length() < 8 || dto.getPassword().trim().length() > 255) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "La contraseña debe tener entre 8 y 255 caracteres");
-        }
-
-    if (dto.getCorreo() == null || dto.getCorreo().trim().isEmpty()) {
-        throw new ResponseStatusException(
-            HttpStatus.BAD_REQUEST, "El correo es obligatorio");
-    }
-
-    String correo = dto.getCorreo().trim().toLowerCase();
-
-    if (usuarioRepository.existsByCorreo(correo)) {
-        throw new ResponseStatusException(
-            HttpStatus.CONFLICT, "Correo ya registrado por otro usuario");
-    }
-
-
-    // ===================== CREAR USUARIO =====================
-    UsuarioModel usuario = new UsuarioModel();
-    usuario.setNombre(dto.getNombre());
-    usuario.setApellidos(dto.getApellidos());
-    usuario.setCorreo(correo);
-    usuario.setTelefono(dto.getTelefono());
-    usuario.setPassword(passwordEncoder.encode(dto.getPassword().trim()));
-
-    // ===================== ROL (FORZAR USUARIO EN REGISTRO PÚBLICO) =====================
-    RolModel rol = rolRepository.findByNombreIgnoreCase("ROLE_USER")
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Rol por defecto ROLE_USER no existe. Ejecuta RolesSeeder."
-        ));
-
-    usuario.setRol(rol);
-
-    // Guardar usuario sin dirección primero (para obtener ID)
-    UsuarioModel usuarioGuardado = usuarioRepository.save(usuario);
-
-
-    // ===================== CREAR DIRECCIÓN =====================
-    DireccionRequestDTO d = dto.getDireccion();
-
-    if (d != null) {
-
-        if (d.getComunaId() == null) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "La comunaId es obligatoria en dirección.");
-        }
-
-        ComunaModel comuna = comunaRepository.findById(d.getComunaId())
-                .orElseThrow(() -> new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Comuna no encontrada"));
-
-        DireccionModel direccion = new DireccionModel();
-        direccion.setCalle(d.getCalle());
-        direccion.setNumero(d.getNumero());
-        direccion.setComplemento(d.getComplemento());
-        direccion.setCodigoPostal(d.getCodigoPostal());
-        direccion.setActivo(d.getActivo() == null ? true : d.getActivo());
-        direccion.setComuna(comuna);
-        direccion.setUsuarioModel(usuarioGuardado);
-
-        direccionRepository.save(direccion);
-
-        // recomendado: guardar también el usuario si tu relación NO tiene cascade
-        usuarioGuardado.setDireccion(direccion);
-        usuarioRepository.save(usuarioGuardado);
-    }
-    // ===================== RESPUESTA =====================
-    return toResponseDTO(usuarioGuardado);
-}
-
 
     /*
      Eliminar un usuario por ID.
