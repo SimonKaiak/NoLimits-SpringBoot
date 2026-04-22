@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.NoLimits.Multimedia.assemblers.usuario.UsuarioModelAssembler;
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
@@ -98,9 +99,39 @@ public class UsuarioControllerV2 {
 
     /* ===================== CREAR ===================== */
 
+    @PostMapping("/registro")
+@Operation(
+    summary = "Registro público de usuario (DTO + HATEOAS)",
+    requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = UsuarioRegistroDTO.class),
+            examples = @ExampleObject(
+                value = """
+                {
+                  "nombre": "Lucas",
+                  "apellidos": "Fernández",
+                  "correo": "lucas@example.com",
+                  "telefono": 912345678,
+                  "password": "clave12345"
+                }
+                """
+            )
+        )
+    )
+)
+public ResponseEntity<EntityModel<UsuarioResponseDTO>> registrar(@jakarta.validation.Valid @RequestBody UsuarioRegistroDTO body) {
+    UsuarioResponseDTO creado = usuarioService.save(body);
+    EntityModel<UsuarioResponseDTO> entity = assembler.toModel(creado);
+
+    return ResponseEntity
+            .created(entity.getRequiredLink(IanaLinkRelations.SELF).toUri())
+            .body(entity);
+}
     @PostMapping
     @Operation(
-        summary = "Crear usuario (DTO + HATEOAS)",
+        summary = "Crear usuario desde admin (DTO + HATEOAS)",
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true,
             content = @Content(
@@ -109,12 +140,12 @@ public class UsuarioControllerV2 {
                 examples = @ExampleObject(
                     value = """
                     {
-                      "nombre": "Lucas",
-                      "apellidos": "Fernández",
-                      "correo": "lucas@example.com",
-                      "telefono": 912345678,
-                      "password": "clave123",
-                      "rolId": 1
+                    "nombre": "Lucas",
+                    "apellidos": "Fernández",
+                    "correo": "lucas@example.com",
+                    "telefono": 912345678,
+                    "password": "clave12345",
+                    "rolId": 1
                     }
                     """
                 )
@@ -133,8 +164,8 @@ public class UsuarioControllerV2 {
             @ApiResponse(responseCode = "400", description = "Error de validación")
         }
     )
-    public ResponseEntity<EntityModel<UsuarioResponseDTO>> create(@RequestBody UsuarioRequestDTO body) {
-        UsuarioResponseDTO creado = usuarioService.save(body);
+    public ResponseEntity<EntityModel<UsuarioResponseDTO>> create(@jakarta.validation.Valid @RequestBody UsuarioRequestDTO body) {
+        UsuarioResponseDTO creado = usuarioService.saveDesdeAdmin(body);
         EntityModel<UsuarioResponseDTO> entity = assembler.toModel(creado);
 
         return ResponseEntity
@@ -165,7 +196,7 @@ public class UsuarioControllerV2 {
     @ApiResponse(responseCode = "400", description = "Error de validación")
     public ResponseEntity<EntityModel<UsuarioResponseDTO>> update(
             @PathVariable Long id,
-            @RequestBody UsuarioUpdateDTO body) {
+            @jakarta.validation.Valid @RequestBody UsuarioUpdateDTO body) {
 
         UsuarioResponseDTO actualizado = usuarioService.update(id, body);
         return ResponseEntity.ok(assembler.toModel(actualizado));
