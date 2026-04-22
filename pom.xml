@@ -172,6 +172,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Dependencia Chat bot OpenAI -->
+		<dependency>
+			<groupId>com.openai</groupId>
+			<artifactId>openai-java</artifactId>
+			<version>4.32.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<!-- ========================
