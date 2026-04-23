@@ -84,6 +84,34 @@ public class UsuarioController {
         return ResponseEntity.ok(favoritos);
     }
 
+    @PostMapping("/{usuarioId}/favoritos/{productoId}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+        summary = "Agregar favorito al usuario",
+        description = "Agrega un producto a los favoritos de un usuario."
+    )
+    public ResponseEntity<FavoritoModel> agregarFavorito(
+            @PathVariable Long usuarioId,
+            @PathVariable Long productoId) {
+
+        FavoritoModel favorito = usuarioService.agregarFavorito(usuarioId, productoId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(favorito);
+    }
+
+    @DeleteMapping("/{usuarioId}/favoritos/{productoId}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+        summary = "Eliminar favorito del usuario",
+        description = "Elimina un producto de los favoritos de un usuario."
+    )
+    public ResponseEntity<Void> eliminarFavorito(
+            @PathVariable Long usuarioId,
+            @PathVariable Long productoId) {
+
+        usuarioService.eliminarFavorito(usuarioId, productoId);
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * Listar usuarios con paginación real.
      */
