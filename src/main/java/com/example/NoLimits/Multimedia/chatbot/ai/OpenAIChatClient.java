@@ -75,11 +75,17 @@ public class OpenAIChatClient {
     // Limpieza extra por si la IA se pasa de lista
     private String limpiarTexto(String texto) {
         return texto
-                .replace("###", "")
-                .replace("##", "")
-                .replace("#", "")
-                .replace("**", "")
-                .replace("*", "")
+                // convierte listas tipo "* texto" a "- texto"
+                .replaceAll("(?m)^\\*\\s*", "- ")
+                
+                // elimina markdown restante
+                .replaceAll("\\*+", "")   // otros *
+                .replaceAll("#+", "")    // ### títulos
+                
+                // limpia espacios
+                .replaceAll("\\s{2,}", " ")
+                .replaceAll("\\n{3,}", "\n\n")
+                
                 .trim();
-    }
+        }
 }
