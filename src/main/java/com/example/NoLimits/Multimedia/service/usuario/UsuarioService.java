@@ -20,12 +20,14 @@ import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
+import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.ComunaModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
 import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
+import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
@@ -71,6 +73,9 @@ public class UsuarioService {
 
     @Autowired
     private FavoritoRepository favoritoRepository;
+
+    @Autowired
+    private ProductoRepository productoRepository;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -622,5 +627,35 @@ public class UsuarioService {
     public List<FavoritoModel> obtenerFavoritosPorUsuario(Long usuarioId) {
         getUsuarioOrThrow(usuarioId);
         return favoritoRepository.findByUsuario_Id(usuarioId);
+    }
+
+    public FavoritoModel agregarFavorito(Long usuarioId, Long productoId) {
+        UsuarioModel usuario = getUsuarioOrThrow(usuarioId);
+
+        ProductoModel producto = productoRepository.findById(productoId)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + productoId));
+
+        if (favoritoRepository.existsByUsuario_IdAndProducto_Id(usuarioId, productoId)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "El producto ya está en favoritos.");
+        }
+
+        FavoritoModel favorito = new FavoritoModel();
+        favorito.setUsuario(usuario);
+        favorito.setProducto(producto);
+
+        return favoritoRepository.save(favorito);
+    }
+
+    public void eliminarFavorito(Long usuarioId, Long productoId) {
+        getUsuarioOrThrow(usuarioId);
+
+        FavoritoModel favorito = favoritoRepository
+            .findByUsuario_IdAndProducto_Id(usuarioId, productoId)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Favorito no encontrado para ese usuario y producto."));
+
+        favoritoRepository.delete(favorito);
     }
 }
