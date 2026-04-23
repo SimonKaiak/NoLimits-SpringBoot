@@ -43,6 +43,10 @@ public class OpenAIChatClient {
                 - No inventes funciones que la plataforma no tenga.
                 - Si no sabes algo, dilo con honestidad.
                 - Mantén las respuestas cortas o medianas.
+                - No uses Markdown.
+                - No uses símbolos como *, **, #, ##, ### ni guiones tipo lista.
+                - Responde en texto plano.
+                - Si das pasos, usa este formato: 1) 2) 3)
                 """;
 
         ResponseCreateParams params = ResponseCreateParams.builder()
@@ -65,8 +69,17 @@ public class OpenAIChatClient {
                 .findFirst()
                 .orElse("No pude generar una respuesta en este momento.");
 
-        return texto;
+        return limpiarTexto(texto);
+    }
+
+    // Limpieza extra por si la IA se pasa de lista
+    private String limpiarTexto(String texto) {
+        return texto
+                .replace("###", "")
+                .replace("##", "")
+                .replace("#", "")
+                .replace("**", "")
+                .replace("*", "")
+                .trim();
     }
 }
-
-// Test
