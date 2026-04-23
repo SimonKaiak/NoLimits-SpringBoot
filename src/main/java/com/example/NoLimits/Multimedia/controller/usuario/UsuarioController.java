@@ -25,6 +25,7 @@ import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
+import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
 import com.example.NoLimits.Multimedia.service.usuario.UsuarioService;
 
@@ -71,6 +72,16 @@ public class UsuarioController {
         return usuarios.isEmpty()
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/{id}/favoritos")
+    @Operation(
+        summary = "Listar favoritos del usuario",
+        description = "Obtiene el listado de productos favoritos asociados a un usuario."
+    )
+    public ResponseEntity<List<FavoritoModel>> obtenerFavoritosPorUsuario(@PathVariable Long id) {
+        List<FavoritoModel> favoritos = usuarioService.obtenerFavoritosPorUsuario(id);
+        return ResponseEntity.ok(favoritos);
     }
 
     /**

@@ -22,6 +22,7 @@ import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
 import com.example.NoLimits.Multimedia.model.ubicacion.ComunaModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
+import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
@@ -29,6 +30,7 @@ import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
+import com.example.NoLimits.Multimedia.repository.usuario.FavoritoRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -66,6 +68,9 @@ public class UsuarioService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private FavoritoRepository favoritoRepository;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -612,5 +617,10 @@ public class UsuarioService {
         }
 
         return dto;
+    }
+
+    public List<FavoritoModel> obtenerFavoritosPorUsuario(Long usuarioId) {
+        getUsuarioOrThrow(usuarioId);
+        return favoritoRepository.findByUsuario_Id(usuarioId);
     }
 }
