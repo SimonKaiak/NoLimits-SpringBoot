@@ -59,9 +59,8 @@ public class ProductoModel {
     @Schema(description = "Nombre del producto", example = "Spider-Man (2002)")
     private String nombre;
 
-    @Column(nullable = false)
-    @NotNull(message = "El precio es obligatorio.")
-    @Schema(description = "Precio del producto", example = "12990")
+    @Column(nullable = true)
+    @Schema(description = "Precio manual de respaldo del producto", example = "12990")
     private Double precio;
 
     /* ====== Campos para sagas (solo aplica a películas) ====== */
