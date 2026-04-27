@@ -358,14 +358,37 @@ public class ProductoService {
                     Estado: %s
                     Precio: %s
                     Saga: %s
+                    Genero: %s
+                    Empresa: %s
+                    Plataforma: %s
+                    Desarrollador: %s
                     """.formatted(
                     producto.getNombre(),
                     producto.getTipoProducto() != null ? producto.getTipoProducto().getNombre() : "",
                     producto.getClasificacion() != null ? producto.getClasificacion().getNombre() : "",
                     producto.getEstado() != null ? producto.getEstado().getNombre() : "",
                     producto.getPrecio(),
-                    producto.getSaga()
-                    //producto.getSinopsis() | Está documentado porque aun no se implementa "Sinopsis" como atributo
+                    producto.getSaga(),
+                    producto.getGeneros() != null
+                            ? producto.getGeneros().stream()
+                                .map(g -> g.getGenero().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : "",
+                    producto.getEmpresas() != null
+                            ? producto.getEmpresas().stream()
+                                .map(e -> e.getEmpresa().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : "",
+                    producto.getPlataformas() != null
+                            ? producto.getPlataformas().stream()
+                                .map(p -> p.getPlataforma().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : "",
+                    producto.getDesarrolladores() != null
+                            ? producto.getDesarrolladores().stream()
+                                .map(d -> d.getDesarrollador().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : ""
             );
 
             productoEmbeddingService.guardarEmbeddingProducto(producto.getId(), contenido);

@@ -58,14 +58,44 @@ public class ProductoEmbeddingService {
                     p.nombre,
                     p.precio,
                     p.saga,
-                    p.sinopsis,
                     tp.nombre AS tipo_producto,
                     c.nombre AS clasificacion,
-                    e.nombre AS estado
+                    e.nombre AS estado,
+
+                    COALESCE(STRING_AGG(DISTINCT g.nombre, ', '), '') AS generos,
+                    COALESCE(STRING_AGG(DISTINCT emp.nombre, ', '), '') AS empresas,
+                    COALESCE(STRING_AGG(DISTINCT plat.nombre, ', '), '') AS plataformas,
+                    COALESCE(STRING_AGG(DISTINCT d.nombre, ', '), '') AS desarrolladores
+
                 FROM productos p
                 LEFT JOIN tipo_productos tp ON tp.id = p.tipo_producto_id
                 LEFT JOIN clasificaciones c ON c.id = p.clasificacion_id
                 LEFT JOIN estados e ON e.id = p.estado_id
+
+                -- GENEROS
+                LEFT JOIN generos gp ON gp.producto_id = p.id
+                LEFT JOIN genero g ON g.id = gp.genero_id
+
+                -- EMPRESAS
+                LEFT JOIN empresas ep ON ep.producto_id = p.id
+                LEFT JOIN empresa emp ON emp.id = ep.empresa_id
+
+                -- PLATAFORMAS
+                LEFT JOIN plataformas pp ON pp.producto_id = p.id
+                LEFT JOIN plataforma plat ON plat.id = pp.plataforma_id
+
+                -- DESARROLLADORES
+                LEFT JOIN desarrolladores dp ON dp.producto_id = p.id
+                LEFT JOIN desarrollador d ON d.id = dp.desarrollador_id
+
+                GROUP BY 
+                    p.id,
+                    p.nombre,
+                    p.precio,
+                    p.saga,
+                    tp.nombre,
+                    c.nombre,
+                    e.nombre
                 """;
 
         List<Integer> resultado = jdbcTemplate.query(sqlProductos, rs -> {
@@ -81,7 +111,10 @@ public class ProductoEmbeddingService {
                         Estado: %s
                         Precio: %s
                         Saga: %s
-                        Sinopsis: %s
+                        Genero: %s
+                        Empresa: %s
+                        Plataforma: %s
+                        Desarrollador: %s
                         """.formatted(
                         rs.getString("nombre"),
                         rs.getString("tipo_producto"),
@@ -89,7 +122,10 @@ public class ProductoEmbeddingService {
                         rs.getString("estado"),
                         rs.getObject("precio"),
                         rs.getString("saga"),
-                        rs.getString("sinopsis")
+                        rs.getString("generos"),
+                        rs.getString("empresas"),
+                        rs.getString("plataformas"),
+                        rs.getString("desarrolladores")
                 );
 
                 guardarEmbeddingProducto(id, contenido);
