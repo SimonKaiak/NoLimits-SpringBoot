@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +37,8 @@ public class ProductoService {
     @Autowired private GeneroRepository generoRepository;
     @Autowired private EmpresaRepository empresaRepository;
     @Autowired private DesarrolladorRepository desarrolladorRepository;
+
+    @Autowired private ProductoEmbeddingService productoEmbeddingService;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -63,6 +66,8 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
+        actualizarEmbeddingProducto(recargado);
+
         return ProductoMapper.toResponseDTO(recargado);
     }
 
@@ -78,6 +83,8 @@ public class ProductoService {
 
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+
+        actualizarEmbeddingProducto(recargado);
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -156,7 +163,9 @@ public class ProductoService {
         productoRepository.save(productoExistente);
 
         ProductoModel recargado = productoRepository.findByIdFull(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+
+        actualizarEmbeddingProducto(recargado);
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -337,6 +346,33 @@ public class ProductoService {
         }
         if (dto.getEstadoId() == null) {
             throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
+        }
+    }
+
+    private void actualizarEmbeddingProducto(ProductoModel producto) {
+        try {
+            String contenido = """
+                    Nombre: %s
+                    Tipo: %s
+                    Clasificación: %s
+                    Estado: %s
+                    Precio: %s
+                    Saga: %s
+                    """.formatted(
+                    producto.getNombre(),
+                    producto.getTipoProducto() != null ? producto.getTipoProducto().getNombre() : "",
+                    producto.getClasificacion() != null ? producto.getClasificacion().getNombre() : "",
+                    producto.getEstado() != null ? producto.getEstado().getNombre() : "",
+                    producto.getPrecio(),
+                    producto.getSaga()
+                    //producto.getSinopsis() | Está documentado porque aun no se implementa "Sinopsis" como atributo
+            );
+
+            productoEmbeddingService.guardarEmbeddingProducto(producto.getId(), contenido);
+
+        } catch (Exception e) {
+            System.err.println("No se pudo actualizar el embedding del producto ID "
+                    + producto.getId() + ": " + e.getMessage());
         }
     }
 
