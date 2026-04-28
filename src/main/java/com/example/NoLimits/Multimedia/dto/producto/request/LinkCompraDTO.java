@@ -6,5 +6,6 @@ import lombok.Data;
 public class LinkCompraDTO {
     private Long plataformaId;
     private String url;
-    private String label; 
+    private String label;
+    private String appId;
 }

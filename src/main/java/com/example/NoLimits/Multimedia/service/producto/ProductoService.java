@@ -13,6 +13,9 @@ import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.*;
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
+import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
+import java.time.LocalDateTime;
+
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -36,6 +39,8 @@ public class ProductoService {
     @Autowired private GeneroRepository generoRepository;
     @Autowired private EmpresaRepository empresaRepository;
     @Autowired private DesarrolladorRepository desarrolladorRepository;
+
+    @Autowired private ScrapingClientService scrapingClientService;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -381,14 +386,19 @@ public class ProductoService {
 
             ProductoLinkCompraModel existente = existentesMap.get(l.getPlataformaId());
 
-            if (existente != null) {
-                existente.setUrl(l.getUrl().trim());
-                existente.setLabel(
-                        l.getLabel() != null && !l.getLabel().isBlank()
-                                ? l.getLabel().trim()
-                                : existente.getPlataforma().getNombre()
-                );
-            } else {
+                if (existente != null) {
+                    existente.setUrl(l.getUrl().trim());
+                    existente.setLabel(
+                            l.getLabel() != null && !l.getLabel().isBlank()
+                                    ? l.getLabel().trim()
+                                    : existente.getPlataforma().getNombre()
+                    );
+                    existente.setAppId(
+                            l.getAppId() != null && !l.getAppId().isBlank()
+                                    ? l.getAppId().trim()
+                                    : existente.getAppId()
+                    );
+                } else {
                 PlataformaModel plat = plataformaRepository.findById(l.getPlataformaId())
                         .orElseThrow(() -> new RecursoNoEncontradoException(
                                 "Plataforma no encontrada con ID: " + l.getPlataformaId()
@@ -402,6 +412,11 @@ public class ProductoService {
                         l.getLabel() != null && !l.getLabel().isBlank()
                                 ? l.getLabel().trim()
                                 : plat.getNombre()
+                );
+                nuevo.setAppId(
+                        l.getAppId() != null && !l.getAppId().isBlank()
+                                ? l.getAppId().trim()
+                                : null
                 );
 
                 producto.getLinksCompra().add(nuevo);
@@ -572,5 +587,73 @@ public class ProductoService {
                 .collect(Collectors.toList());
 
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
+    }
+
+    // ========================= Actualizar Precio de Steam =========================
+
+
+    // Método que actualiza el precio de un producto usando datos obtenidos desde Steam
+    public ProductoResponseDTO actualizarPrecioDesdeSteam(Long productoId) {
+
+        // Busca el producto en la base de datos incluyendo todas sus relaciones (links, etc.)
+        ProductoModel producto = productoRepository.findByIdFull(productoId)
+                // Si no existe el producto, lanza una excepción personalizada
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+
+        // Busca dentro de los links de compra del producto uno que tenga appId de Steam válido
+        ProductoLinkCompraModel linkSteam = producto.getLinksCompra()
+                .stream() // Convierte la lista en un stream para aplicar filtros
+                .filter(link -> link.getAppId() != null && !link.getAppId().isBlank()) // Filtra links con appId válido
+                .findFirst() // Obtiene el primer link que cumpla la condición
+                // Si no encuentra ninguno, lanza excepción
+                .orElseThrow(() -> new RecursoNoEncontradoException("El producto no tiene appId de Steam configurado."));
+
+        // Llama al microservicio de scraping para obtener los datos del producto desde Steam usando el appId
+        Map<String, Object> datosSteam = scrapingClientService.obtenerPrecioSteam(linkSteam.getAppId());
+
+        // Extrae el precio desde el Map recibido y lo convierte a tipo Double
+        Double precio = Double.valueOf(datosSteam.get("precio").toString());
+
+        // Actualiza el precio principal del producto
+        producto.setPrecio(precio);
+
+        // Actualiza el nombre de la plataforma (por ejemplo: "Steam")
+        linkSteam.setNombrePlataforma((String) datosSteam.get("nombre"));
+
+        // Actualiza el precio actual del producto en ese link específico
+        linkSteam.setPrecioActual(precio);
+
+        // Guarda el precio formateado (por ejemplo: "$19.990")
+        linkSteam.setPrecioFormato((String) datosSteam.get("precioFormato"));
+
+        // Guarda la moneda del precio (por ejemplo: "CLP", "USD")
+        linkSteam.setMoneda((String) datosSteam.get("moneda"));
+
+        // Guarda la URL de la plataforma (link directo al producto en Steam)
+        linkSteam.setUrl((String) datosSteam.get("urlPlataforma"));
+
+        // Registra la fecha y hora en que se actualizó el precio por última vez
+        linkSteam.setFechaUltimaActualizacion(LocalDateTime.now());
+
+        // Guarda los cambios en la base de datos (producto + link actualizado)
+        productoRepository.save(producto);
+
+        // Vuelve a consultar el producto desde la base de datos para asegurar que se obtienen los datos actualizados
+        ProductoModel recargado = productoRepository.findByIdFull(productoId)
+                // Si por alguna razón no se encuentra, lanza excepción
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
+
+        // Convierte el modelo actualizado a DTO de respuesta y lo retorna
+        return ProductoMapper.toResponseDTO(recargado);
+    }
+
+    public List<Long> obtenerIdsProductosConAppId() {
+        return productoRepository.findAllFull()
+                .stream()
+                .filter(p -> p.getLinksCompra() != null &&
+                        p.getLinksCompra().stream().anyMatch(l ->
+                                l.getAppId() != null && !l.getAppId().isBlank()))
+                .map(ProductoModel::getId)
+                .toList();
     }
 }
