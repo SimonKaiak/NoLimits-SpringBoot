@@ -81,3 +81,10 @@ nolimits-scraping-service/node_modules/
 nolimits-scraping-service/.env
 nolimits-scraping-service/dist/
 nolimits-scraping-service/.cache
+
+# ============================================================
+# BACKEND SPRING BOOT - VARIABLES LOCALES
+# ============================================================
+
+.env
+NoLimits-SpringBoot-main/.env

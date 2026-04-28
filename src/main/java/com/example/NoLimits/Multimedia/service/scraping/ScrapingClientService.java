@@ -47,7 +47,7 @@ public class ScrapingClientService {
     public Map<String, Object> obtenerPrecioSteam(String appId) {
 
         // URL del microservicio de scraping corriendo en Node.js (puerto 3001)
-        String url = "http://localhost:3001/api/precios?appId=" + appId;
+        String url = "https://nolimits-scraping.onrender.com/api/precios?appId=" + appId;
 
         // Realiza la petición GET y retorna la respuesta convertida en Map
         return restTemplate.getForObject(url, Map.class);

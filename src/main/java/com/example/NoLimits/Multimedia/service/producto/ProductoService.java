@@ -70,6 +70,12 @@ public class ProductoService {
 
         ProductoModel guardado = productoRepository.save(producto);
 
+        try {
+            actualizarPrecioDesdeSteam(guardado.getId());
+        } catch (Exception e) {
+            System.out.println("No se pudo actualizar precio desde Steam al crear producto: " + e.getMessage());
+        }
+
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
@@ -656,7 +662,7 @@ public class ProductoService {
 
         Map<String, Object> datosSteam = scrapingClientService.obtenerPrecioSteam(linkSteam.getAppId());
 
-        Double precio = Double.valueOf(datosSteam.get("precio").toString());
+        Double precio = Double.valueOf(datosSteam.get("precio").toString()) / 100;
 
         producto.setPrecio(precio);
 
