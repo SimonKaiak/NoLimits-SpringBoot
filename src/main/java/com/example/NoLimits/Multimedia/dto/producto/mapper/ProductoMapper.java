@@ -117,6 +117,7 @@ public class ProductoMapper {
                         l.setPlataformaId(link.getPlataforma().getId());
                         l.setUrl(link.getUrl());
                         l.setLabel(link.getLabel());
+                        l.setAppId(link.getAppId());
                         return l;
                 })
                 .collect(Collectors.toList())

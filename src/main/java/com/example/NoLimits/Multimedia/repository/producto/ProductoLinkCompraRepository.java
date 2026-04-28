@@ -14,6 +14,10 @@ public interface ProductoLinkCompraRepository extends JpaRepository<ProductoLink
 
     Optional<ProductoLinkCompraModel> findByProductoIdAndPlataformaId(Long productoId, Long plataformaId);
 
+    Optional<ProductoLinkCompraModel> findByProductoIdAndAppId(Long productoId, String appId);
+
+    Optional<ProductoLinkCompraModel> findByAppId(String appId);
+
     @Transactional
     void deleteByProductoIdAndPlataformaId(Long productoId, Long plataformaId);
 }

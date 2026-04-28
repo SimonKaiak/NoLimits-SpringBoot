@@ -72,3 +72,12 @@ Thumbs.db
 
 # Logs generados manualmente por Maven u otros procesos
 mvn-log.txt
+
+# ============================================================
+# NODE MICROSERVICE (SCRAPING)
+# ============================================================
+
+nolimits-scraping-service/node_modules/
+nolimits-scraping-service/.env
+nolimits-scraping-service/dist/
+nolimits-scraping-service/.cache

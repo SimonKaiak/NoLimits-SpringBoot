@@ -319,6 +319,24 @@ public class ProductoControllerV2 {
         }
     }
 
+    // ========================= Actualizar Precio de Steam =========================
+
+
+        // Endpoint HTTP PATCH que permite actualizar parcialmente el precio de un producto desde Steam
+        @PatchMapping("/{id}/actualizar-precio-steam")
+
+        // Método del controlador que retorna una respuesta enriquecida con HATEOAS (EntityModel)
+        public ResponseEntity<EntityModel<ProductoResponseDTO>> actualizarPrecioDesdeSteam(@PathVariable Long id) {
+
+        // Llama al servicio para ejecutar la lógica de scraping y actualización del precio
+        // Retorna un DTO con los datos actualizados del producto
+        ProductoResponseDTO actualizado = productoService.actualizarPrecioDesdeSteam(id);
+
+        // Convierte el DTO en un EntityModel usando un assembler
+        // Esto agrega enlaces HATEOAS (self, update, delete, etc.)
+        return ResponseEntity.ok(productoAssembler.toModel(actualizado));
+        }
+
     // ========================= BÚSQUEDAS / FILTROS (HATEOAS) =========================
 
     @GetMapping("/nombre/{nombre}")
