@@ -1,5 +1,6 @@
 package com.example.NoLimits.Multimedia.chatbot.ai;
 
+import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.ChatModel;
@@ -8,10 +9,17 @@ import com.openai.models.responses.ResponseCreateParams;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class OpenAIChatClient {
 
     private OpenAIClient client;
+    private final ProductoEmbeddingService productoEmbeddingService;
+
+    public OpenAIChatClient(ProductoEmbeddingService productoEmbeddingService) {
+        this.productoEmbeddingService = productoEmbeddingService;
+    }
 
     @PostConstruct
     public void init() {
@@ -19,13 +27,20 @@ public class OpenAIChatClient {
     }
 
     public String askNoLimits(String userMessage) {
+
+        List<String> resultadosBD = productoEmbeddingService.buscarSimilares(userMessage);
+
+        String contextoBD = resultadosBD.isEmpty()
+                ? "SIN_RESULTADOS"
+                : String.join("\n", resultadosBD);
+
         String systemPrompt = """
                 Eres el asistente oficial de NoLimits.
-        
+
                 Tu tarea es orientar al usuario dentro de la plataforma.
                 Responde siempre en español, de forma clara, amable y útil.
                 Si corresponde, explica paso a paso.
-                
+
                 Contexto real de NoLimits:
                 - El usuario entra primero a la página principal.
                 - No es obligatorio iniciar sesión para explorar productos.
@@ -38,14 +53,20 @@ public class OpenAIChatClient {
                 - Después puede usar "Ver Precios".
                 - Al hacer clic sobre un precio, el usuario es redirigido a una plataforma externa.
                 - Si preguntan por soporte, el correo es NoLimits@gmail.com.
-                
-                - NoLimits solo ofrece productos relacionados con:
+
+                NoLimits solo ofrece productos relacionados con:
                 Películas, videojuegos y accesorios.
-                
-                - Si el usuario pregunta por un producto que no pertenece a esas categorías
-                o que no existe en la plataforma, responde únicamente:
+
+                Usa la información real encontrada en la base de datos de NoLimits para responder sobre productos.
+                Responde solo usando la información entregada en la sección de base de datos.
+                No inventes productos, precios, plataformas ni datos que no estén en la información entregada.
+
+                Si la información encontrada es "SIN_RESULTADOS", responde únicamente:
                 "Ese producto no está disponible en NoLimits."
-                
+
+                Si el usuario pregunta por un producto que no pertenece a películas, videojuegos o accesorios, responde únicamente:
+                "Ese producto no está disponible en NoLimits."
+
                 Reglas:
                 - No inventes funciones que la plataforma no tenga.
                 - Si no sabes algo, dilo con honestidad.
@@ -60,10 +81,13 @@ public class OpenAIChatClient {
                 .model(ChatModel.GPT_5_2)
                 .input("""
                         %s
-                        
+
+                        Información real encontrada en la base de datos de NoLimits:
+                        %s
+
                         Pregunta del usuario:
                         %s
-                        """.formatted(systemPrompt, userMessage))
+                        """.formatted(systemPrompt, contextoBD, userMessage))
                 .build();
 
         Response response = client.responses().create(params);

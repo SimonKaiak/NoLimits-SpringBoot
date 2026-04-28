@@ -13,14 +13,15 @@ import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.*;
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
+import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
-import java.time.LocalDateTime;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,7 +41,11 @@ public class ProductoService {
     @Autowired private EmpresaRepository empresaRepository;
     @Autowired private DesarrolladorRepository desarrolladorRepository;
 
+    // ✅ TUYO: scraping Steam
     @Autowired private ScrapingClientService scrapingClientService;
+
+    // ✅ DE TU COMPAÑERO: embeddings IA
+    @Autowired private ProductoEmbeddingService productoEmbeddingService;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -68,10 +73,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
+        actualizarEmbeddingProducto(recargado);
+
         return ProductoMapper.toResponseDTO(recargado);
     }
 
-    // PUT: reemplaza datos principales
     public ProductoResponseDTO update(Long id, ProductoRequestDTO dto) {
         ProductoModel productoExistente = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
@@ -84,22 +90,20 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
+        actualizarEmbeddingProducto(recargado);
+
         return ProductoMapper.toResponseDTO(recargado);
     }
 
-    // PATCH: solo campos no nulos
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
         ProductoModel productoExistente = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        // ================== CAMPOS SIMPLES ==================
         if (dto.getNombre() != null) productoExistente.setNombre(dto.getNombre());
         if (dto.getPrecio() != null) productoExistente.setPrecio(dto.getPrecio());
         if (dto.getSaga() != null) productoExistente.setSaga(dto.getSaga());
         if (dto.getPortadaSaga() != null) productoExistente.setPortadaSaga(dto.getPortadaSaga());
 
-
-        // ================== N:1 (FKs) ==================
         if (dto.getTipoProductoId() != null) {
             TipoProductoModel tipo = tipoProductoRepository.findById(dto.getTipoProductoId())
                     .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -121,25 +125,15 @@ public class ProductoService {
             productoExistente.setEstado(estado);
         }
 
-        // ================== PLATAFORMAS ==================
         syncPlataformas(productoExistente, dto.getPlataformasIds());
-
-        // ================== GÉNEROS ==================
         syncGeneros(productoExistente, dto.getGenerosIds());
-
-        // ================== EMPRESAS ==================
         syncEmpresas(productoExistente, dto.getEmpresasIds());
-
-        // ================== DESARROLLADORES ==================
         syncDesarrolladores(productoExistente, dto.getDesarrolladoresIds());
 
-
-        // ================== IMÁGENES ==================
         if (dto.getImagenesRutas() != null) {
             if (productoExistente.getImagenes() == null) productoExistente.setImagenes(new ArrayList<>());
             else productoExistente.getImagenes().clear();
 
-            // si viene vacía [], queda sin imágenes (válido)
             if (!dto.getImagenesRutas().isEmpty()) {
                 List<ImagenesModel> nuevasImagenes = dto.getImagenesRutas()
                         .stream()
@@ -157,11 +151,13 @@ public class ProductoService {
         }
 
         syncLinksCompra(productoExistente, dto.getLinksCompra());
-        // ================== GUARDAR + RECARGAR ==================
+
         productoRepository.save(productoExistente);
 
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
+
+        actualizarEmbeddingProducto(recargado);
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -200,6 +196,7 @@ public class ProductoService {
             datos.put("portadaSaga", fila[1]);
             lista.add(datos);
         }
+
         return lista;
     }
 
@@ -218,10 +215,11 @@ public class ProductoService {
             datos.put("Portada Saga", fila[6]);
             lista.add(datos);
         }
+
         return lista;
     }
 
-    // ================= BÚSQUEDAS / FILTROS (PARA EL CONTROLLER) =================
+    /* ================= BÚSQUEDAS / FILTROS ================= */
 
     public List<ProductoResponseDTO> findByNombre(String nombre) {
         return productoRepository.findByNombre(nombre)
@@ -270,6 +268,7 @@ public class ProductoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         boolean tieneMovimientos = !detalleVentaRepository.findByProducto_Id(id).isEmpty();
+
         if (tieneMovimientos) {
             throw new IllegalStateException("No se puede eliminar: el producto tiene movimientos en ventas.");
         }
@@ -282,12 +281,9 @@ public class ProductoService {
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
-
-        // saga y portadaSaga
         producto.setSaga(dto.getSaga());
         producto.setPortadaSaga(dto.getPortadaSaga());
 
-        // Tipo, clasificación y estado
         TipoProductoModel tipo = tipoProductoRepository.findById(dto.getTipoProductoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Tipo de producto no encontrado con ID: " + dto.getTipoProductoId()));
@@ -304,13 +300,11 @@ public class ProductoService {
         producto.setClasificacion(clasificacion);
         producto.setEstado(estado);
 
-        // ===== Relaciones N:M (usar sync para evitar duplicados) =====
         syncPlataformas(producto, dto.getPlataformasIds());
         syncGeneros(producto, dto.getGenerosIds());
         syncEmpresas(producto, dto.getEmpresasIds());
         syncDesarrolladores(producto, dto.getDesarrolladoresIds());
 
-        // IMÁGENES
         if (dto.getImagenesRutas() != null) {
             if (producto.getImagenes() == null) producto.setImagenes(new ArrayList<>());
             else producto.getImagenes().clear();
@@ -330,6 +324,7 @@ public class ProductoService {
                 producto.getImagenes().addAll(imagenes);
             }
         }
+
         syncLinksCompra(producto, dto.getLinksCompra());
     }
 
@@ -337,15 +332,74 @@ public class ProductoService {
         if (dto.getTipoProductoId() == null) {
             throw new RecursoNoEncontradoException("Debe indicar un tipo de producto válido.");
         }
+
         if (dto.getClasificacionId() == null) {
             throw new RecursoNoEncontradoException("Debe indicar una clasificación válida.");
         }
+
         if (dto.getEstadoId() == null) {
             throw new RecursoNoEncontradoException("Debe indicar un estado válido.");
         }
     }
 
-    private void syncLinksCompra(ProductoModel producto, List<com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO> nuevosLinks) {
+    /* ================= EMBEDDINGS IA ================= */
+
+    private void actualizarEmbeddingProducto(ProductoModel producto) {
+        try {
+            String contenido = """
+                    Nombre: %s
+                    Tipo: %s
+                    Clasificación: %s
+                    Estado: %s
+                    Precio: %s
+                    Saga: %s
+                    Genero: %s
+                    Empresa: %s
+                    Plataforma: %s
+                    Desarrollador: %s
+                    """.formatted(
+                    producto.getNombre(),
+                    producto.getTipoProducto() != null ? producto.getTipoProducto().getNombre() : "",
+                    producto.getClasificacion() != null ? producto.getClasificacion().getNombre() : "",
+                    producto.getEstado() != null ? producto.getEstado().getNombre() : "",
+                    producto.getPrecio(),
+                    producto.getSaga(),
+                    producto.getGeneros() != null
+                            ? producto.getGeneros().stream()
+                                .map(g -> g.getGenero().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : "",
+                    producto.getEmpresas() != null
+                            ? producto.getEmpresas().stream()
+                                .map(e -> e.getEmpresa().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : "",
+                    producto.getPlataformas() != null
+                            ? producto.getPlataformas().stream()
+                                .map(p -> p.getPlataforma().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : "",
+                    producto.getDesarrolladores() != null
+                            ? producto.getDesarrolladores().stream()
+                                .map(d -> d.getDesarrollador().getNombre())
+                                .collect(Collectors.joining(", "))
+                            : ""
+            );
+
+            productoEmbeddingService.guardarEmbeddingProducto(producto.getId(), contenido);
+
+        } catch (Exception e) {
+            System.err.println("No se pudo actualizar el embedding del producto ID "
+                    + producto.getId() + ": " + e.getMessage());
+        }
+    }
+
+    /* ================= LINKS COMPRA ================= */
+
+    private void syncLinksCompra(
+            ProductoModel producto,
+            List<com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO> nuevosLinks
+    ) {
         if (nuevosLinks == null) return;
 
         if (producto.getLinksCompra() == null) {
@@ -386,19 +440,19 @@ public class ProductoService {
 
             ProductoLinkCompraModel existente = existentesMap.get(l.getPlataformaId());
 
-                if (existente != null) {
-                    existente.setUrl(l.getUrl().trim());
-                    existente.setLabel(
-                            l.getLabel() != null && !l.getLabel().isBlank()
-                                    ? l.getLabel().trim()
-                                    : existente.getPlataforma().getNombre()
-                    );
-                    existente.setAppId(
-                            l.getAppId() != null && !l.getAppId().isBlank()
-                                    ? l.getAppId().trim()
-                                    : existente.getAppId()
-                    );
-                } else {
+            if (existente != null) {
+                existente.setUrl(l.getUrl().trim());
+                existente.setLabel(
+                        l.getLabel() != null && !l.getLabel().isBlank()
+                                ? l.getLabel().trim()
+                                : existente.getPlataforma().getNombre()
+                );
+                existente.setAppId(
+                        l.getAppId() != null && !l.getAppId().isBlank()
+                                ? l.getAppId().trim()
+                                : existente.getAppId()
+                );
+            } else {
                 PlataformaModel plat = plataformaRepository.findById(l.getPlataformaId())
                         .orElseThrow(() -> new RecursoNoEncontradoException(
                                 "Plataforma no encontrada con ID: " + l.getPlataformaId()
@@ -423,8 +477,10 @@ public class ProductoService {
             }
         }
     }
-    private void syncDesarrolladores(ProductoModel producto, List<Long> nuevosIds) {
 
+    /* ================= RELACIONES N:M ================= */
+
+    private void syncDesarrolladores(ProductoModel producto, List<Long> nuevosIds) {
         if (nuevosIds == null) return;
 
         if (producto.getDesarrolladores() == null) {
@@ -435,20 +491,17 @@ public class ProductoService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // 1) eliminar los que ya no vienen
         producto.getDesarrolladores().removeIf(rel ->
                 rel.getDesarrollador() != null &&
                 rel.getDesarrollador().getId() != null &&
                 !nuevosSet.contains(rel.getDesarrollador().getId())
         );
 
-        // 2) recalcular existentes después del remove
         Set<Long> existentesSet = producto.getDesarrolladores().stream()
                 .map(rel -> rel.getDesarrollador().getId())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // 3) agregar solo los que faltan
         for (Long idDev : nuevosSet) {
             if (existentesSet.contains(idDev)) continue;
 
@@ -589,61 +642,38 @@ public class ProductoService {
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
-    // ========================= Actualizar Precio de Steam =========================
+    /* ================= SCRAPING STEAM ================= */
 
-
-    // Método que actualiza el precio de un producto usando datos obtenidos desde Steam
     public ProductoResponseDTO actualizarPrecioDesdeSteam(Long productoId) {
-
-        // Busca el producto en la base de datos incluyendo todas sus relaciones (links, etc.)
         ProductoModel producto = productoRepository.findByIdFull(productoId)
-                // Si no existe el producto, lanza una excepción personalizada
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
-        // Busca dentro de los links de compra del producto uno que tenga appId de Steam válido
         ProductoLinkCompraModel linkSteam = producto.getLinksCompra()
-                .stream() // Convierte la lista en un stream para aplicar filtros
-                .filter(link -> link.getAppId() != null && !link.getAppId().isBlank()) // Filtra links con appId válido
-                .findFirst() // Obtiene el primer link que cumpla la condición
-                // Si no encuentra ninguno, lanza excepción
+                .stream()
+                .filter(link -> link.getAppId() != null && !link.getAppId().isBlank())
+                .findFirst()
                 .orElseThrow(() -> new RecursoNoEncontradoException("El producto no tiene appId de Steam configurado."));
 
-        // Llama al microservicio de scraping para obtener los datos del producto desde Steam usando el appId
         Map<String, Object> datosSteam = scrapingClientService.obtenerPrecioSteam(linkSteam.getAppId());
 
-        // Extrae el precio desde el Map recibido y lo convierte a tipo Double
         Double precio = Double.valueOf(datosSteam.get("precio").toString());
 
-        // Actualiza el precio principal del producto
         producto.setPrecio(precio);
 
-        // Actualiza el nombre de la plataforma (por ejemplo: "Steam")
         linkSteam.setNombrePlataforma((String) datosSteam.get("nombre"));
-
-        // Actualiza el precio actual del producto en ese link específico
         linkSteam.setPrecioActual(precio);
-
-        // Guarda el precio formateado (por ejemplo: "$19.990")
         linkSteam.setPrecioFormato((String) datosSteam.get("precioFormato"));
-
-        // Guarda la moneda del precio (por ejemplo: "CLP", "USD")
         linkSteam.setMoneda((String) datosSteam.get("moneda"));
-
-        // Guarda la URL de la plataforma (link directo al producto en Steam)
         linkSteam.setUrl((String) datosSteam.get("urlPlataforma"));
-
-        // Registra la fecha y hora en que se actualizó el precio por última vez
         linkSteam.setFechaUltimaActualizacion(LocalDateTime.now());
 
-        // Guarda los cambios en la base de datos (producto + link actualizado)
         productoRepository.save(producto);
 
-        // Vuelve a consultar el producto desde la base de datos para asegurar que se obtienen los datos actualizados
         ProductoModel recargado = productoRepository.findByIdFull(productoId)
-                // Si por alguna razón no se encuentra, lanza excepción
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
-        // Convierte el modelo actualizado a DTO de respuesta y lo retorna
+        actualizarEmbeddingProducto(recargado);
+
         return ProductoMapper.toResponseDTO(recargado);
     }
 
