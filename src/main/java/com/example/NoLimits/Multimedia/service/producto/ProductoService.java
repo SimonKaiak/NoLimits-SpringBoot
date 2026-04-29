@@ -101,6 +101,9 @@ public class ProductoService {
 
         if (dto.getNombre() != null) productoExistente.setNombre(dto.getNombre());
         if (dto.getPrecio() != null) productoExistente.setPrecio(dto.getPrecio());
+        // Nuevos campos agregados Sinopsis y URL del trailer
+        if (dto.getSinopsis() != null) productoExistente.setSinopsis(dto.getSinopsis());
+        if (dto.getUrlTrailer() != null) productoExistente.setUrlTrailer(dto.getUrlTrailer());
         if (dto.getSaga() != null) productoExistente.setSaga(dto.getSaga());
         if (dto.getPortadaSaga() != null) productoExistente.setPortadaSaga(dto.getPortadaSaga());
 
@@ -281,6 +284,8 @@ public class ProductoService {
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
+        producto.setSinopsis(dto.getSinopsis()); // Nuevo campo agregado
+        producto.setUrlTrailer(dto.getUrlTrailer()); // Nuevo campo agregado
         producto.setSaga(dto.getSaga());
         producto.setPortadaSaga(dto.getPortadaSaga());
 
