@@ -63,6 +63,14 @@ public class ProductoModel {
     @Schema(description = "Precio manual de respaldo del producto", example = "12990")
     private Double precio;
 
+    @Column(length = 2000)
+    @Schema(description = "Sinopsis o descripción del producto", example = "Un joven héroe descubre sus poderes y enfrenta una gran amenaza.")
+    private String sinopsis;
+
+    @Column(name = "url_trailer", length = 500)
+    @Schema(description = "URL del tráiler del producto", example = "https://www.youtube.com/watch?v=...")
+    private String urlTrailer;
+
     /* ====== Campos para sagas (solo aplica a películas) ====== */
 
     @Column(name = "saga", length = 100)

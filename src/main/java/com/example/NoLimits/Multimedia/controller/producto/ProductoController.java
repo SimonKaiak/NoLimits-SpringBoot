@@ -280,6 +280,19 @@ public class ProductoController {
         return ResponseEntity.noContent().build();
     }
 
+    // ========================= Actualizar Precio de Steam =========================
+
+        // Endpoint HTTP PATCH que permite actualizar parcialmente un recurso específico (precio desde Steam)
+        @PatchMapping("/{id}/actualizar-precio-steam")
+
+        // Método del controlador que recibe el ID del producto desde la URL
+        public ResponseEntity<ProductoResponseDTO> actualizarPrecioDesdeSteam(@PathVariable Long id) {
+
+        // Llama al servicio que realiza toda la lógica de scraping y actualización del precio
+        // Luego envuelve la respuesta en un ResponseEntity con estado HTTP 200 (OK)
+        return ResponseEntity.ok(productoService.actualizarPrecioDesdeSteam(id));
+        }
+
     // ========================= BÚSQUEDAS / FILTROS =========================
 
     @GetMapping("/nombre/{nombre}")

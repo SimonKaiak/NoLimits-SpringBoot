@@ -52,6 +52,10 @@ public class ProductoModelAssembler implements RepresentationModelAssembler<Prod
                         .patch(dto.getId(), null))
                         .withRel("actualizar_parcial"),
 
+                linkTo(methodOn(ProductoControllerV2.class)
+                        .actualizarPrecioDesdeSteam(dto.getId()))
+                        .withRel("actualizar_precio_steam"),
+
                 // Enlace para eliminar el producto
                 linkTo(methodOn(ProductoControllerV2.class)
                         .delete(dto.getId()))

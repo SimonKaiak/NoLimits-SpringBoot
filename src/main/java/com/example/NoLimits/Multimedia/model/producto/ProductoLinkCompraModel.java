@@ -1,5 +1,7 @@
 package com.example.NoLimits.Multimedia.model.producto;
 
+import java.time.LocalDateTime;
+
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -38,11 +40,29 @@ public class ProductoLinkCompraModel {
     @ManyToOne(optional = false)
     @JoinColumn(name = "plataforma_id", nullable = false)
     @JsonIgnore
-    private PlataformaModel plataforma; // ajusta al nombre real
+    private PlataformaModel plataforma;
 
     @Column(nullable = false, length = 500)
     private String url;
 
     @Column(length = 60)
-    private String label; 
+    private String label;
+
+    @Column(name = "nombre_plataforma", length = 150)
+    private String nombrePlataforma;
+
+    @Column(name = "app_id", length = 80)
+    private String appId;
+
+    @Column(name = "precio_actual")
+    private Double precioActual;
+
+    @Column(name = "precio_formato", length = 80)
+    private String precioFormato;
+
+    @Column(length = 10)
+    private String moneda;
+
+    @Column(name = "fecha_ultima_actualizacion")
+    private LocalDateTime fechaUltimaActualizacion;
 }

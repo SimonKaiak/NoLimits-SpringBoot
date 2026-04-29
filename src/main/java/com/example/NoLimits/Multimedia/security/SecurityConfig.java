@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/registro").permitAll()
                 .requestMatchers("/api/chatbot/**").permitAll()
                 .requestMatchers("/api/embeddings/**").permitAll()
+                .requestMatchers("/api/scraping/**").permitAll()
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
@@ -70,7 +71,9 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "https://no-limits-react.vercel.app"
+            "https://no-limits-react.vercel.app",
+            "https://nolimitshub.cl",
+            "https://www.nolimitshub.cl"
         ));
 
         configuration.setAllowedMethods(List.of(
