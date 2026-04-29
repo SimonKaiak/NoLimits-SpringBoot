@@ -71,7 +71,9 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "https://no-limits-react.vercel.app"
+            "https://no-limits-react.vercel.app",
+            "https://nolimitshub.cl",
+            "https://www.nolimitshub.cl"
         ));
 
         configuration.setAllowedMethods(List.of(
