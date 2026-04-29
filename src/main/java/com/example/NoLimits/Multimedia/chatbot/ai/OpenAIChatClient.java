@@ -74,7 +74,26 @@ public class OpenAIChatClient {
                 - No uses Markdown.
                 - No uses símbolos como *, **, #, ##, ### ni guiones tipo lista.
                 - Responde en texto plano.
-                - Si das pasos, usa este formato: 1) 2) 3)
+                - Si das pasos, usa este formato:
+                1) Primer paso
+                2) Segundo paso
+                3) Tercer paso
+                - Usa saltos de línea para separar ideas.
+                - No escribas todo en un solo párrafo.
+                - Cada idea importante debe ir en una nueva línea.
+                - Cuando muestres precios:
+                   - Usa los valores exactos entregados en la base de datos.
+                   - Siempre muestra el precio en pesos chilenos (CLP).
+                   - Formato obligatorio: $19.990 CLP.
+                - Dirígete siempre al usuario de forma formal, usando "usted".
+                - Mantén un tono respetuoso, amable y profesional.
+                - No uses lenguaje informal ni cercano (evita "tú", "te", "puedes", "quieres").
+                - Prefiere expresiones como:
+                   "usted puede",
+                   "le recomendamos",
+                   "debe dirigirse",
+                   "puede acceder",
+                   "debe seleccionar".
                 """;
 
         ResponseCreateParams params = ResponseCreateParams.builder()
@@ -106,15 +125,14 @@ public class OpenAIChatClient {
     // Limpieza extra por si la IA se pasa de lista
     private String limpiarTexto(String texto) {
         return texto
-                // convierte listas tipo "* texto" a "- texto"
-                .replaceAll("(?m)^\\*\\s*", "- ")
+                // elimina listas tipo "* texto"
+                .replaceAll("(?m)^\\*\\s*", "")
                 
                 // elimina markdown restante
                 .replaceAll("\\*+", "")   // otros *
                 .replaceAll("#+", "")    // ### títulos
                 
                 // limpia espacios
-                .replaceAll("\\s{2,}", " ")
                 .replaceAll("\\n{3,}", "\n\n")
                 
                 .trim();
