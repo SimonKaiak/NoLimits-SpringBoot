@@ -290,8 +290,8 @@ public class ProductoService {
     private void applyRequestToModel(ProductoRequestDTO dto, ProductoModel producto) {
         producto.setNombre(dto.getNombre());
         producto.setPrecio(dto.getPrecio());
-        producto.setSinopsis(dto.getSinopsis()); // Nuevo campo agregado
-        producto.setUrlTrailer(dto.getUrlTrailer()); // Nuevo campo agregado
+        producto.setSinopsis(dto.getSinopsis());
+        producto.setUrlTrailer(dto.getUrlTrailer());
         producto.setSaga(dto.getSaga());
         producto.setPortadaSaga(dto.getPortadaSaga());
 
