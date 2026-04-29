@@ -16,6 +16,12 @@ public class ProductoRequestDTO {
     @Schema(description = "Precio del producto", example = "12990")
     private Double precio;
 
+    @Schema(description = "Sinopsis o descripción del producto", example = "Un joven héroe descubre sus poderes...")
+    private String sinopsis;
+
+    @Schema(description = "URL del tráiler del producto", example = "https://www.youtube.com/watch?v=...")
+    private String urlTrailer;
+
     @Schema(description = "ID del tipo de producto", example = "2")
     private Long tipoProductoId;
 

@@ -16,6 +16,12 @@ public class ProductoUpdateDTO {
 
     @Schema(example = "14990")
     private Double precio;
+    // Nuevos campos agregados : Sinopsis y Url del trailer
+    @Schema(description = "Sinopsis o descripción del producto", example = "Un joven héroe descubre sus poderes...")
+    private String sinopsis;
+
+    @Schema(description = "URL del trailer del producto", example =  "https://www.youtube.com/watch?v=...")
+    private String urlTrailer;
 
     @Schema(description = "Nuevo ID del tipo de producto", example = "2")
     private Long tipoProductoId;

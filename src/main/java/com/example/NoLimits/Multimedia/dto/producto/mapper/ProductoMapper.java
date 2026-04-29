@@ -29,6 +29,10 @@ public class ProductoMapper {
         dto.setNombre(model.getNombre());
         dto.setPrecio(model.getPrecio());
 
+        //Nuevos campos agregados
+        dto.setSinopsis(model.getSinopsis());
+        dto.setUrlTrailer(model.getUrlTrailer());
+
         // Datos del tipo de producto
         if (model.getTipoProducto() != null) {
             dto.setTipoProductoId(model.getTipoProducto().getId());
