@@ -31,11 +31,12 @@ public class TipoEmpresaController {
     @Autowired
     private TipoEmpresaService tipoEmpresaService;
 
-    @GetMapping
+    @GetMapping("/paginado")
     @Operation(summary = "Listar tipos de empresa con paginación")
     public ResponseEntity<PagedResponse<TipoEmpresaResponseDTO>> findAllPaged(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "4") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "") String search
     ) {
         PagedResponse<TipoEmpresaResponseDTO> respuesta =
                 tipoEmpresaService.findAllPaged(page, size);
