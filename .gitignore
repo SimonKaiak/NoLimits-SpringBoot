@@ -81,3 +81,5 @@ nolimits-scraping-service/node_modules/
 nolimits-scraping-service/.env
 nolimits-scraping-service/dist/
 nolimits-scraping-service/.cache
+
+src/main/resources/application-local.properties
