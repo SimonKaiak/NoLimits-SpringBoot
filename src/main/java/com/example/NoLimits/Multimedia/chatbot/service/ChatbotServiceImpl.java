@@ -19,7 +19,7 @@ public class ChatbotServiceImpl implements ChatbotService {
     @Override
     public ChatResponse getWelcomeMessage() {
         return new ChatResponse(
-                "¡Hola! 👋 Soy el asistente de NoLimits. Puedo orientarle dentro de la plataforma.",
+                "¡Hola! 👋 Soy el asistente de NoLimits! Puedo orientarle dentro de la plataforma. ¿Busca algo en especifico?",
                 List.of(
                         "¿Qué es NoLimits?",
                         "¿Cómo Crear Una Cuenta?",
