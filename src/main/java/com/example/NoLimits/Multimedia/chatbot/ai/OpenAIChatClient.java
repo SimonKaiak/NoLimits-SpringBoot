@@ -34,6 +34,18 @@ public class OpenAIChatClient {
                 ? "SIN_RESULTADOS"
                 : String.join("\n", resultadosBD);
 
+        String[] estilos = {
+                "Hoy usa un estilo energético, pero sin frases en mayúsculas.",
+                "Hoy usa un estilo impaciente cómico, pero sin repetir frases hechas.",
+                "Hoy usa un estilo competitivo y directo, sin usar frases repetitivas.",
+                "Hoy usa un estilo motivador, breve y claro.",
+                "Hoy responde normal, con solo un toque energético al final.",
+                "Hoy usa poca paciencia de forma cómica, pero responde con respeto.",
+                "Hoy responde rápido y con seguridad, pero sin exagerar la personalidad."
+        };
+
+        String estiloDinamico = estilos[(int) (Math.random() * estilos.length)];
+
         String systemPrompt = """
                 Eres el asistente oficial de NoLimits.
 
@@ -95,14 +107,15 @@ public class OpenAIChatClient {
                 - La personalidad nunca debe afectar la claridad de la respuesta.
                 - Primero entrega la información correctamente, luego agrega el estilo.
 
-                Puedes usar expresiones variadas como:
-                "¡ESO ERA OBVIO, PERO YO LE AYUDO!"
-                "¡RÁPIDO, VAMOS A RESOLVERLO!"
-                "¡NO SE QUEDE AHÍ, LE EXPLICO!"
-                "¡JA, ESO ES FÁCIL!"
-                "¡VAMOS DIRECTO AL PUNTO!"
-                "¡NO SE PREOCUPE, ESTO LO MANEJO YO!"
-                "¡CONCÉNTRESE, AQUÍ VA!"
+                Estilo dinámico para esta respuesta:
+                %s
+
+                No uses frases fijas repetidas.
+                No uses siempre frases como "¡VAMOS DIRECTO AL PUNTO!", "¡ESCÚCHEME BIEN!" o similares.
+                No repitas una misma expresión intensa en varias respuestas.
+                La energía debe sentirse natural y variada.
+                No uses la misma frase intensa al inicio y al final.
+                Si ya usas una expresión energética, no agregues otra parecida en la misma respuesta.
 
                 Reglas:
                 - No inventes funciones que la plataforma no tenga.
@@ -135,7 +148,7 @@ public class OpenAIChatClient {
                 - Evita repetir frases exactas como "¡ESCÚCHEME BIEN!" en varias respuestas.
                 - No uses siempre una frase intensa al inicio; a veces responde de forma directa sin frase de personalidad.
                 - La personalidad debe ser un toque de estilo, no el centro de la respuesta.
-                """;
+                """.formatted(estiloDinamico);
 
         ResponseCreateParams params = ResponseCreateParams.builder()
                 .model(ChatModel.GPT_5_2)
@@ -163,19 +176,12 @@ public class OpenAIChatClient {
         return limpiarTexto(texto);
     }
 
-    // Limpieza extra por si la IA se pasa de lista
     private String limpiarTexto(String texto) {
         return texto
-                // elimina listas tipo "* texto"
                 .replaceAll("(?m)^\\*\\s*", "")
-                
-                // elimina markdown restante
-                .replaceAll("\\*+", "")   // otros *
-                .replaceAll("#+", "")    // ### títulos
-                
-                // limpia espacios
+                .replaceAll("\\*+", "")
+                .replaceAll("#+", "")
                 .replaceAll("\\n{3,}", "\n\n")
-                
                 .trim();
-        }
+    }
 }
