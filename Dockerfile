@@ -48,4 +48,4 @@ EXPOSE 8080
 # Comando final al iniciar el contenedor:
 # - Usa el puerto definido por Render mediante la variable PORT
 # - Si PORT no existe → usa 8080 por defecto
-ENTRYPOINT ["java", "-Dserver.port=${PORT:8080}", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms64m", "-Xmx256m", "-XX:+UseSerialGC", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
