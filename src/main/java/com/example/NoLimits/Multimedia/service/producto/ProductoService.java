@@ -85,7 +85,7 @@ public class ProductoService {
     }
 
     public ProductoResponseDTO update(Long id, ProductoRequestDTO dto) {
-        ProductoModel productoExistente = productoRepository.findByIdFull(id)
+        ProductoModel productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         validarRequestObligatorio(dto);
@@ -93,7 +93,7 @@ public class ProductoService {
         applyRequestToModel(dto, productoExistente);
         productoRepository.save(productoExistente);
 
-        ProductoModel recargado = productoRepository.findByIdFull(id)
+        ProductoModel recargado = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         // actualizarEmbeddingProducto(recargado);
@@ -102,7 +102,7 @@ public class ProductoService {
     }
 
     public ProductoResponseDTO patch(Long id, ProductoUpdateDTO dto) {
-        ProductoModel productoExistente = productoRepository.findByIdFull(id)
+        ProductoModel productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         if (dto.getNombre() != null) productoExistente.setNombre(dto.getNombre());
@@ -163,7 +163,7 @@ public class ProductoService {
 
         productoRepository.save(productoExistente);
 
-        ProductoModel recargado = productoRepository.findByIdFull(id)
+        ProductoModel recargado = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
         // actualizarEmbeddingProducto(recargado);
