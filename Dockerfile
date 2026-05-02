@@ -48,4 +48,4 @@ EXPOSE 8080
 # Comando final al iniciar el contenedor:
 # - Usa el puerto definido por Render mediante la variable PORT
 # - Si PORT no existe → usa 8080 por defecto
-ENTRYPOINT ["java", "-Xms64m", "-Xmx300m", "-XX:+UseSerialGC", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms32m", "-Xmx256m","-XX:+UseSerialGC","-XX:MaxMetaspaceSize=128m","-XX:CompressedClassSpaceSize=32m","-Djava.security.egd=file:/dev/./urandom","-Dserver.port=${PORT:-8080}","-jar", "app.jar"]
