@@ -643,7 +643,7 @@ public class ProductoService {
 
     public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-        Page<ProductoModel> result = productoRepository.findAll(pageable);
+        Page<ProductoModel> result = productoRepository.findAllFullPaged(pageable); // ← cambia esto
 
         List<ProductoResponseDTO> contenido = result.getContent()
                 .stream()

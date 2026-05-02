@@ -1,5 +1,7 @@
 package com.example.NoLimits.Multimedia.repository.producto;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,6 +43,7 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
     """)
     Optional<ProductoModel> findByIdWithImagenes(@Param("id") Long id);
 
+    // ⚠️ SOLO usar para contextos muy acotados (admin, exportación), nunca en endpoints públicos
     @Query("""
         select distinct p from ProductoModel p
         left join fetch p.imagenes
@@ -55,9 +58,31 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         left join fetch p.linksCompra lc
         left join fetch lc.plataforma
     """)
-     List<ProductoModel> findAllFull();
+    List<ProductoModel> findAllFull();
 
-     @Query("""
+    // ✅ Versión paginada de findAllFull — úsala siempre en el frontend
+    // Nota: JPQL con fetch + Pageable no puede calcular el count con los joins,
+    // por eso se separa countQuery en una consulta simple.
+    @Query(
+        value = """
+            select distinct p from ProductoModel p
+            left join fetch p.imagenes
+            left join fetch p.plataformas pp
+            left join fetch pp.plataforma
+            left join fetch p.generos gg
+            left join fetch gg.genero
+            left join fetch p.empresas ee
+            left join fetch ee.empresa
+            left join fetch p.desarrolladores dd
+            left join fetch dd.desarrollador
+            left join fetch p.linksCompra lc
+            left join fetch lc.plataforma
+        """,
+        countQuery = "select count(distinct p) from ProductoModel p"
+    )
+    Page<ProductoModel> findAllFullPaged(Pageable pageable);
+
+    @Query("""
         select distinct p from ProductoModel p
         left join fetch p.imagenes
         left join fetch p.plataformas pp
