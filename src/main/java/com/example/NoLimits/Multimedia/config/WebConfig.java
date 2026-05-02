@@ -35,8 +35,10 @@ public class WebConfig implements WebMvcConfigurer {
                 // localhost: entorno de desarrollo
                 // Vercel: entorno de producción del frontend
                 .allowedOrigins(
-                        "http://localhost:5173",
-                        "https://no-limits-react.vercel.app"
+                    "http://localhost:5173",
+                    "https://no-limits-react.vercel.app",
+                    "https://www.nolimitshub.cl",
+                    "https://nolimitshub.cl"
                 )
 
                 // Métodos HTTP permitidos desde el frontend
