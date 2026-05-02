@@ -63,22 +63,10 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
     // ✅ Versión paginada de findAllFull — úsala siempre en el frontend
     // Nota: JPQL con fetch + Pageable no puede calcular el count con los joins,
     // por eso se separa countQuery en una consulta simple.
+    // Reemplaza findAllFullPaged por una query simple sin JOINs
     @Query(
-        value = """
-            select distinct p from ProductoModel p
-            left join fetch p.imagenes
-            left join fetch p.plataformas pp
-            left join fetch pp.plataforma
-            left join fetch p.generos gg
-            left join fetch gg.genero
-            left join fetch p.empresas ee
-            left join fetch ee.empresa
-            left join fetch p.desarrolladores dd
-            left join fetch dd.desarrollador
-            left join fetch p.linksCompra lc
-            left join fetch lc.plataforma
-        """,
-        countQuery = "select count(distinct p) from ProductoModel p"
+        value = "select p from ProductoModel p",
+        countQuery = "select count(p) from ProductoModel p"
     )
     Page<ProductoModel> findAllFullPaged(Pageable pageable);
 

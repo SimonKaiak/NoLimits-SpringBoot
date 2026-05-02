@@ -643,11 +643,15 @@ public class ProductoService {
 
     public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-        Page<ProductoModel> result = productoRepository.findAllFullPaged(pageable); // ← cambia esto
+        Page<ProductoModel> result = productoRepository.findAllFullPaged(pageable);
 
+        // Carga cada producto con sus relaciones por separado
         List<ProductoResponseDTO> contenido = result.getContent()
                 .stream()
-                .map(ProductoMapper::toResponseDTO)
+                .map(p -> productoRepository.findByIdFull(p.getId())
+                        .map(ProductoMapper::toResponseDTO)
+                        .orElse(null))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
@@ -689,7 +693,7 @@ public class ProductoService {
     }
 
     public List<Long> obtenerIdsProductosConAppId() {
-        return productoRepository.findAllFull()
+        return productoRepository.findAll()
                 .stream()
                 .filter(p -> p.getLinksCompra() != null &&
                         p.getLinksCompra().stream().anyMatch(l ->
