@@ -84,12 +84,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
-        // DESPUÉS — comentar todo el bloque
-        // try {
-        //     actualizarEmbeddingProducto(recargado);
-        // } catch (Exception e) {
-        //     System.err.println("Embedding falló pero producto guardado: " + e.getMessage());
-        // }
+        try {
+            actualizarEmbeddingProducto(recargado);
+        } catch (Exception e) {
+            System.err.println("Embedding falló pero producto guardado: " + e.getMessage());
+        }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -106,7 +105,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        // actualizarEmbeddingProducto(recargado);
+        try {
+            actualizarEmbeddingProducto(recargado);
+        } catch (Exception e) {
+            System.err.println("Embedding falló en update: " + e.getMessage());
+        }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -190,7 +193,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        // actualizarEmbeddingProducto(recargado);
+        try {
+            actualizarEmbeddingProducto(recargado);
+        } catch (Exception e) {
+            System.err.println("Embedding falló en patch: " + e.getMessage());
+        }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
