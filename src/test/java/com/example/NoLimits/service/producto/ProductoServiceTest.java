@@ -3,6 +3,7 @@ package com.example.NoLimits.service.producto;
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResumenDTO;
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
 import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -95,7 +98,6 @@ public class ProductoServiceTest {
         p.setTipoProducto(tipoProducto());
         p.setClasificacion(clasificacion());
         p.setEstado(estado());
-        // Nuevos campos para sagas
         p.setSaga("Spiderman");
         p.setPortadaSaga("/assets/img/sagas/spidermanSaga.webp");
         return p;
@@ -108,34 +110,47 @@ public class ProductoServiceTest {
         dto.setTipoProductoId(1L);
         dto.setClasificacionId(1L);
         dto.setEstadoId(1L);
-        // Saga opcional en el request, por ahora lo dejamos null
         return dto;
+    }
+
+    private Object[] filaResumen() {
+        return new Object[]{
+            1L,
+            "Teclado Mecánico",
+            29990.0,
+            "Accesorio",
+            "Activo",
+            "Spiderman",
+            "/assets/img/sagas/spidermanSaga.webp",
+            null  // imagenPortada
+        };
     }
 
     // ==========================
     // findAll / findById
     // ==========================
 
-    @Test
-    public void testFindAll() {
-        when(productoRepository.findAll()).thenReturn(List.of(productoEntity()));
+        @Test
+        public void testFindAll() {
+        List<Object[]> filas = Collections.singletonList(filaResumen());
+        when(productoRepository.obtenerProductosResumen())
+                .thenReturn(filas);
 
-        List<ProductoResponseDTO> productos = productoService.findAll();
+        List<ProductoResumenDTO> productos = productoService.findAll();
 
         assertNotNull(productos);
         assertEquals(1, productos.size());
-        ProductoResponseDTO dto = productos.get(0);
+        ProductoResumenDTO dto = productos.get(0);
         assertEquals(1L, dto.getId());
         assertEquals("Teclado Mecánico", dto.getNombre());
         assertEquals(29990.0, dto.getPrecio());
         assertEquals("Accesorio", dto.getTipoProductoNombre());
         assertEquals("Activo", dto.getEstadoNombre());
-        // no es obligatorio validar saga aquí, pero ya viene seteado
-    }
+        }
 
     @Test
     public void testFindById_Existe() {
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(productoEntity()));
+        when(productoRepository.findByIdFull(1L)).thenReturn(Optional.of(productoEntity()));
 
         ProductoResponseDTO dto = productoService.findById(1L);
 
@@ -149,7 +164,7 @@ public class ProductoServiceTest {
 
     @Test
     public void testFindById_NoExiste() {
-        when(productoRepository.findById(99L)).thenReturn(Optional.empty());
+        when(productoRepository.findByIdFull(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> productoService.findById(99L));
@@ -172,6 +187,7 @@ public class ProductoServiceTest {
                     p.setId(1L);
                     return p;
                 });
+        when(productoRepository.findByIdFull(1L)).thenReturn(Optional.of(productoEntity()));
 
         ProductoResponseDTO res = productoService.save(dto);
 
@@ -230,7 +246,13 @@ public class ProductoServiceTest {
         dto.setClasificacionId(1L);
         dto.setEstadoId(1L);
 
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        ProductoModel actualizado = productoEntity();
+        actualizado.setNombre("Mouse Gamer");
+        actualizado.setPrecio(19990.0);
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(existente))
+                .thenReturn(Optional.of(actualizado));
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(tipoProducto()));
         when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(clasificacion()));
         when(estadoRepository.findById(1L)).thenReturn(Optional.of(estado()));
@@ -249,7 +271,7 @@ public class ProductoServiceTest {
     public void testUpdate_NoExiste_Lanza404() {
         ProductoRequestDTO dto = requestBase();
 
-        when(productoRepository.findById(1L)).thenReturn(Optional.empty());
+        when(productoRepository.findByIdFull(1L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> productoService.update(1L, dto));
@@ -271,7 +293,13 @@ public class ProductoServiceTest {
         nuevoEstado.setNombre("Descontinuado");
         nuevoEstado.setActivo(true);
 
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        ProductoModel recargado = productoEntity();
+        recargado.setPrecio(25000.0);
+        recargado.setEstado(nuevoEstado);
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(existente))
+                .thenReturn(Optional.of(recargado));
         when(estadoRepository.findById(2L)).thenReturn(Optional.of(nuevoEstado));
         when(productoRepository.save(any(ProductoModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -291,7 +319,7 @@ public class ProductoServiceTest {
         ProductoUpdateDTO dto = new ProductoUpdateDTO();
         dto.setTipoProductoId(99L);
 
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(productoRepository.findByIdFull(1L)).thenReturn(Optional.of(existente));
         when(tipoProductoRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
@@ -319,11 +347,10 @@ public class ProductoServiceTest {
         when(productoRepository.findById(1L))
                 .thenReturn(Optional.of(productoEntity()));
 
-        // Crear un DetalleVentaModel falso para simular movimientos
         DetalleVentaModel movimiento = new DetalleVentaModel();
 
         when(detalleVentaRepository.findByProducto_Id(1L))
-                .thenReturn(List.of(movimiento)); // lista NO vacía con tipo correcto
+                .thenReturn(List.of(movimiento));
 
         assertThrows(IllegalStateException.class,
                 () -> productoService.deleteById(1L));
@@ -358,31 +385,32 @@ public class ProductoServiceTest {
         assertEquals("Teclado Mecánico", productos.get(0).getNombre());
     }
 
-    @Test
-    public void testFindByNombreContainingIgnoreCase() {
-        when(productoRepository.findByNombreContainingIgnoreCase("teclado"))
-                .thenReturn(List.of(productoEntity()));
+        @Test
+        public void testFindByNombreContainingIgnoreCase() {
+        List<Object[]> filas = Collections.singletonList(filaResumen());
+        var page = new PageImpl<>(filas);
+        when(productoRepository.obtenerResumenPorNombre(eq("teclado"), any()))
+                .thenReturn(page);
 
-        List<ProductoResponseDTO> productos =
-                productoService.findByNombreContainingIgnoreCase("teclado");
+        var resultado = productoService.findByNombreContainingIgnoreCase("teclado", 1, 20);
 
-        assertNotNull(productos);
-        assertEquals(1, productos.size());
-        assertEquals("Teclado Mecánico", productos.get(0).getNombre());
-    }
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals("Teclado Mecánico", resultado.getContenido().get(0).getNombre());
+        }
 
-    @Test
-    public void testFindByTipoProducto() {
-        when(productoRepository.findByTipoProducto_Id(1L))
-                .thenReturn(List.of(productoEntity()));
+        @Test
+        public void testFindByTipoProducto() {
+        List<Object[]> filas = Collections.singletonList(filaResumen());
+        var page = new PageImpl<>(filas);
+        when(productoRepository.obtenerResumenPorTipo(eq(1L), any()))
+                .thenReturn(page);
 
-        List<ProductoResponseDTO> productos =
-                productoService.findByTipoProducto(1L);
+        var resultado = productoService.findByTipoProducto(1L, 1, 20);
 
-        assertNotNull(productos);
-        assertEquals(1, productos.size());
-        assertEquals(1L, productos.get(0).getTipoProductoId());
-    }
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        }
 
     @Test
     public void testFindByClasificacion() {
@@ -397,18 +425,18 @@ public class ProductoServiceTest {
         assertEquals(1L, productos.get(0).getClasificacionId());
     }
 
-    @Test
-    public void testFindByEstado() {
-        when(productoRepository.findByEstado_Id(1L))
-                .thenReturn(List.of(productoEntity()));
+        @Test
+        public void testFindByEstado() {
+        List<Object[]> filas = Collections.singletonList(filaResumen());
+        var page = new PageImpl<>(filas);
+        when(productoRepository.obtenerResumenPorEstado(eq(1L), any()))
+                .thenReturn(page);
 
-        List<ProductoResponseDTO> productos =
-                productoService.findByEstado(1L);
+        var resultado = productoService.findByEstado(1L, 1, 20);
 
-        assertNotNull(productos);
-        assertEquals(1, productos.size());
-        assertEquals(1L, productos.get(0).getEstadoId());
-    }
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        }
 
     @Test
     public void testFindByTipoProductoAndEstado() {
@@ -437,8 +465,9 @@ public class ProductoServiceTest {
                 29990.0,
                 "Accesorio",
                 "Activo",
-                "Spiderman",                                 // Saga
-                "/assets/img/sagas/spidermanSaga.webp"      // Portada Saga
+                "Spiderman",
+                "/assets/img/sagas/spidermanSaga.webp",
+                null  // imagenPortada
         };
 
         when(productoRepository.obtenerProductosResumen())
