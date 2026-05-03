@@ -275,6 +275,18 @@ public class ProductoController {
         return buscarPorSaga(saga, page, size);
     }
 
+    @GetMapping("/sagas/{saga}/completo")
+    @Operation(
+        summary = "Productos completos de una saga.",
+        description = "Devuelve todos los campos incluyendo géneros, plataformas, empresas, etc. Usar solo cuando el usuario selecciona una saga."
+    )
+    public ResponseEntity<List<ProductoResponseDTO>> obtenerProductosDeSagaCompleto(
+            @PathVariable String saga) {
+        List<ProductoResponseDTO> productos = productoService.findBySagaCompleto(saga);
+        if (productos.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(productos);
+    }
+
     // ========================= RESUMEN ADMIN =========================
 
     @GetMapping("/resumen")

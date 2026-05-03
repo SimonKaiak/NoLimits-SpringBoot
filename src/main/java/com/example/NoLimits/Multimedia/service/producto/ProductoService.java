@@ -217,6 +217,21 @@ public class ProductoService {
         return findBySaga(saga, page, size);
     }
 
+    /**
+     * Devuelve los productos COMPLETOS de una saga.
+     * Usa findByIdFull() para cada producto → datos completos con relaciones.
+     * Solo se llama cuando el usuario selecciona una saga en el carrusel.
+     */
+    public List<ProductoResponseDTO> findBySagaCompleto(String saga) {
+        return productoRepository.findIdsBySagaIgnoreCase(saga)
+                .stream()
+                .map(id -> productoRepository.findByIdFull(id)
+                        .map(ProductoMapper::toResponseDTO)
+                        .orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
     public List<String> obtenerSagasDistinct() {
         return productoRepository.findDistinctSagas();
     }

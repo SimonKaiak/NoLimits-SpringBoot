@@ -239,4 +239,19 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         LEFT JOIN FETCH lc.plataforma
     """)
     List<ProductoModel> findAllFull();
+
+    // =========================================================
+    // SAGA COMPLETO — para carrusel de detalle
+    // =========================================================
+
+    /**
+     * Devuelve los IDs de productos de una saga, ordenados por id ASC.
+     * Usar junto a findByIdFull() para cargar el detalle completo de cada producto.
+     */
+    @Query("""
+        SELECT p.id FROM ProductoModel p
+        WHERE LOWER(p.saga) = LOWER(:saga)
+        ORDER BY p.id ASC
+    """)
+    List<Long> findIdsBySagaIgnoreCase(@Param("saga") String saga);
 }

@@ -629,24 +629,24 @@ public class ProductoControllerV2 {
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para esa saga.")
     })
-        public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> buscarPorSaga(@PathVariable String saga) {
-        List<ProductoResumenDTO> lista = productoService.findBySagaIgnoreCase(saga, 1, 50).getContenido();
+                public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> buscarPorSaga(@PathVariable String saga) {
+                List<ProductoResumenDTO> lista = productoService.findBySagaIgnoreCase(saga, 1, 50).getContenido();
 
-        if (lista.isEmpty()) {
-                return ResponseEntity.noContent().build();
-        }
+                if (lista.isEmpty()) {
+                        return ResponseEntity.noContent().build();
+                }
 
-        List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
-                .map(dto -> EntityModel.of(dto,
-                        linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
-                .collect(Collectors.toList());
+                List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
+                        .map(dto -> EntityModel.of(dto,
+                                linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
+                        .collect(Collectors.toList());
 
-        return ResponseEntity.ok(
-                CollectionModel.of(
-                        productos,
-                        linkTo(methodOn(ProductoControllerV2.class).buscarPorSaga(saga)).withSelfRel()
-                )
-        );
+                return ResponseEntity.ok(
+                        CollectionModel.of(
+                                productos,
+                                linkTo(methodOn(ProductoControllerV2.class).buscarPorSaga(saga)).withSelfRel()
+                        )
+                );
         }
 
     // ========================= RESUMEN =========================
