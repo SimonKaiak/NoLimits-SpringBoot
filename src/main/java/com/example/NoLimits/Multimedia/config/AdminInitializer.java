@@ -14,7 +14,6 @@ import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Component
-@Profile("dev")
 @Order(2)
 public class AdminInitializer implements CommandLineRunner {
 
