@@ -84,11 +84,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
-        try {
-            actualizarEmbeddingProducto(recargado);
-        } catch (Exception e) {
-            System.err.println("Embedding falló pero producto guardado: " + e.getMessage());
-        }
+        // try {
+        //     actualizarEmbeddingProducto(recargado);
+        // } catch (Exception e) {
+        //     System.err.println("Embedding falló pero producto guardado: " + e.getMessage());
+        // }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
