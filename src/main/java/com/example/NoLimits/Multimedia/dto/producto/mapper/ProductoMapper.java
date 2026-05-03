@@ -51,6 +51,18 @@ public class ProductoMapper {
             dto.setEstadoNombre(model.getEstado().getNombre());
         }
 
+        // Tipo de empresa (opcional)
+        if (model.getTipoEmpresa() != null) {
+        dto.setTipoEmpresaId(model.getTipoEmpresa().getId());
+        dto.setTipoEmpresaNombre(model.getTipoEmpresa().getNombre());
+        }
+
+        // Tipo de desarrollador (opcional)
+        if (model.getTipoDesarrollador() != null) {
+        dto.setTipoDesarrolladorId(model.getTipoDesarrollador().getId());
+        dto.setTipoDesarrolladorNombre(model.getTipoDesarrollador().getNombre());
+        }
+
         // Información de saga, solo si existe una asociada
         dto.setSaga(model.getSaga());
         dto.setPortadaSaga(model.getPortadaSaga());

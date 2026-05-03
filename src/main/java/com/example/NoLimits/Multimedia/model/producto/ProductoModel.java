@@ -12,6 +12,9 @@ import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
 import com.example.NoLimits.Multimedia.model.catalogos.GenerosModel;
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformasModel;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
+import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
+import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
@@ -117,6 +120,16 @@ public class ProductoModel {
         accessMode = Schema.AccessMode.WRITE_ONLY
     )
     private EstadoModel estado;
+
+    @ManyToOne
+    @JoinColumn(name = "tipo_empresa_id")
+    @Schema(description = "Tipo de empresa asociada al producto")
+    private TipoEmpresaModel tipoEmpresa;
+
+    @ManyToOne
+    @JoinColumn(name = "tipo_desarrollador_id")
+    @Schema(description = "Tipo de desarrollador asociado al producto")
+    private TipoDeDesarrolladorModel tipoDesarrollador;
 
     /* ====== Relaciones 1:N ====== */
 

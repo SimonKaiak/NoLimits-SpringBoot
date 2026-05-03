@@ -41,10 +41,15 @@ public class ProductoService {
     @Autowired private EmpresaRepository empresaRepository;
     @Autowired private DesarrolladorRepository desarrolladorRepository;
 
-    // ✅ TUYO: scraping Steam
+    @Autowired
+    private TipoEmpresaRepository tipoEmpresaRepository;
+
+    @Autowired
+    private TipoDeDesarrolladorRepository tipoDeDesarrolladorRepository;
+    // scraping Steam
     @Autowired private ScrapingClientService scrapingClientService;
 
-    // ✅ DE TU COMPAÑERO: embeddings IA
+    // embeddings IA
     @Autowired private ProductoEmbeddingService productoEmbeddingService;
 
     /* ================= CRUD BÁSICO ================= */
@@ -132,6 +137,20 @@ public class ProductoService {
                     .orElseThrow(() -> new RecursoNoEncontradoException(
                             "Estado no encontrado con ID: " + dto.getEstadoId()));
             productoExistente.setEstado(estado);
+        }
+
+        if (dto.getTipoEmpresaId() != null) {
+            TipoEmpresaModel tipoEmpresa = tipoEmpresaRepository.findById(dto.getTipoEmpresaId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Tipo de empresa no encontrado con ID: " + dto.getTipoEmpresaId()));
+            productoExistente.setTipoEmpresa(tipoEmpresa);
+        }
+
+        if (dto.getTipoDesarrolladorId() != null) {
+            TipoDeDesarrolladorModel tipoDesarrollador = tipoDeDesarrolladorRepository.findById(dto.getTipoDesarrolladorId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Tipo de desarrollador no encontrado con ID: " + dto.getTipoDesarrolladorId()));
+            productoExistente.setTipoDesarrollador(tipoDesarrollador);
         }
 
         syncPlataformas(productoExistente, dto.getPlataformasIds());
@@ -310,6 +329,25 @@ public class ProductoService {
         producto.setTipoProducto(tipo);
         producto.setClasificacion(clasificacion);
         producto.setEstado(estado);
+
+        if (dto.getTipoEmpresaId() != null) {
+            TipoEmpresaModel tipoEmpresa = tipoEmpresaRepository.findById(dto.getTipoEmpresaId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Tipo de empresa no encontrado con ID: " + dto.getTipoEmpresaId()));
+            producto.setTipoEmpresa(tipoEmpresa);
+        } else {
+            producto.setTipoEmpresa(null);
+        }
+
+        if (dto.getTipoDesarrolladorId() != null) {
+            TipoDeDesarrolladorModel tipoDesarrollador = tipoDeDesarrolladorRepository
+                .findById(dto.getTipoDesarrolladorId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Tipo de desarrollador no encontrado con ID: " + dto.getTipoDesarrolladorId()));
+            producto.setTipoDesarrollador(tipoDesarrollador);
+        } else {
+            producto.setTipoDesarrollador(null);
+        }
 
         syncPlataformas(producto, dto.getPlataformasIds());
         syncGeneros(producto, dto.getGenerosIds());
