@@ -84,7 +84,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
-        actualizarEmbeddingProducto(recargado);
+        try {
+            actualizarEmbeddingProducto(recargado);
+        } catch (Exception e) {
+            System.err.println("Embedding falló pero producto guardado: " + e.getMessage());
+        }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -393,7 +397,10 @@ public class ProductoService {
 
     /* ================= EMBEDDINGS IA ================= */
 
-    private void actualizarEmbeddingProducto(ProductoModel producto) {
+    @org.springframework.transaction.annotation.Transactional(
+        propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
+    public void actualizarEmbeddingProducto(ProductoModel producto) {
         try {
             String contenido = """
                     Nombre: %s
@@ -725,7 +732,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(productoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
-        actualizarEmbeddingProducto(recargado);
+        try {
+            actualizarEmbeddingProducto(recargado);
+        } catch (Exception e) {
+            System.err.println("Embedding falló en steam update: " + e.getMessage());
+        }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
