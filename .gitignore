@@ -82,13 +82,11 @@ nolimits-scraping-service/.env
 nolimits-scraping-service/dist/
 nolimits-scraping-service/.cache
 
-<<<<<<< HEAD
+
 src/main/resources/application-local.properties
-=======
 # ============================================================
 # BACKEND SPRING BOOT - VARIABLES LOCALES
 # ============================================================
 
 .env
 NoLimits-SpringBoot-main/.env
->>>>>>> dev

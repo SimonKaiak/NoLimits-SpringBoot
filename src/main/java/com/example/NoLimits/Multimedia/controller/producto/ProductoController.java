@@ -49,27 +49,30 @@ public class ProductoController {
 
     @GetMapping
     @Operation(
-            summary = "Listar todos los productos.",
-            description = "Obtiene una lista de todos los productos registrados."
-    )
+        summary = "Listar todos los productos.",
+        description = "Obtiene una lista de todos los productos registrados."
+  )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Lista de productos obtenida exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No hay productos disponibles.")
-    })
-    public ResponseEntity<List<ProductoResponseDTO>> listarProductos() {
-        List<ProductoResponseDTO> productos = productoService.findAll();
+        @ApiResponse(
+                responseCode = "200",
+                description = "Lista de productos obtenida exitosamente.",
+                content = @Content(
+                        mediaType = "application/json",
+                        array = @ArraySchema(schema = @Schema(implementation = Object.class))
+                )
+        ),
+        @ApiResponse(responseCode = "204", description = "No hay productos disponibles.")
+  })
+   public ResponseEntity<List<Map<String, Object>>> listarProductos() {
+
+        List<Map<String, Object>> productos = productoService.findAll();
+
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(productos);
     }
+
+    return ResponseEntity.ok(productos);
+}
 
     @GetMapping("/paginacion")
     @Operation(summary = "Listar productos con paginación real")

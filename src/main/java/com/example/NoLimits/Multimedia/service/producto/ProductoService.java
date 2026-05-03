@@ -48,14 +48,9 @@ public class ProductoService {
     @Autowired private ProductoEmbeddingService productoEmbeddingService;
 
     /* ================= CRUD BÁSICO ================= */
-
-    public List<ProductoResponseDTO> findAll() {
-        return productoRepository.findAllFull()
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public List<Map<String, Object>> findAll() {
+        return obtenerProductosConDatos();
     }
-
     public ProductoResponseDTO findById(Long id) {
         ProductoModel model = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
@@ -640,23 +635,19 @@ public class ProductoService {
     }
 
     /* ================= PAGINACIÓN ================= */
-
     public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-        Page<ProductoModel> result = productoRepository.findAllFullPaged(pageable);
 
-        // Carga cada producto con sus relaciones por separado
+        Page<ProductoModel> result = productoRepository.findAll(pageable);
+
         List<ProductoResponseDTO> contenido = result.getContent()
-                .stream()
-                .map(p -> productoRepository.findByIdFull(p.getId())
-                        .map(ProductoMapper::toResponseDTO)
-                        .orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            .stream()
+            .map(ProductoMapper::toResponseDTO)
+            .toList();
 
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
-
+    
     /* ================= SCRAPING STEAM ================= */
 
     public ProductoResponseDTO actualizarPrecioDesdeSteam(Long productoId) {
