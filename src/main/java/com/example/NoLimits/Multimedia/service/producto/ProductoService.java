@@ -695,7 +695,7 @@ public class ProductoService {
     /* ================= PAGINACIÓN ================= */
 
     public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<ProductoModel> result = productoRepository.findAllFullPaged(pageable);
 
         // Carga cada producto con sus relaciones por separado
