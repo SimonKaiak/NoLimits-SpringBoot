@@ -192,6 +192,7 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         SELECT DISTINCT p.saga
         FROM ProductoModel p
         WHERE p.saga IS NOT NULL AND p.saga <> ''
+        ORDER BY p.saga ASC
     """)
     List<String> findDistinctSagas();
 
@@ -208,8 +209,9 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         SELECT p.saga, MAX(p.portadaSaga)
         FROM ProductoModel p
         WHERE p.saga IS NOT NULL
-          AND p.saga <> ''
+        AND p.saga <> ''
         GROUP BY p.saga
+        ORDER BY p.saga ASC
     """)
     List<Object[]> findDistinctSagasWithPortada();
 

@@ -206,7 +206,7 @@ public class ProductoService {
     /* ================= SAGAS ================= */
 
     public PagedResponse<ProductoResumenDTO> findBySaga(String saga, int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<Object[]> result = productoRepository.obtenerResumenPorSaga(saga, pageable);
         List<ProductoResumenDTO> contenido = result.getContent().stream()
                 .map(this::mapResumenRow).collect(Collectors.toList());
@@ -269,7 +269,7 @@ public class ProductoService {
     }
 
     public PagedResponse<ProductoResumenDTO> findByNombreContainingIgnoreCase(String nombre, int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<Object[]> result = productoRepository.obtenerResumenPorNombre(nombre, pageable);
         List<ProductoResumenDTO> contenido = result.getContent().stream()
                 .map(this::mapResumenRow).collect(Collectors.toList());
@@ -277,7 +277,7 @@ public class ProductoService {
     }
 
     public PagedResponse<ProductoResumenDTO> findByTipoProducto(Long tipoProductoId, int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<Object[]> result = productoRepository.obtenerResumenPorTipo(tipoProductoId, pageable);
         List<ProductoResumenDTO> contenido = result.getContent().stream()
                 .map(this::mapResumenRow).collect(Collectors.toList());
@@ -292,7 +292,7 @@ public class ProductoService {
     }
 
     public PagedResponse<ProductoResumenDTO> findByEstado(Long estadoId, int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<Object[]> result = productoRepository.obtenerResumenPorEstado(estadoId, pageable);
         List<ProductoResumenDTO> contenido = result.getContent().stream()
                 .map(this::mapResumenRow).collect(Collectors.toList());
@@ -698,7 +698,7 @@ public class ProductoService {
     /* ================= PAGINACIÓN ================= */
 
     public PagedResponse<ProductoResumenDTO> findAllPaged(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<Object[]> result = productoRepository.obtenerResumenPaginado(pageable);
 
         List<ProductoResumenDTO> contenido = result.getContent()
