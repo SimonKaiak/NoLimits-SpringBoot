@@ -1,21 +1,27 @@
+// ARCHIVO MODIFICADO
 // Ruta: src/main/java/com/example/NoLimits/Multimedia/controller/producto/ProductoController.java
+//
+// CAMBIOS:
+//   1. listarProductos()        → retorna List<ProductoResumenDTO> (antes ProductoResponseDTO completo)
+//   2. listarProductosPaginado()→ retorna PagedResponse<ProductoResumenDTO> (antes ProductoResponseDTO)
+//   3. buscarPorSaga()          → acepta ?page y ?size, retorna paginado
+//   4. buscarPorSagaAlias()     → igual
+//   5. buscarPorTipo()          → acepta ?page y ?size, retorna paginado
+//   6. buscarPorEstado()        → acepta ?page y ?size, retorna paginado
+//   7. buscarPorNombreContiene()→ acepta ?page y ?size, retorna paginado
+//   8. buscarPorId()            → SIN CAMBIOS (retorna ProductoResponseDTO completo ✅)
+
 package com.example.NoLimits.Multimedia.controller.producto;
 
 import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResumenDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.service.producto.ProductoService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -25,16 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/productos")
@@ -45,304 +42,184 @@ public class ProductoController {
     @Autowired
     private ProductoService productoService;
 
-    // ========================= CRUD BÁSICO =========================
+    // ========================= LISTADO GENERAL =========================
 
+    /**
+     * GET /api/v1/productos
+     *
+     * Lista todos los productos en formato liviano (resumen).
+     * ✅ Una sola query liviana, sin relaciones pesadas.
+     * Para ver el detalle completo de un producto, usar GET /productos/{id}
+     */
     @GetMapping
     @Operation(
-            summary = "Listar todos los productos.",
-            description = "Obtiene una lista de todos los productos registrados."
+        summary = "Listar todos los productos (resumen liviano).",
+        description = "Devuelve id, nombre, precio, tipo, estado, saga y portada. Sin relaciones N:M. Usar /productos/{id} para el detalle completo."
     )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Lista de productos obtenida exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductoResponseDTO.class))
-                    )
-            ),
-            @ApiResponse(responseCode = "204", description = "No hay productos disponibles.")
-    })
-    public ResponseEntity<List<ProductoResponseDTO>> listarProductos() {
-        List<ProductoResponseDTO> productos = productoService.findAll();
+    public ResponseEntity<List<ProductoResumenDTO>> listarProductos() {
+        List<ProductoResumenDTO> productos = productoService.findAll();
         if (productos.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(productos);
     }
 
+    /**
+     * GET /api/v1/productos/paginacion?page=1&size=20
+     *
+     * ✅ Usar SIEMPRE este endpoint en el frontend para listar el catálogo.
+     * Solo trae UNA página a la vez. El frontend muestra la página y puede
+     * pedir la siguiente con page=2, page=3, etc.
+     *
+     * size recomendado: 12 a 24 productos por página.
+     */
     @GetMapping("/paginacion")
-    @Operation(summary = "Listar productos con paginación real")
-    public ResponseEntity<PagedResponse<ProductoResponseDTO>> listarProductosPaginado(
+    @Operation(
+        summary = "Listar productos paginados (resumen liviano).",
+        description = "Devuelve una página de productos. Usar page=1&size=20. No acumular todas las páginas en el frontend."
+    )
+    public ResponseEntity<PagedResponse<ProductoResumenDTO>> listarProductosPaginado(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "20") int size
     ) {
-        // Opcional: evitar page <= 0 o size <= 0
         if (page < 1) page = 1;
-        if (size < 1) size = 5;
-
-        PagedResponse<ProductoResponseDTO> response = productoService.findAllPaged(page, size);
+        if (size < 1 || size > 50) size = 20; // máximo 50 por página
+        PagedResponse<ProductoResumenDTO> response = productoService.findAllPaged(page, size);
         return ResponseEntity.ok(response);
     }
 
-    // ✅ FIX CLAVE: el id solo acepta números, así no choca con /sagas/... ni /saga/...
+    // ========================= DETALLE COMPLETO =========================
+
+    /**
+     * GET /api/v1/productos/{id}
+     *
+     * Retorna el producto COMPLETO con todas sus relaciones.
+     * ✅ Úsalo SOLO cuando el usuario entra al detalle de un producto.
+     * ❌ Nunca llames este endpoint en un loop o para construir un listado.
+     */
     @GetMapping("/{id:\\d+}")
     @Operation(
-            summary = "Buscar producto por ID.",
-            description = "Obtiene un producto específico por su ID."
+        summary = "Buscar producto por ID (detalle completo).",
+        description = "Retorna el producto con todas sus relaciones. Solo para vista de detalle."
     )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Producto encontrado exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "Producto no encontrado.")
-    })
     public ResponseEntity<ProductoResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.findById(id));
     }
 
+    // ========================= CRUD =========================
+
     @PostMapping(consumes = "application/json", produces = "application/json")
-    @Operation(
-            summary = "Crear un nuevo producto.",
-            description = "Registra un nuevo producto en el sistema.",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoRequestDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Producto mínimo",
-                                            description = "Incluye los campos requeridos y FKs válidas.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Control Inalámbrico",
-                                                      "precio": 39990,
-                                                      "tipoProductoId": 1,
-                                                      "clasificacionId": 2,
-                                                      "estadoId": 1
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Producto con relaciones completas",
-                                            description = "Incluye clasificación, N:M y listas de imágenes.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Spider-Man 2 (2004)",
-                                                      "precio": 13990,
-                                                      "tipoProductoId": 1,
-                                                      "clasificacionId": 2,
-                                                      "estadoId": 1,
-                                                      "plataformasIds": [1, 2],
-                                                      "generosIds": [1, 3],
-                                                      "empresasIds": [1],
-                                                      "desarrolladoresIds": [4],
-                                                      "imagenesRutas": [
-                                                        "peliculas/spiderman/PSpiderman2.webp",
-                                                        "peliculas/spiderman/PSpiderman2-alt.webp"
-                                                      ]
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "Película con saga",
-                                            description = "Ejemplo de película que pertenece a una saga y define una portada de saga.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Spider-Man 3 (2007)",
-                                                      "precio": 14990,
-                                                      "tipoProductoId": 1,
-                                                      "clasificacionId": 2,
-                                                      "estadoId": 1,
-                                                      "saga": "Spiderman",
-                                                      "portadaSaga": "sagas/SagaSpiderman.webp",
-                                                      "imagenesRutas": [
-                                                        "peliculas/spiderman/PSpiderman3.webp"
-                                                      ]
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            )
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Producto creado exitosamente.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoResponseDTO.class)
-                    )
-            ),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos para crear el producto.")
-    })
+    @Operation(summary = "Crear un nuevo producto.")
     public ResponseEntity<ProductoResponseDTO> crearProducto(@Valid @RequestBody ProductoRequestDTO producto) {
         ProductoResponseDTO nuevoProducto = productoService.save(producto);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
     }
 
     @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
-    @Operation(
-            summary = "Actualizar un producto.",
-            description = "Actualiza un producto existente (reemplaza todos sus campos).",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoRequestDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "PUT seguro (sin id en body)",
-                                            description = "Usa el id de la URL. Incluye todos los campos obligatorios.",
-                                            value = """
-                                                    {
-                                                      "nombre": "Control Inalámbrico",
-                                                      "precio": 39990,
-                                                      "tipoProductoId": 1,
-                                                      "clasificacionId": 2,
-                                                      "estadoId": 1,
-                                                      "plataformasIds": [1, 2],
-                                                      "generosIds": [1],
-                                                      "empresasIds": [1],
-                                                      "desarrolladoresIds": [3],
-                                                      "imagenesRutas": [
-                                                        "accesorios/controles/Control1.webp"
-                                                      ]
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            )
-    )
+    @Operation(summary = "Actualizar un producto completo.")
     public ResponseEntity<ProductoResponseDTO> actualizarProducto(
             @PathVariable Long id,
             @Valid @RequestBody ProductoRequestDTO productoDetalles) {
-
         return ResponseEntity.ok(productoService.update(id, productoDetalles));
     }
 
     @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
-    @Operation(
-            summary = "Editar parcialmente un producto.",
-            description = "Actualiza parcialmente un producto (solo los campos enviados).",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoUpdateDTO.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "PATCH ejemplo",
-                                            description = "Solo los campos a modificar.",
-                                            value = """
-                                                    {
-                                                      "precio": 34990,
-                                                      "estadoId": 2
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "PATCH saga",
-                                            description = "Ejemplo de actualización parcial de la saga y portada de saga.",
-                                            value = """
-                                                    {
-                                                      "saga": "El Señor de los Anillos",
-                                                      "portadaSaga": "sagas/SagaLOTR.webp"
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            )
-    )
+    @Operation(summary = "Editar parcialmente un producto.")
     public ResponseEntity<ProductoResponseDTO> editarProducto(
             @PathVariable Long id,
             @Valid @RequestBody ProductoUpdateDTO productoDetalles) {
-
         return ResponseEntity.ok(productoService.patch(id, productoDetalles));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(
-            summary = "Eliminar un producto.",
-            description = "Elimina un producto por su ID. Falla si el producto tiene ventas asociadas."
-    )
+    @Operation(summary = "Eliminar un producto por ID.")
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
         productoService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    // ========================= Actualizar Precio de Steam =========================
+    // ========================= PRECIO STEAM =========================
 
-        // Endpoint HTTP PATCH que permite actualizar parcialmente un recurso específico (precio desde Steam)
-        @PatchMapping("/{id}/actualizar-precio-steam")
-
-        // Método del controlador que recibe el ID del producto desde la URL
-        public ResponseEntity<ProductoResponseDTO> actualizarPrecioDesdeSteam(@PathVariable Long id) {
-
-        // Llama al servicio que realiza toda la lógica de scraping y actualización del precio
-        // Luego envuelve la respuesta en un ResponseEntity con estado HTTP 200 (OK)
+    @PatchMapping("/{id}/actualizar-precio-steam")
+    public ResponseEntity<ProductoResponseDTO> actualizarPrecioDesdeSteam(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.actualizarPrecioDesdeSteam(id));
-        }
-
-    // ========================= BÚSQUEDAS / FILTROS =========================
-
-    @GetMapping("/nombre/{nombre}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorNombre(@PathVariable String nombre) {
-        List<ProductoResponseDTO> productos = productoService.findByNombre(nombre);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
     }
 
-    @GetMapping("/nombre/contiene/{nombre}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorNombreContiene(@PathVariable String nombre) {
-        List<ProductoResponseDTO> productos = productoService.findByNombreContainingIgnoreCase(nombre);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
+    // ========================= BÚSQUEDA POR NOMBRE =========================
+
+    /**
+     * GET /api/v1/productos/buscar?nombre=spider&page=1&size=20
+     *
+     * Búsqueda por nombre paginada. El filtrado ocurre en el backend.
+     * ✅ Reemplaza buscar en el frontend con .filter() sobre todos los productos.
+     */
+    @GetMapping("/buscar")
+    @Operation(
+        summary = "Buscar productos por nombre (paginado).",
+        description = "Filtra en el backend. Usar ?nombre=texto&page=1&size=20"
+    )
+    public ResponseEntity<PagedResponse<ProductoResumenDTO>> buscarPorNombreContiene(
+            @RequestParam String nombre,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 1) page = 1;
+        if (size < 1 || size > 50) size = 20;
+        PagedResponse<ProductoResumenDTO> resultado = productoService.findByNombreContainingIgnoreCase(nombre, page, size);
+        if (resultado.getContenido().isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(resultado);
     }
 
+    // ========================= FILTROS PAGINADOS =========================
+
+    /**
+     * GET /api/v1/productos/tipo/{tipoProductoId}?page=1&size=20
+     *
+     * ✅ Filtra por tipo en el backend, paginado.
+     */
     @GetMapping("/tipo/{tipoProductoId}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorTipo(@PathVariable Long tipoProductoId) {
-        List<ProductoResponseDTO> productos = productoService.findByTipoProducto(tipoProductoId);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
-    }
-
-    @GetMapping("/clasificacion/{clasificacionId}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorClasificacion(@PathVariable Long clasificacionId) {
-        List<ProductoResponseDTO> productos = productoService.findByClasificacion(clasificacionId);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
-    }
-
-    @GetMapping("/estado/{estadoId}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorEstado(@PathVariable Long estadoId) {
-        List<ProductoResponseDTO> productos = productoService.findByEstado(estadoId);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
-    }
-
-    @GetMapping("/tipo/{tipoProductoId}/estado/{estadoId}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorTipoYEstado(
+    @Operation(
+        summary = "Buscar productos por tipo (paginado).",
+        description = "Filtra en el backend. Usar ?page=1&size=20"
+    )
+    public ResponseEntity<PagedResponse<ProductoResumenDTO>> buscarPorTipo(
             @PathVariable Long tipoProductoId,
-            @PathVariable Long estadoId) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 1) page = 1;
+        if (size < 1 || size > 50) size = 20;
+        PagedResponse<ProductoResumenDTO> resultado = productoService.findByTipoProducto(tipoProductoId, page, size);
+        if (resultado.getContenido().isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(resultado);
+    }
 
-        List<ProductoResponseDTO> productos = productoService.findByTipoProductoAndEstado(tipoProductoId, estadoId);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
+    /**
+     * GET /api/v1/productos/estado/{estadoId}?page=1&size=20
+     *
+     * ✅ Filtra por estado en el backend, paginado.
+     */
+    @GetMapping("/estado/{estadoId}")
+    @Operation(
+        summary = "Buscar productos por estado (paginado).",
+        description = "Filtra en el backend. Usar ?page=1&size=20"
+    )
+    public ResponseEntity<PagedResponse<ProductoResumenDTO>> buscarPorEstado(
+            @PathVariable Long estadoId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 1) page = 1;
+        if (size < 1 || size > 50) size = 20;
+        PagedResponse<ProductoResumenDTO> resultado = productoService.findByEstado(estadoId, page, size);
+        if (resultado.getContenido().isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(resultado);
     }
 
     // ========================= SAGAS =========================
 
     @GetMapping("/sagas")
+    @Operation(summary = "Listar todas las sagas distintas.")
     public ResponseEntity<List<String>> listarSagas() {
         List<String> sagas = productoService.obtenerSagasDistinct();
         if (sagas.isEmpty()) return ResponseEntity.noContent().build();
@@ -350,6 +227,7 @@ public class ProductoController {
     }
 
     @GetMapping("/sagas/resumen")
+    @Operation(summary = "Listar sagas con su portada.")
     public ResponseEntity<List<Map<String, Object>>> listarSagasConPortada() {
         List<Map<String, Object>> sagas = productoService.obtenerSagasConPortada();
         if (sagas.isEmpty()) return ResponseEntity.noContent().build();
@@ -357,29 +235,53 @@ public class ProductoController {
     }
 
     @GetMapping("/sagas/tipo/{tipoProductoId}")
+    @Operation(summary = "Listar sagas filtradas por tipo de producto.")
     public ResponseEntity<List<String>> listarSagasPorTipoProducto(@PathVariable Long tipoProductoId) {
         List<String> sagas = productoService.obtenerSagasDistinctPorTipoProducto(tipoProductoId);
         if (sagas.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(sagas);
     }
 
+    /**
+     * GET /api/v1/productos/sagas/{saga}?page=1&size=20
+     *
+     * ✅ Filtra productos por saga en el backend, paginado.
+     */
     @GetMapping("/sagas/{saga}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorSaga(@PathVariable String saga) {
-        List<ProductoResponseDTO> productos = productoService.findBySagaIgnoreCase(saga);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
+    @Operation(
+        summary = "Buscar productos por saga (paginado).",
+        description = "Filtra en el backend. Usar ?page=1&size=20"
+    )
+    public ResponseEntity<PagedResponse<ProductoResumenDTO>> buscarPorSaga(
+            @PathVariable String saga,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 1) page = 1;
+        if (size < 1 || size > 50) size = 20;
+        PagedResponse<ProductoResumenDTO> resultado = productoService.findBySagaIgnoreCase(saga, page, size);
+        if (resultado.getContenido().isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(resultado);
     }
 
+    // Alias por compatibilidad con frontend que usaba /saga/{saga}
     @GetMapping("/saga/{saga}")
-    public ResponseEntity<List<ProductoResponseDTO>> buscarPorSagaAlias(@PathVariable String saga) {
-        List<ProductoResponseDTO> productos = productoService.findBySagaIgnoreCase(saga);
-        if (productos.isEmpty()) return ResponseEntity.noContent().build();
-        return ResponseEntity.ok(productos);
+    @Operation(summary = "Alias de /sagas/{saga} (paginado).")
+    public ResponseEntity<PagedResponse<ProductoResumenDTO>> buscarPorSagaAlias(
+            @PathVariable String saga,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return buscarPorSaga(saga, page, size);
     }
 
-    // ========================= RESUMEN =========================
+    // ========================= RESUMEN ADMIN =========================
 
     @GetMapping("/resumen")
+    @Operation(
+        summary = "Resumen de productos para admin.",
+        description = "Lista liviana con datos básicos. Sin paginación. Solo para admin/debugging."
+    )
     public ResponseEntity<List<Map<String, Object>>> obtenerResumenProductos() {
         List<Map<String, Object>> resumen = productoService.obtenerProductosConDatos();
         if (resumen.isEmpty()) return ResponseEntity.noContent().build();

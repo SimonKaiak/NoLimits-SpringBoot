@@ -4,6 +4,7 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.producto.ProductoModelAssembler;
 import com.example.NoLimits.Multimedia.dto.producto.request.ProductoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
+import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResumenDTO;
 import com.example.NoLimits.Multimedia.dto.producto.update.ProductoUpdateDTO;
 import com.example.NoLimits.Multimedia.service.producto.ProductoService;
 
@@ -76,24 +77,19 @@ public class ProductoControllerV2 {
             ),
             @ApiResponse(responseCode = "204", description = "No hay productos registrados.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ProductoResponseDTO>>> getAll() {
-        List<ProductoResponseDTO> lista = productoService.findAll();
+        public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> getAll() {
+        List<ProductoResumenDTO> lista = productoService.findAll();
 
-        if (lista.isEmpty()) {
-            return ResponseEntity.noContent().build();
-            }
+        if (lista.isEmpty()) return ResponseEntity.noContent().build();
 
-        List<EntityModel<ProductoResponseDTO>> productos = lista.stream()
-                .map(productoAssembler::toModel)
+        List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
+                .map(dto -> EntityModel.of(dto,
+                        linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(
-                CollectionModel.of(
-                        productos,
-                        linkTo(methodOn(ProductoControllerV2.class).getAll()).withSelfRel()
-                )
-        );
-    }
+        return ResponseEntity.ok(CollectionModel.of(productos,
+                linkTo(methodOn(ProductoControllerV2.class).getAll()).withSelfRel()));
+        }
 
     @GetMapping("/{id}")
     @Operation(
@@ -390,15 +386,16 @@ public class ProductoControllerV2 {
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese criterio.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ProductoResponseDTO>>> buscarPorNombreContiene(@PathVariable String nombre) {
-        List<ProductoResponseDTO> lista = productoService.findByNombreContainingIgnoreCase(nombre);
+        public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> buscarPorNombreContiene(@PathVariable String nombre) {
+        List<ProductoResumenDTO> lista = productoService.findByNombreContainingIgnoreCase(nombre, 1, 50).getContenido();
 
         if (lista.isEmpty()) {
-            return ResponseEntity.noContent().build();
+                return ResponseEntity.noContent().build();
         }
 
-        List<EntityModel<ProductoResponseDTO>> productos = lista.stream()
-                .map(productoAssembler::toModel)
+        List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
+                .map(dto -> EntityModel.of(dto,
+                        linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(
@@ -407,7 +404,7 @@ public class ProductoControllerV2 {
                         linkTo(methodOn(ProductoControllerV2.class).buscarPorNombreContiene(nombre)).withSelfRel()
                 )
         );
-    }
+        }
 
     @GetMapping("/tipo/{tipoProductoId}")
     @Operation(
@@ -425,15 +422,16 @@ public class ProductoControllerV2 {
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese tipo.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ProductoResponseDTO>>> buscarPorTipo(@PathVariable Long tipoProductoId) {
-        List<ProductoResponseDTO> lista = productoService.findByTipoProducto(tipoProductoId);
+        public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> buscarPorTipo(@PathVariable Long tipoProductoId) {
+        List<ProductoResumenDTO> lista = productoService.findByTipoProducto(tipoProductoId, 1, 50).getContenido();
 
         if (lista.isEmpty()) {
-            return ResponseEntity.noContent().build();
+                return ResponseEntity.noContent().build();
         }
 
-        List<EntityModel<ProductoResponseDTO>> productos = lista.stream()
-                .map(productoAssembler::toModel)
+        List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
+                .map(dto -> EntityModel.of(dto,
+                        linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(
@@ -442,7 +440,7 @@ public class ProductoControllerV2 {
                         linkTo(methodOn(ProductoControllerV2.class).buscarPorTipo(tipoProductoId)).withSelfRel()
                 )
         );
-    }
+        }
 
     @GetMapping("/clasificacion/{clasificacionId}")
     @Operation(
@@ -495,15 +493,16 @@ public class ProductoControllerV2 {
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para ese estado.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ProductoResponseDTO>>> buscarPorEstado(@PathVariable Long estadoId) {
-        List<ProductoResponseDTO> lista = productoService.findByEstado(estadoId);
+        public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> buscarPorEstado(@PathVariable Long estadoId) {
+        List<ProductoResumenDTO> lista = productoService.findByEstado(estadoId, 1, 50).getContenido();
 
         if (lista.isEmpty()) {
-            return ResponseEntity.noContent().build();
+                return ResponseEntity.noContent().build();
         }
 
-        List<EntityModel<ProductoResponseDTO>> productos = lista.stream()
-                .map(productoAssembler::toModel)
+        List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
+                .map(dto -> EntityModel.of(dto,
+                        linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(
@@ -512,7 +511,7 @@ public class ProductoControllerV2 {
                         linkTo(methodOn(ProductoControllerV2.class).buscarPorEstado(estadoId)).withSelfRel()
                 )
         );
-    }
+        }
 
     @GetMapping("/tipo/{tipoProductoId}/estado/{estadoId}")
     @Operation(
@@ -630,15 +629,16 @@ public class ProductoControllerV2 {
             ),
             @ApiResponse(responseCode = "204", description = "No se encontraron productos para esa saga.")
     })
-    public ResponseEntity<CollectionModel<EntityModel<ProductoResponseDTO>>> buscarPorSaga(@PathVariable String saga) {
-        List<ProductoResponseDTO> lista = productoService.findBySagaIgnoreCase(saga);
+        public ResponseEntity<CollectionModel<EntityModel<ProductoResumenDTO>>> buscarPorSaga(@PathVariable String saga) {
+        List<ProductoResumenDTO> lista = productoService.findBySagaIgnoreCase(saga, 1, 50).getContenido();
 
         if (lista.isEmpty()) {
-            return ResponseEntity.noContent().build();
+                return ResponseEntity.noContent().build();
         }
 
-        List<EntityModel<ProductoResponseDTO>> productos = lista.stream()
-                .map(productoAssembler::toModel)
+        List<EntityModel<ProductoResumenDTO>> productos = lista.stream()
+                .map(dto -> EntityModel.of(dto,
+                        linkTo(methodOn(ProductoControllerV2.class).getById(dto.getId())).withSelfRel()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(
@@ -647,7 +647,7 @@ public class ProductoControllerV2 {
                         linkTo(methodOn(ProductoControllerV2.class).buscarPorSaga(saga)).withSelfRel()
                 )
         );
-    }
+        }
 
     // ========================= RESUMEN =========================
 

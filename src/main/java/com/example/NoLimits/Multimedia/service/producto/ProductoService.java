@@ -15,6 +15,7 @@ import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepositor
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
+import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResumenDTO;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +55,10 @@ public class ProductoService {
 
     /* ================= CRUD BÁSICO ================= */
 
-    public List<ProductoResponseDTO> findAll() {
-        return productoRepository.findAllFull()
+    public List<ProductoResumenDTO> findAll() {
+        return productoRepository.obtenerProductosResumen()
                 .stream()
-                .map(ProductoMapper::toResponseDTO)
+                .map(this::mapResumenRow)
                 .collect(Collectors.toList());
     }
 
@@ -204,18 +205,16 @@ public class ProductoService {
 
     /* ================= SAGAS ================= */
 
-    public List<ProductoResponseDTO> findBySaga(String saga) {
-        return productoRepository.findBySaga(saga)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findBySaga(String saga, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorSaga(saga, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
-    public List<ProductoResponseDTO> findBySagaIgnoreCase(String saga) {
-        return productoRepository.findBySagaIgnoreCase(saga)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findBySagaIgnoreCase(String saga, int page, int size) {
+        return findBySaga(saga, page, size);
     }
 
     public List<String> obtenerSagasDistinct() {
@@ -253,6 +252,7 @@ public class ProductoService {
             datos.put("Estado", fila[4]);
             datos.put("Saga", fila[5]);
             datos.put("Portada Saga", fila[6]);
+            datos.put("Imagen Portada", fila[7]);
             lista.add(datos);
         }
 
@@ -268,18 +268,20 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
-    public List<ProductoResponseDTO> findByNombreContainingIgnoreCase(String nombre) {
-        return productoRepository.findByNombreContainingIgnoreCase(nombre)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findByNombreContainingIgnoreCase(String nombre, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorNombre(nombre, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
-    public List<ProductoResponseDTO> findByTipoProducto(Long tipoProductoId) {
-        return productoRepository.findByTipoProducto_Id(tipoProductoId)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findByTipoProducto(Long tipoProductoId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorTipo(tipoProductoId, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
     public List<ProductoResponseDTO> findByClasificacion(Long clasificacionId) {
@@ -289,11 +291,12 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
-    public List<ProductoResponseDTO> findByEstado(Long estadoId) {
-        return productoRepository.findByEstado_Id(estadoId)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findByEstado(Long estadoId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorEstado(estadoId, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
     public List<ProductoResponseDTO> findByTipoProductoAndEstado(Long tipoProductoId, Long estadoId) {
@@ -694,17 +697,13 @@ public class ProductoService {
 
     /* ================= PAGINACIÓN ================= */
 
-    public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
-        Page<ProductoModel> result = productoRepository.findAllFullPaged(pageable);
+    public PagedResponse<ProductoResumenDTO> findAllPaged(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Page<Object[]> result = productoRepository.obtenerResumenPaginado(pageable);
 
-        // Carga cada producto con sus relaciones por separado
-        List<ProductoResponseDTO> contenido = result.getContent()
+        List<ProductoResumenDTO> contenido = result.getContent()
                 .stream()
-                .map(p -> productoRepository.findByIdFull(p.getId())
-                        .map(ProductoMapper::toResponseDTO)
-                        .orElse(null))
-                .filter(Objects::nonNull)
+                .map(this::mapResumenRow)
                 .collect(Collectors.toList());
 
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
@@ -750,12 +749,19 @@ public class ProductoService {
     }
 
     public List<Long> obtenerIdsProductosConAppId() {
-        return productoRepository.findAll()
-                .stream()
-                .filter(p -> p.getLinksCompra() != null &&
-                        p.getLinksCompra().stream().anyMatch(l ->
-                                l.getAppId() != null && !l.getAppId().isBlank()))
-                .map(ProductoModel::getId)
-                .toList();
+        return productoRepository.findIdsConAppId();
+    }
+
+    private ProductoResumenDTO mapResumenRow(Object[] fila) {
+        return new ProductoResumenDTO(
+            fila[0] != null ? ((Number) fila[0]).longValue() : null,
+            (String) fila[1],
+            fila[2] != null ? ((Number) fila[2]).doubleValue() : null,
+            (String) fila[3],
+            (String) fila[4],
+            (String) fila[5],
+            (String) fila[6],
+            (String) fila[7]
+        );
     }
 }
