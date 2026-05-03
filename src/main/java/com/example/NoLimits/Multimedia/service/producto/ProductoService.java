@@ -105,11 +105,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        try {
-            actualizarEmbeddingProducto(recargado);
-        } catch (Exception e) {
-            System.err.println("Embedding falló en update: " + e.getMessage());
-        }
+        // try {
+        //     actualizarEmbeddingProducto(recargado);
+        // } catch (Exception e) {
+        //     System.err.println("Embedding falló en update: " + e.getMessage());
+        // }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
