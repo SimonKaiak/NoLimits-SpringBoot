@@ -534,6 +534,10 @@ public class ProductoService {
                                 ? l.getAppId().trim()
                                 : existente.getAppId()
                 );
+                if (l.getPrecioActual() != null) {
+                    existente.setPrecioActual(l.getPrecioActual());
+                    existente.setFechaUltimaActualizacion(java.time.LocalDateTime.now());
+                }
             } else {
                 PlataformaModel plat = plataformaRepository.findById(l.getPlataformaId())
                         .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -554,6 +558,10 @@ public class ProductoService {
                                 ? l.getAppId().trim()
                                 : null
                 );
+                if (l.getPrecioActual() != null) {
+                    nuevo.setPrecioActual(l.getPrecioActual());
+                    nuevo.setFechaUltimaActualizacion(java.time.LocalDateTime.now());
+                }
 
                 producto.getLinksCompra().add(nuevo);
             }
