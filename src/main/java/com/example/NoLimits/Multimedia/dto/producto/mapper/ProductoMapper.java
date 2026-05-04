@@ -134,6 +134,7 @@ public class ProductoMapper {
                         l.setUrl(link.getUrl());
                         l.setLabel(link.getLabel());
                         l.setAppId(link.getAppId());
+                        l.setPrecioActual(link.getPrecioActual());
                         return l;
                 })
                 .collect(Collectors.toList())
