@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/health").permitAll()
-                .requestMatchers("/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/registro").permitAll()
                 .requestMatchers("/api/chatbot/**").permitAll()
