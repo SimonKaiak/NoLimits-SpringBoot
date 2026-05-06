@@ -254,4 +254,6 @@ public interface ProductoRepository extends JpaRepository<ProductoModel, Long> {
         ORDER BY p.id ASC
     """)
     List<Long> findIdsBySagaIgnoreCase(@Param("saga") String saga);
+
+    boolean existsByLinksCompraUrl(String url);
 }

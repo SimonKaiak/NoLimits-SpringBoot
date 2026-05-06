@@ -71,6 +71,22 @@ public class ProductoService {
     public ProductoResponseDTO save(ProductoRequestDTO dto) {
         validarRequestObligatorio(dto);
 
+        if (dto.getLinksCompra() != null && !dto.getLinksCompra().isEmpty()) {
+            for (var link : dto.getLinksCompra()) {
+
+                if (link.getUrl() != null && !link.getUrl().isBlank()) {
+                    String url = link.getUrl().trim();
+
+                    if (existeProductoPorLinkCompra(url)) {
+                        throw new IllegalStateException(
+                            "Producto duplicado: ya existe un producto con ese link de compra."
+                        );
+                    }
+                }
+
+            }
+        }
+
         ProductoModel producto = new ProductoModel();
         applyRequestToModel(dto, producto);
 
@@ -786,5 +802,15 @@ public class ProductoService {
             (String) fila[6],
             (String) fila[7]
         );
+    }
+
+    public boolean existeProductoPorLinkCompra(String url) {
+        String urlLimpia = limpiarUrlMercadoLibre(url);
+        return productoRepository.existsByLinksCompraUrl(urlLimpia);
+    }
+
+    private String limpiarUrlMercadoLibre(String url) {
+        if (url == null) return "";
+        return url.split("#")[0];
     }
 }

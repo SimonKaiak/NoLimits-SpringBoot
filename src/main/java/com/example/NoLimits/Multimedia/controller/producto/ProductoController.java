@@ -299,4 +299,15 @@ public class ProductoController {
         if (resumen.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(resumen);
     }
+
+    // ========================= Scraping =========================
+    @GetMapping("/existe-link")
+    @Operation(
+        summary = "Verificar si existe un producto por link de compra.",
+        description = "Usado por el scraper para evitar duplicados antes de crear productos."
+    )
+    public ResponseEntity<Boolean> existeProductoPorLink(@RequestParam String url) {
+        boolean existe = productoService.existeProductoPorLinkCompra(url);
+        return ResponseEntity.ok(existe);
+    }
 }
