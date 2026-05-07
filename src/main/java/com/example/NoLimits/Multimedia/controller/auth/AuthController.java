@@ -94,9 +94,12 @@ public class AuthController {
 
             usuario.setCorreo(correoNormalizado);
             usuario.setNombre(nombre != null ? nombre : "");
-            usuario.setApellidos("");
+            usuario.setApellidos("Google");
             usuario.setTelefono(0L);
-            usuario.setPassword("");
+
+            usuario.setPassword(
+                    passwordEncoder.encode("googleauth123")
+            );
 
             RolModel rolUser = rolRepository
                     .findByNombreIgnoreCase("ROLE_USER")
