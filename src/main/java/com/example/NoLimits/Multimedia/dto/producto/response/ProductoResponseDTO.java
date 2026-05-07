@@ -61,7 +61,7 @@ public class ProductoResponseDTO {
     // ==================== Relaciones N:M (nombres) ====================
 
     @Schema(description = "Lista de plataformas asociadas al producto.")
-    private List<String> plataformas;
+    private List<PlataformaSimpleDTO> plataformas;
 
     @Schema(description = "Lista de géneros asociados al producto.")
     private List<String> generos;
