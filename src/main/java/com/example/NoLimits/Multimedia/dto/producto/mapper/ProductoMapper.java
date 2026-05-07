@@ -4,6 +4,7 @@ package com.example.NoLimits.Multimedia.dto.producto.mapper;
 import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
+import com.example.NoLimits.Multimedia.dto.producto.response.PlataformaSimpleDTO;
 
 import java.util.stream.Collectors;
 
@@ -76,11 +77,23 @@ public class ProductoMapper {
 
         // plataformas → nombre de la PlataformaModel asociada
         dto.setPlataformas(
-                model.getPlataformas() == null ? null :
-                        model.getPlataformas()
-                                .stream()
-                                .map(p -> p.getPlataforma().getNombre())
-                                .collect(Collectors.toList())
+             model.getPlataformas() == null ? null :
+                model.getPlataformas()
+                    .stream()
+                    .map(p -> {
+                        PlataformaSimpleDTO plataformaDTO = new PlataformaSimpleDTO();
+
+                        plataformaDTO.setId(
+                            p.getPlataforma().getId()
+                        );
+
+                        plataformaDTO.setNombre(
+                            p.getPlataforma().getNombre()
+                        );
+
+                        return plataformaDTO;
+                })
+                .collect(Collectors.toList())
         );
 
         // géneros → nombre del GeneroModel asociado
