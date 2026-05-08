@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.UUID;
 
 import java.util.Map;
 
@@ -97,9 +98,7 @@ public class AuthController {
             usuario.setApellidos("Google");
             usuario.setTelefono(0L);
 
-            usuario.setPassword(
-                    passwordEncoder.encode("googleauth123")
-            );
+            usuario.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
 
             RolModel rolUser = rolRepository
                     .findByNombreIgnoreCase("ROLE_USER")
