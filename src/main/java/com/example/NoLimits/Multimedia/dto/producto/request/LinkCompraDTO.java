@@ -8,4 +8,5 @@ public class LinkCompraDTO {
     private String url;
     private String label;
     private String appId;
+    private Double precioActual;
 }

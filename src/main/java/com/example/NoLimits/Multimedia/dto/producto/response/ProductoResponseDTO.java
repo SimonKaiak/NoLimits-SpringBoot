@@ -61,7 +61,7 @@ public class ProductoResponseDTO {
     // ==================== Relaciones N:M (nombres) ====================
 
     @Schema(description = "Lista de plataformas asociadas al producto.")
-    private List<String> plataformas;
+    private List<PlataformaSimpleDTO> plataformas;
 
     @Schema(description = "Lista de géneros asociados al producto.")
     private List<String> generos;
@@ -92,4 +92,16 @@ public class ProductoResponseDTO {
             """
     )
     private List<LinkCompraDTO> linksCompra;
+
+    @Schema(description = "ID del tipo de empresa", example = "1")
+        private Long tipoEmpresaId;
+
+        @Schema(description = "Nombre del tipo de empresa", example = "Publisher")
+        private String tipoEmpresaNombre;
+
+        @Schema(description = "ID del tipo de desarrollador", example = "2")
+        private Long tipoDesarrolladorId;
+
+        @Schema(description = "Nombre del tipo de desarrollador", example = "Estudio")
+        private String tipoDesarrolladorNombre;
 }

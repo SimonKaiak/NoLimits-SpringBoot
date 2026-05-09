@@ -3,7 +3,6 @@ package com.example.NoLimits.Multimedia.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +13,6 @@ import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Component
-@Profile("dev")
 @Order(2)
 public class AdminInitializer implements CommandLineRunner {
 

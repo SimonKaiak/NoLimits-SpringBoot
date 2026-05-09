@@ -14,4 +14,6 @@ public class LinkCompraUpdateDTO {
     private Long plataformaId;
     private String url;
     private String label;
+    private String appId;
+    private Double precioActual;
 }

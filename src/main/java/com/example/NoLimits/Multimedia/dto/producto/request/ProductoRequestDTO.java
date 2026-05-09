@@ -1,4 +1,3 @@
-// Ruta: src/main/java/com/example/NoLimits/Multimedia/dto/producto/request/ProductoRequestDTO.java
 package com.example.NoLimits.Multimedia.dto.producto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,4 +90,10 @@ public class ProductoRequestDTO {
             """
     )
     private List<LinkCompraDTO> linksCompra;
+
+    @Schema(description = "ID del tipo de empresa", example = "1")
+        private Long tipoEmpresaId;
+
+    @Schema(description = "ID del tipo de desarrollador", example = "2")
+        private Long tipoDesarrolladorId;
 }

@@ -15,6 +15,7 @@ import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepositor
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
+import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResumenDTO;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,15 +42,26 @@ public class ProductoService {
     @Autowired private EmpresaRepository empresaRepository;
     @Autowired private DesarrolladorRepository desarrolladorRepository;
 
-    // ✅ TUYO: scraping Steam
+    @Autowired
+    private TipoEmpresaRepository tipoEmpresaRepository;
+
+    @Autowired
+    private TipoDeDesarrolladorRepository tipoDeDesarrolladorRepository;
+    // scraping Steam
     @Autowired private ScrapingClientService scrapingClientService;
 
-    // ✅ DE TU COMPAÑERO: embeddings IA
+    // embeddings IA
     @Autowired private ProductoEmbeddingService productoEmbeddingService;
 
     /* ================= CRUD BÁSICO ================= */
-    public List<Map<String, Object>> findAll() {
-        return obtenerProductosConDatos();
+
+    
+
+    public List<ProductoResumenDTO> findAll() {
+        return productoRepository.obtenerProductosResumen()
+                .stream()
+                .map(this::mapResumenRow)
+                .collect(Collectors.toList());
     }
     public ProductoResponseDTO findById(Long id) {
         ProductoModel model = productoRepository.findByIdFull(id)
@@ -59,6 +71,22 @@ public class ProductoService {
 
     public ProductoResponseDTO save(ProductoRequestDTO dto) {
         validarRequestObligatorio(dto);
+
+        if (dto.getLinksCompra() != null && !dto.getLinksCompra().isEmpty()) {
+            for (var link : dto.getLinksCompra()) {
+
+                if (link.getUrl() != null && !link.getUrl().isBlank()) {
+                    String url = link.getUrl().trim();
+
+                    if (existeProductoPorLinkCompra(url)) {
+                        throw new IllegalStateException(
+                            "Producto duplicado: ya existe un producto con ese link de compra."
+                        );
+                    }
+                }
+
+            }
+        }
 
         ProductoModel producto = new ProductoModel();
         applyRequestToModel(dto, producto);
@@ -74,7 +102,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(guardado.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + guardado.getId()));
 
-        actualizarEmbeddingProducto(recargado);
+        // try {
+        //     actualizarEmbeddingProducto(recargado);
+        // } catch (Exception e) {
+        //     System.err.println("Embedding falló pero producto guardado: " + e.getMessage());
+        // }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -91,7 +123,11 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        // actualizarEmbeddingProducto(recargado);
+        // try {
+        //     actualizarEmbeddingProducto(recargado);
+        // } catch (Exception e) {
+        //     System.err.println("Embedding falló en update: " + e.getMessage());
+        // }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
@@ -129,6 +165,20 @@ public class ProductoService {
             productoExistente.setEstado(estado);
         }
 
+        if (dto.getTipoEmpresaId() != null) {
+            TipoEmpresaModel tipoEmpresa = tipoEmpresaRepository.findById(dto.getTipoEmpresaId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Tipo de empresa no encontrado con ID: " + dto.getTipoEmpresaId()));
+            productoExistente.setTipoEmpresa(tipoEmpresa);
+        }
+
+        if (dto.getTipoDesarrolladorId() != null) {
+            TipoDeDesarrolladorModel tipoDesarrollador = tipoDeDesarrolladorRepository.findById(dto.getTipoDesarrolladorId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Tipo de desarrollador no encontrado con ID: " + dto.getTipoDesarrolladorId()));
+            productoExistente.setTipoDesarrollador(tipoDesarrollador);
+        }
+
         syncPlataformas(productoExistente, dto.getPlataformasIds());
         syncGeneros(productoExistente, dto.getGenerosIds());
         syncEmpresas(productoExistente, dto.getEmpresasIds());
@@ -161,24 +211,41 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
 
-        // actualizarEmbeddingProducto(recargado);
+        // try {
+        //     actualizarEmbeddingProducto(recargado);
+        // } catch (Exception e) {
+        //     System.err.println("Embedding falló en patch: " + e.getMessage());
+        // }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
 
     /* ================= SAGAS ================= */
 
-    public List<ProductoResponseDTO> findBySaga(String saga) {
-        return productoRepository.findBySaga(saga)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findBySaga(String saga, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorSaga(saga, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
-    public List<ProductoResponseDTO> findBySagaIgnoreCase(String saga) {
-        return productoRepository.findBySagaIgnoreCase(saga)
+    public PagedResponse<ProductoResumenDTO> findBySagaIgnoreCase(String saga, int page, int size) {
+        return findBySaga(saga, page, size);
+    }
+
+    /**
+     * Devuelve los productos COMPLETOS de una saga.
+     * Usa findByIdFull() para cada producto → datos completos con relaciones.
+     * Solo se llama cuando el usuario selecciona una saga en el carrusel.
+     */
+    public List<ProductoResponseDTO> findBySagaCompleto(String saga) {
+        return productoRepository.findIdsBySagaIgnoreCase(saga)
                 .stream()
-                .map(ProductoMapper::toResponseDTO)
+                .map(id -> productoRepository.findByIdFull(id)
+                        .map(ProductoMapper::toResponseDTO)
+                        .orElse(null))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -217,6 +284,7 @@ public class ProductoService {
             datos.put("Estado", fila[4]);
             datos.put("Saga", fila[5]);
             datos.put("Portada Saga", fila[6]);
+            datos.put("Imagen Portada", fila[7]);
             lista.add(datos);
         }
 
@@ -232,18 +300,20 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
-    public List<ProductoResponseDTO> findByNombreContainingIgnoreCase(String nombre) {
-        return productoRepository.findByNombreContainingIgnoreCase(nombre)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findByNombreContainingIgnoreCase(String nombre, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorNombre(nombre, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
-    public List<ProductoResponseDTO> findByTipoProducto(Long tipoProductoId) {
-        return productoRepository.findByTipoProducto_Id(tipoProductoId)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findByTipoProducto(Long tipoProductoId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorTipo(tipoProductoId, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
     public List<ProductoResponseDTO> findByClasificacion(Long clasificacionId) {
@@ -253,11 +323,12 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
-    public List<ProductoResponseDTO> findByEstado(Long estadoId) {
-        return productoRepository.findByEstado_Id(estadoId)
-                .stream()
-                .map(ProductoMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public PagedResponse<ProductoResumenDTO> findByEstado(Long estadoId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+        Page<Object[]> result = productoRepository.obtenerResumenPorEstado(estadoId, pageable);
+        List<ProductoResumenDTO> contenido = result.getContent().stream()
+                .map(this::mapResumenRow).collect(Collectors.toList());
+        return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
 
     public List<ProductoResponseDTO> findByTipoProductoAndEstado(Long tipoProductoId, Long estadoId) {
@@ -306,6 +377,25 @@ public class ProductoService {
         producto.setClasificacion(clasificacion);
         producto.setEstado(estado);
 
+        if (dto.getTipoEmpresaId() != null) {
+            TipoEmpresaModel tipoEmpresa = tipoEmpresaRepository.findById(dto.getTipoEmpresaId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Tipo de empresa no encontrado con ID: " + dto.getTipoEmpresaId()));
+            producto.setTipoEmpresa(tipoEmpresa);
+        } else {
+            producto.setTipoEmpresa(null);
+        }
+
+        if (dto.getTipoDesarrolladorId() != null) {
+            TipoDeDesarrolladorModel tipoDesarrollador = tipoDeDesarrolladorRepository
+                .findById(dto.getTipoDesarrolladorId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                    "Tipo de desarrollador no encontrado con ID: " + dto.getTipoDesarrolladorId()));
+            producto.setTipoDesarrollador(tipoDesarrollador);
+        } else {
+            producto.setTipoDesarrollador(null);
+        }
+
         syncPlataformas(producto, dto.getPlataformasIds());
         syncGeneros(producto, dto.getGenerosIds());
         syncEmpresas(producto, dto.getEmpresasIds());
@@ -350,7 +440,10 @@ public class ProductoService {
 
     /* ================= EMBEDDINGS IA ================= */
 
-    private void actualizarEmbeddingProducto(ProductoModel producto) {
+    @org.springframework.transaction.annotation.Transactional(
+        propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
+    public void actualizarEmbeddingProducto(ProductoModel producto) {
         try {
             String contenido = """
                     Nombre: %s
@@ -458,6 +551,10 @@ public class ProductoService {
                                 ? l.getAppId().trim()
                                 : existente.getAppId()
                 );
+                if (l.getPrecioActual() != null) {
+                    existente.setPrecioActual(l.getPrecioActual());
+                    existente.setFechaUltimaActualizacion(java.time.LocalDateTime.now());
+                }
             } else {
                 PlataformaModel plat = plataformaRepository.findById(l.getPlataformaId())
                         .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -478,6 +575,10 @@ public class ProductoService {
                                 ? l.getAppId().trim()
                                 : null
                 );
+                if (l.getPrecioActual() != null) {
+                    nuevo.setPrecioActual(l.getPrecioActual());
+                    nuevo.setFechaUltimaActualizacion(java.time.LocalDateTime.now());
+                }
 
                 producto.getLinksCompra().add(nuevo);
             }
@@ -635,15 +736,17 @@ public class ProductoService {
     }
 
     /* ================= PAGINACIÓN ================= */
-    public PagedResponse<ProductoResponseDTO> findAllPaged(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
 
-        Page<ProductoModel> result = productoRepository.findAll(pageable);
 
-        List<ProductoResponseDTO> contenido = result.getContent()
-            .stream()
-            .map(ProductoMapper::toResponseDTO)
-            .toList();
+    public PagedResponse<ProductoResumenDTO> findAllPaged(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+        Page<Object[]> result = productoRepository.obtenerResumenPaginado(pageable);
+
+        List<ProductoResumenDTO> contenido = result.getContent()
+                .stream()
+                .map(this::mapResumenRow)
+                .collect(Collectors.toList());
+
 
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
@@ -678,18 +781,39 @@ public class ProductoService {
         ProductoModel recargado = productoRepository.findByIdFull(productoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
-        actualizarEmbeddingProducto(recargado);
+        try {
+            actualizarEmbeddingProducto(recargado);
+        } catch (Exception e) {
+            System.err.println("Embedding falló en steam update: " + e.getMessage());
+        }
 
         return ProductoMapper.toResponseDTO(recargado);
     }
 
     public List<Long> obtenerIdsProductosConAppId() {
-        return productoRepository.findAll()
-                .stream()
-                .filter(p -> p.getLinksCompra() != null &&
-                        p.getLinksCompra().stream().anyMatch(l ->
-                                l.getAppId() != null && !l.getAppId().isBlank()))
-                .map(ProductoModel::getId)
-                .toList();
+        return productoRepository.findIdsConAppId();
+    }
+
+    private ProductoResumenDTO mapResumenRow(Object[] fila) {
+        return new ProductoResumenDTO(
+            fila[0] != null ? ((Number) fila[0]).longValue() : null,
+            (String) fila[1],
+            fila[2] != null ? ((Number) fila[2]).doubleValue() : null,
+            (String) fila[3],
+            (String) fila[4],
+            (String) fila[5],
+            (String) fila[6],
+            (String) fila[7]
+        );
+    }
+
+    public boolean existeProductoPorLinkCompra(String url) {
+        String urlLimpia = limpiarUrlMercadoLibre(url);
+        return productoRepository.existsByLinksCompraUrl(urlLimpia);
+    }
+
+    private String limpiarUrlMercadoLibre(String url) {
+        if (url == null) return "";
+        return url.split("#")[0];
     }
 }

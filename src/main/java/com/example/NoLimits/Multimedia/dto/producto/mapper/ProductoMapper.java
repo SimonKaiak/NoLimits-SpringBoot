@@ -4,6 +4,7 @@ package com.example.NoLimits.Multimedia.dto.producto.mapper;
 import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResponseDTO;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
+import com.example.NoLimits.Multimedia.dto.producto.response.PlataformaSimpleDTO;
 
 import java.util.stream.Collectors;
 
@@ -51,6 +52,18 @@ public class ProductoMapper {
             dto.setEstadoNombre(model.getEstado().getNombre());
         }
 
+        // Tipo de empresa (opcional)
+        if (model.getTipoEmpresa() != null) {
+        dto.setTipoEmpresaId(model.getTipoEmpresa().getId());
+        dto.setTipoEmpresaNombre(model.getTipoEmpresa().getNombre());
+        }
+
+        // Tipo de desarrollador (opcional)
+        if (model.getTipoDesarrollador() != null) {
+        dto.setTipoDesarrolladorId(model.getTipoDesarrollador().getId());
+        dto.setTipoDesarrolladorNombre(model.getTipoDesarrollador().getNombre());
+        }
+
         // Información de saga, solo si existe una asociada
         dto.setSaga(model.getSaga());
         dto.setPortadaSaga(model.getPortadaSaga());
@@ -64,11 +77,23 @@ public class ProductoMapper {
 
         // plataformas → nombre de la PlataformaModel asociada
         dto.setPlataformas(
-                model.getPlataformas() == null ? null :
-                        model.getPlataformas()
-                                .stream()
-                                .map(p -> p.getPlataforma().getNombre())
-                                .collect(Collectors.toList())
+             model.getPlataformas() == null ? null :
+                model.getPlataformas()
+                    .stream()
+                    .map(p -> {
+                        PlataformaSimpleDTO plataformaDTO = new PlataformaSimpleDTO();
+
+                        plataformaDTO.setId(
+                            p.getPlataforma().getId()
+                        );
+
+                        plataformaDTO.setNombre(
+                            p.getPlataforma().getNombre()
+                        );
+
+                        return plataformaDTO;
+                })
+                .collect(Collectors.toList())
         );
 
         // géneros → nombre del GeneroModel asociado
@@ -122,6 +147,7 @@ public class ProductoMapper {
                         l.setUrl(link.getUrl());
                         l.setLabel(link.getLabel());
                         l.setAppId(link.getAppId());
+                        l.setPrecioActual(link.getPrecioActual());
                         return l;
                 })
                 .collect(Collectors.toList())
