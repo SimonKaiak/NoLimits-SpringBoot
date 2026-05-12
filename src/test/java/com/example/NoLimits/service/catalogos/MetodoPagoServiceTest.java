@@ -9,6 +9,7 @@ import com.example.NoLimits.Multimedia.model.venta.VentaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.MetodoPagoRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoPagoService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.never;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class MetodoPagoServiceTest {
+public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private MetodoPagoService metodoPagoService;

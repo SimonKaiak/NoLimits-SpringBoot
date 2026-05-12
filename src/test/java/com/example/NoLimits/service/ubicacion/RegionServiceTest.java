@@ -8,6 +8,7 @@ import com.example.NoLimits.Multimedia.model.ubicacion.RegionModel;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.RegionRepository;
 import com.example.NoLimits.Multimedia.service.ubicacion.RegionService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class RegionServiceTest {
+public class RegionServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private RegionService regionService;

@@ -55,13 +55,14 @@ public class ProductoService {
 
     /* ================= CRUD BÁSICO ================= */
 
+    
+
     public List<ProductoResumenDTO> findAll() {
         return productoRepository.obtenerProductosResumen()
                 .stream()
                 .map(this::mapResumenRow)
                 .collect(Collectors.toList());
     }
-
     public ProductoResponseDTO findById(Long id) {
         ProductoModel model = productoRepository.findByIdFull(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
@@ -720,6 +721,7 @@ public class ProductoService {
 
     /* ================= PAGINACIÓN ================= */
 
+
     public PagedResponse<ProductoResumenDTO> findAllPaged(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").ascending());
         Page<Object[]> result = productoRepository.obtenerResumenPaginado(pageable);
@@ -729,9 +731,10 @@ public class ProductoService {
                 .map(this::mapResumenRow)
                 .collect(Collectors.toList());
 
+
         return new PagedResponse<>(contenido, page, result.getTotalPages(), result.getTotalElements());
     }
-
+    
     /* ================= SCRAPING STEAM ================= */
 
     public ProductoResponseDTO actualizarPrecioDesdeSteam(Long productoId) {

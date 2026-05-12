@@ -7,6 +7,8 @@ import com.example.NoLimits.Multimedia.dto.usuario.update.RolUpdateDTO;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.service.usuario.RolService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class RolServiceTest {
+public class RolServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private RolService rolService;

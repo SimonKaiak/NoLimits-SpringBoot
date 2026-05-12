@@ -9,6 +9,7 @@ import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository
 import com.example.NoLimits.Multimedia.repository.catalogos.PlataformasRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformasService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class PlataformasServiceTest {
+class PlataformasServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private PlataformasService service;

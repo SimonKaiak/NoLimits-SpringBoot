@@ -7,6 +7,7 @@ import com.example.NoLimits.Multimedia.dto.catalogos.update.ClasificacionUpdateD
 import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.ClasificacionService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ClasificacionServiceTest {
+public class ClasificacionServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private ClasificacionService clasificacionService;

@@ -11,6 +11,7 @@ import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepositor
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.service.producto.DetalleVentaService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +37,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class DetalleVentaServiceTest {
+public class DetalleVentaServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private DetalleVentaService detalleVentaService;

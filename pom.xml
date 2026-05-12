@@ -72,6 +72,21 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Testcontainers PostgreSQL -->
+		<dependency>
+    		<groupId>org.testcontainers</groupId>
+    		<artifactId>junit-jupiter</artifactId>
+    		<version>1.19.8</version>
+    		<scope>test</scope>
+		</dependency>
+
+		<dependency>
+    		<groupId>org.testcontainers</groupId>
+    		<artifactId>postgresql</artifactId>
+    		<version>1.19.8</version>
+    		<scope>test</scope>
+		</dependency>
+
 		<!-- Validaciones Bean Validation (@NotNull, @Size, etc.) -->
 		<dependency>
     		<groupId>org.springframework.boot</groupId>
@@ -177,6 +192,12 @@
 			<groupId>com.openai</groupId>
 			<artifactId>openai-java</artifactId>
 			<version>4.32.0</version>
+		</dependency>
+
+		<dependency>
+    		<groupId>org.springdoc</groupId>
+    		<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    		<version>2.5.0</version>
 		</dependency>
 
 	</dependencies>

@@ -8,6 +8,7 @@ import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoDeDesarrolladorRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.TiposDeDesarrolladorRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoDeDesarrolladorService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class TipoDeDesarrolladorServiceTest {
+public class TipoDeDesarrolladorServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private TipoDeDesarrolladorService service;

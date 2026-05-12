@@ -7,6 +7,7 @@ import com.example.NoLimits.Multimedia.dto.catalogos.update.GeneroUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.GeneroRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.GeneroService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class GeneroServiceTest {
+public class GeneroServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private GeneroService generoService;

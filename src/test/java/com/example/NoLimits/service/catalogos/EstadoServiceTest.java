@@ -7,6 +7,7 @@ import com.example.NoLimits.Multimedia.dto.catalogos.update.EstadoUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.EstadoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.EstadoService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.never;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class EstadoServiceTest {
+public class EstadoServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private EstadoService estadoService;

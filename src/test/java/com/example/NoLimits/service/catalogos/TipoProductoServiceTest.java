@@ -8,6 +8,7 @@ import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoProductoService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class TipoProductoServiceTest {
+public class TipoProductoServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private TipoProductoService tipoProductoService;

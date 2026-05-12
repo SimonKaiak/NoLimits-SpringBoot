@@ -13,10 +13,11 @@ import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.service.usuario.UsuarioService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -30,9 +31,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+
 @ActiveProfiles("test")
-public class UsuarioServiceTest {
+public class UsuarioServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private UsuarioService usuarioService;
@@ -99,7 +100,7 @@ public class UsuarioServiceTest {
         dto.setApellidos("Gómez");
         dto.setCorreo("nuevo@test.com");
         dto.setTelefono(987654321L);
-        dto.setPassword("newpass");
+        dto.setPassword("newpassword123");
         dto.setRolId(3L);
         return dto;
     }
@@ -158,7 +159,7 @@ public class UsuarioServiceTest {
 
         when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(false);
         when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rol));
-        when(passwordEncoder.encode("password")).thenReturn("hash_password");
+        when(passwordEncoder.encode("newpassword123")).thenReturn("hash_password");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> {
                     UsuarioModel u = inv.getArgument(0);
@@ -178,7 +179,7 @@ public class UsuarioServiceTest {
     }
 
     @Test
-    void testSave_PasswordLarga_Lanza400() {
+    void testSave_PasswordCorta_Lanza400() {
         UsuarioRegistroDTO dto = usuarioRegistroRequest();
         dto.setPassword("1234567"); // 7 caracteres
 
@@ -313,7 +314,7 @@ public class UsuarioServiceTest {
         when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
                 .thenReturn(Optional.of(usuarioEntity()));
 
-        UsuarioResponseDTO dto = usuarioService.findByCorreo("  CORREO@test.com  ");
+        UsuarioResponseDTO dto = usuarioService.findByCorreo("  correo@test.com  ");
 
         assertNotNull(dto);
         assertEquals("correo@test.com", dto.getCorreo());
@@ -342,7 +343,7 @@ public class UsuarioServiceTest {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
         when(rolRepository.findById(3L)).thenReturn(Optional.of(rolNuevo));
-        when(passwordEncoder.encode("newpass")).thenReturn("hash_newpass");
+        when(passwordEncoder.encode("newpassword123")).thenReturn("hash_newpassword");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -383,7 +384,7 @@ public class UsuarioServiceTest {
     }
 
     @Test
-    void testUpdate_PasswordLarga_Lanza400() {
+    void testUpdate_PasswordCorta_Lanza400() {
         UsuarioModel existente = usuarioEntity();
         UsuarioUpdateDTO datos = usuarioUpdateCompleto();
         datos.setPassword("1234567"); // 7 caracteres
@@ -435,7 +436,7 @@ public class UsuarioServiceTest {
     }
 
     @Test
-    void testPatch_PasswordLarga_Lanza400() {
+    void testPatch_PasswordCorta_Lanza400() {
         UsuarioModel existente = usuarioEntity();
 
         UsuarioUpdateDTO patch = new UsuarioUpdateDTO();

@@ -7,6 +7,7 @@ import com.example.NoLimits.Multimedia.dto.catalogos.update.EmpresaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.EmpresaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.EmpresaService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class EmpresaServiceTest {
+public class EmpresaServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private EmpresaService empresaService;
