@@ -9,6 +9,7 @@ import com.example.NoLimits.Multimedia.repository.catalogos.GeneroRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.GenerosRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.GenerosService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class GenerosServiceTest {
+class GenerosServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private GenerosService generosService;

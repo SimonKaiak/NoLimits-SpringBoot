@@ -7,6 +7,7 @@ import com.example.NoLimits.Multimedia.dto.catalogos.update.PlataformaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformaService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class PlataformaServiceTest {
+public class PlataformaServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private PlataformaService plataformaService;

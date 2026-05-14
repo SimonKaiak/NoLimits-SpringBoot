@@ -16,6 +16,7 @@ import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoReposito
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.producto.ProductoService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +44,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ProductoServiceTest {
+public class ProductoServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private ProductoService productoService;

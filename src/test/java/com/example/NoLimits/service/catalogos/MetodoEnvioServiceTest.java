@@ -7,6 +7,7 @@ import com.example.NoLimits.Multimedia.dto.catalogos.update.MetodoEnvioUpdateDTO
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.MetodoEnvioRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoEnvioService;
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.never;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class MetodoEnvioServiceTest {
+public class MetodoEnvioServiceTest extends AbstractContainerBaseTest{
 
     @Autowired
     private MetodoEnvioService metodoEnvioService;

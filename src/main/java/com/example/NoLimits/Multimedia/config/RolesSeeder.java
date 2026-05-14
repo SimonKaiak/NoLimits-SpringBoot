@@ -3,11 +3,13 @@ package com.example.NoLimits.Multimedia.config;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 
 @Configuration
+@Profile("!test") // Evita que se ejecute en el perfil de pruebas
 public class RolesSeeder {
 
     @Bean
