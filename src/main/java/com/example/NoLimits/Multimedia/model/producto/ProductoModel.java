@@ -74,6 +74,10 @@ public class ProductoModel {
     @Schema(description = "URL del tráiler del producto", example = "https://www.youtube.com/watch?v=...")
     private String urlTrailer;
 
+    @Column(name = "anio")
+    @Schema(description = "Año de lanzamiento o publicación del producto", example = "2011")
+    private Integer anio;
+
     /* ====== Campos para sagas (solo aplica a películas) ====== */
 
     @Column(name = "saga", length = 100)

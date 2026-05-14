@@ -21,6 +21,9 @@ public class ProductoRequestDTO {
     @Schema(description = "URL del tráiler del producto", example = "https://www.youtube.com/watch?v=...")
     private String urlTrailer;
 
+    @Schema(description = "Año de lanzamiento", example = "2011")
+    private Integer anio;
+
     @Schema(description = "ID del tipo de producto", example = "2")
     private Long tipoProductoId;
 

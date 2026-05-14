@@ -23,6 +23,9 @@ public class ProductoUpdateDTO {
     @Schema(description = "URL del trailer del producto", example =  "https://www.youtube.com/watch?v=...")
     private String urlTrailer;
 
+    @Schema(description = "Año de lanzamiento o publicación del producto", example = "2011")
+    private Integer anio;
+
     @Schema(description = "Nuevo ID del tipo de producto", example = "2")
     private Long tipoProductoId;
 

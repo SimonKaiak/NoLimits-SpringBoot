@@ -33,6 +33,7 @@ public class ProductoMapper {
         //Nuevos campos agregados
         dto.setSinopsis(model.getSinopsis());
         dto.setUrlTrailer(model.getUrlTrailer());
+        dto.setAnio(model.getAnio());
 
         // Datos del tipo de producto
         if (model.getTipoProducto() != null) {

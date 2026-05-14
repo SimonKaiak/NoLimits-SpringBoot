@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/chatbot/**").permitAll()
                 .requestMatchers("/api/embeddings/**").permitAll()
                 .requestMatchers("/api/scraping/**").permitAll()
+                .requestMatchers("/api/igdb/**").permitAll()
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
