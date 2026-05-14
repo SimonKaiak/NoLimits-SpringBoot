@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
+//import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${security.jwt.secret}")
+  /*  @Value("${security.jwt.secret}")
     private String secret;
 
     @Value("${security.jwt.expiration}")
@@ -22,6 +23,17 @@ public class JwtUtil {
 
     private Key key() {
         return Keys.hmacShaKeyFor(secret.getBytes());
+    }*/
+    private static final String SECRET =
+        "NoLimitsJWTSecretKeyUltraMegaSegura2026ConMuchosCaracteres123456789ABCDEFGHJKLMNOPQRSTUVWXYZ";
+
+    @Value("${security.jwt.expiration}")
+        private Long expiration;
+
+    private Key key() {
+        return Keys.hmacShaKeyFor(
+            SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+        );
     }
 
     public String generateToken(String correo, String rol) {

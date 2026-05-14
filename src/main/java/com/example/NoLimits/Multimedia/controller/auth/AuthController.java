@@ -74,6 +74,36 @@ public class AuthController {
         ));
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestBody Map<String, String> body) {
+
+        String correo = body.get("correo");
+        String password = body.get("password");
+
+        if (correo == null || password == null) {
+                return ResponseEntity.badRequest()
+                        .body("Correo y contraseña obligatorios");
+        }
+
+        UsuarioModel usuario = usuarioRepository
+                .findByCorreoIgnoreCase(correo.trim())
+                .orElse(null);
+
+        if (usuario == null) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Usuario no encontrado");
+        }
+
+        usuario.setPassword(
+            passwordEncoder.encode(password.trim()));
+
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok()
+            .body("Contraseña actualizada correctamente");
+    }
+
     @PostMapping("/google/sync")
     public ResponseEntity<?> syncGoogleUser(@RequestBody Map<String, String> body) {
 
