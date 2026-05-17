@@ -43,11 +43,12 @@ public class ProductoEmbeddingService {
         String sql = """
                 SELECT contenido
                 FROM producto_embeddings
+                WHERE embedding <=> ?::vector <= 0.5
                 ORDER BY embedding <=> ?::vector
                 LIMIT 3
                 """;
 
-        return jdbcTemplate.queryForList(sql, String.class, vector);
+        return jdbcTemplate.queryForList(sql, String.class, vector, 0.5, vector);
     }
 
     public int indexarTodosLosProductos() {
