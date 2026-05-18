@@ -7,12 +7,16 @@ import com.openai.models.ChatModel;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
 public class OpenAIChatClient {
+
+    private static final Logger log = LoggerFactory.getLogger(OpenAIChatClient.class);
 
     private OpenAIClient client;
     private final ProductoEmbeddingService productoEmbeddingService;
@@ -48,56 +52,43 @@ public class OpenAIChatClient {
 
         String systemPrompt = """
                 Eres el asistente oficial de NoLimits.
-
-                Tu tarea es orientar al usuario dentro de la plataforma.
                 Responde siempre en español, de forma clara, amable y útil.
-
-                Contexto real de NoLimits:
-                - El usuario entra primero a la página principal.
-                - No es obligatorio iniciar sesión para explorar productos.
-                - Para iniciar sesión o registrarse, debe usar el menú hamburguesa.
-                - Para ver favoritos, primero debe haber iniciado sesión.
-                - El usuario puede explorar sagas destacadas o usar el buscador.
-                - Desde un producto puede entrar a "Ver Plataformas" y luego "Ver Precios".
-                - Al hacer clic sobre un precio, el usuario es redirigido a una plataforma externa.
-                - Si preguntan por soporte, el correo es NoLimits@gmail.com.
-
                 NoLimits solo ofrece productos relacionados con: Películas, videojuegos y accesorios.
-
                 Usa la información disponible para responder sobre productos.
                 No inventes productos que no estén en la información disponible.
-                No menciones términos técnicos como "base de datos", "embeddings" o similares.
-                Si la información disponible es "SIN_RESULTADOS", no inventes productos y pregunta al usuario qué busca.
-
-                Tu personalidad está inspirada en Inosuke Hashibira: energético, impulsivo, pero nunca irrespetuoso.
+                Si la información disponible es "SIN_RESULTADOS", pregunta al usuario qué busca.
                 Dirígete siempre al usuario de forma formal usando "usted".
                 Estilo dinámico para esta respuesta: %s
-
-                Reglas de formato:
-                - No uses Markdown, ni *, **, #, ##.
-                - Responde en texto plano.
-                - Si das pasos: 1) paso uno 2) paso dos
-                - Usa saltos de línea para separar ideas.
+                No uses Markdown, ni *, **, #, ##. Responde en texto plano.
                 """.formatted(estiloDinamico);
 
-        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
-                .model(ChatModel.GPT_4O_MINI)
-                .addSystemMessage(systemPrompt)
-                .addUserMessage("""
-                        Información disponible de NoLimits:
-                        %s
+        try {
+            log.info("Llamando a OpenAI con mensaje: {}", userMessage);
 
-                        Pregunta del usuario:
-                        %s
-                        """.formatted(contextoBD, userMessage))
-                .build();
+            ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                    .model(ChatModel.GPT_4O_MINI)
+                    .addSystemMessage(systemPrompt)
+                    .addUserMessage("""
+                            Información disponible de NoLimits:
+                            %s
 
-        ChatCompletion completion = client.chat().completions().create(params);
+                            Pregunta del usuario:
+                            %s
+                            """.formatted(contextoBD, userMessage))
+                    .build();
 
-        String texto = completion.choices().get(0).message().content()
-                .orElse("No pude generar una respuesta en este momento.");
+            ChatCompletion completion = client.chat().completions().create(params);
 
-        return limpiarTexto(texto);
+            String texto = completion.choices().get(0).message().content()
+                    .orElse("No pude generar una respuesta en este momento.");
+
+            log.info("Respuesta OpenAI recibida correctamente");
+            return limpiarTexto(texto);
+
+        } catch (Exception e) {
+            log.error("ERROR EN OPENAI: {} - {}", e.getClass().getName(), e.getMessage());
+            return "Error al conectar con el asistente: " + e.getMessage();
+        }
     }
 
     private String limpiarTexto(String texto) {
