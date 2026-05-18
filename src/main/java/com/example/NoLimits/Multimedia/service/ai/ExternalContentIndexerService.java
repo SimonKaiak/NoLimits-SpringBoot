@@ -199,6 +199,50 @@ public class ExternalContentIndexerService {
         return contador;
     }
 
+    @SuppressWarnings("unchecked")
+    public int indexarAnimeJikan() {
+        int contador = 0;
+        try {
+            for (int page = 1; page <= 5; page++) {
+                String url = "https://api.jikan.moe/v4/top/anime?page=" + page + "&limit=20";
+                ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+                if (response.getBody() == null) continue;
+                List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get("data");
+                if (results == null) continue;
+                for (Map<String, Object> anime : results) {
+                    try {
+                        String titulo = (String) anime.getOrDefault("title", "Sin título");
+                        String tituloEn = (String) anime.getOrDefault("title_english", "");
+                        String synopsis = (String) anime.getOrDefault("synopsis", "");
+                        Object rating = anime.getOrDefault("score", 0);
+                        Object año = anime.getOrDefault("year", "");
+                        List<Map<String, Object>> genresList = (List<Map<String, Object>>) anime.getOrDefault("genres", List.of());
+                        String generos = genresList.stream().map(g -> (String) g.getOrDefault("name", "")).filter(s -> !s.isEmpty()).reduce((a, b) -> a + ", " + b).orElse("");
+                        String contenido = """
+                                Nombre: %s
+                                Nombre en inglés: %s
+                                Tipo: Anime
+                                Descripción: %s
+                                Rating: %s
+                                Año: %s
+                                Géneros: %s
+                                Fuente: JIKAN
+                                """.formatted(titulo, tituloEn, synopsis, rating, año, generos);
+                        guardarEmbeddingExterno(titulo, contenido, "JIKAN");
+                        contador++;
+                        Thread.sleep(400);
+                    } catch (Exception e) {
+                        log.warn("Error indexando anime Jikan: {}", e.getMessage());
+                    }
+                }
+                Thread.sleep(1000);
+            }
+        } catch (Exception e) {
+            log.error("Error al indexar anime Jikan: {}", e.getMessage());
+        }
+        return contador;
+    }
+
     private void guardarEmbeddingExterno(String titulo, String contenido, String fuente) {
         List<Float> embedding = embeddingService.generarEmbedding(contenido);
         String vector = embedding.toString();
@@ -215,12 +259,14 @@ public class ExternalContentIndexerService {
         int series = indexarSeriesTMDB();
         int juegosRawg = indexarJuegosRAWG();
         int juegosIgdb = indexarJuegosIGDB();
+        int anime = indexarAnimeJikan();
         return Map.of(
                 "peliculas_tmdb", peliculas,
                 "series_tmdb", series,
                 "juegos_rawg", juegosRawg,
                 "juegos_igdb", juegosIgdb,
-                "total", peliculas + series + juegosRawg + juegosIgdb
+                "anime_jikan", anime,
+                "total", peliculas + series + juegosRawg + juegosIgdb + anime
         );
     }
 }

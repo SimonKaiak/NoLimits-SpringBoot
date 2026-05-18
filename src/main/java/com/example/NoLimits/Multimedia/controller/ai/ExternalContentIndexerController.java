@@ -43,4 +43,10 @@ public class ExternalContentIndexerController {
         int total = indexerService.indexarJuegosIGDB();
         return "Juegos IGDB indexados: " + total;
     }
+
+    @PostMapping("/indexar-jikan")
+    public String indexarJikan() {
+        int total = indexerService.indexarAnimeJikan();
+        return "Animes Jikan indexados: " + total;
+    }
 }
