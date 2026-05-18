@@ -42,11 +42,23 @@ public class ProductoEmbeddingService {
         String sql = """
                 SELECT contenido
                 FROM producto_embeddings
+                WHERE (embedding <=> ?::vector) < 0.5
                 ORDER BY embedding <=> ?::vector
                 LIMIT 3
                 """;
 
-        return jdbcTemplate.queryForList(sql, String.class, vector);
+        try {
+            return jdbcTemplate.queryForList(sql, String.class, vector, vector);
+        } catch (Exception e) {
+            // Si falla el umbral, usar query sin filtro
+            String sqlFallback = """
+                    SELECT contenido
+                    FROM producto_embeddings
+                    ORDER BY embedding <=> ?::vector
+                    LIMIT 3
+                    """;
+            return jdbcTemplate.queryForList(sqlFallback, String.class, vector);
+        }
     }
 
     public int indexarTodosLosProductos() {
