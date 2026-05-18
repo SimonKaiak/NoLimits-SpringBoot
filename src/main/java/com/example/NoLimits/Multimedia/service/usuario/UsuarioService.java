@@ -20,20 +20,19 @@ import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
-import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.ComunaModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
 import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
-import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.FavoritoRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
+import com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -73,9 +72,6 @@ public class UsuarioService {
 
     @Autowired
     private FavoritoRepository favoritoRepository;
-
-    @Autowired
-    private ProductoRepository productoRepository;
 
     /* ================= CRUD BÁSICO ================= */
 
@@ -629,32 +625,37 @@ public class UsuarioService {
         return favoritoRepository.findByUsuario_Id(usuarioId);
     }
 
-    public FavoritoModel agregarFavorito(Long usuarioId, Long productoId) {
+    public FavoritoModel agregarFavorito(Long usuarioId, FavoritoRequestDTO dto) {
         UsuarioModel usuario = getUsuarioOrThrow(usuarioId);
 
-        ProductoModel producto = productoRepository.findById(productoId)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + productoId));
-
-        if (favoritoRepository.existsByUsuario_IdAndProducto_Id(usuarioId, productoId)) {
+        if (dto.getObraId() == null || dto.getObraId().trim().isEmpty()) {
             throw new ResponseStatusException(
-                HttpStatus.CONFLICT, "El producto ya está en favoritos.");
+                HttpStatus.BAD_REQUEST, "El obraId es obligatorio.");
+        }
+
+        if (favoritoRepository.existsByUsuario_IdAndObraId(usuarioId, dto.getObraId())) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "La obra ya está en favoritos.");
         }
 
         FavoritoModel favorito = new FavoritoModel();
         favorito.setUsuario(usuario);
-        favorito.setProducto(producto);
+        favorito.setObraId(dto.getObraId());
+        favorito.setTitulo(dto.getTitulo());
+        favorito.setTipo(dto.getTipo());
+        favorito.setPoster(dto.getPoster());
+        favorito.setSource(dto.getSource());
 
         return favoritoRepository.save(favorito);
     }
 
-    public void eliminarFavorito(Long usuarioId, Long productoId) {
+    public void eliminarFavorito(Long usuarioId, String obraId) {
         getUsuarioOrThrow(usuarioId);
 
         FavoritoModel favorito = favoritoRepository
-            .findByUsuario_IdAndProducto_Id(usuarioId, productoId)
+            .findByUsuario_IdAndObraId(usuarioId, obraId)
             .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Favorito no encontrado para ese usuario y producto."));
+                HttpStatus.NOT_FOUND, "Favorito no encontrado para ese usuario y obra."));
 
         favoritoRepository.delete(favorito);
     }

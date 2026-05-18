@@ -10,9 +10,10 @@ import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 
 @Repository
 public interface FavoritoRepository extends JpaRepository<FavoritoModel, Long> {
+
     List<FavoritoModel> findByUsuario_Id(Long usuarioId);
 
-    Optional<FavoritoModel> findByUsuario_IdAndProducto_Id(Long usuarioId, Long productoId);
+    Optional<FavoritoModel> findByUsuario_IdAndObraId(Long usuarioId, String obraId);
 
-    boolean existsByUsuario_IdAndProducto_Id(Long usuarioId, Long productoId);
+    boolean existsByUsuario_IdAndObraId(Long usuarioId, String obraId);
 }

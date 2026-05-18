@@ -1,8 +1,8 @@
 package com.example.NoLimits.Multimedia.model.usuario;
 
-import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,7 +33,18 @@ public class FavoritoModel {
     @JsonIgnore
     private UsuarioModel usuario;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "producto_id", nullable = false)
-    private ProductoModel producto;
+    @Column(name = "obra_id", nullable = false)
+    private String obraId;
+
+    @Column(name = "titulo", nullable = false)
+    private String titulo;
+
+    @Column(name = "tipo")
+    private String tipo;
+
+    @Column(name = "poster", length = 1000)
+    private String poster;
+
+    @Column(name = "source")
+    private String source;
 }
