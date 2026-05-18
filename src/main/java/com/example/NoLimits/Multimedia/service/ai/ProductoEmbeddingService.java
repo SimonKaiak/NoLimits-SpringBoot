@@ -37,14 +37,13 @@ public class ProductoEmbeddingService {
     public List<String> buscarSimilares(String pregunta) {
 
         List<Float> embedding = embeddingService.generarEmbedding(pregunta);
-
         String vector = embedding.toString();
 
         String sql = """
                 SELECT contenido
                 FROM producto_embeddings
                 ORDER BY embedding <=> ?::vector
-                LIMIT 3
+                LIMIT 5
                 """;
 
         return jdbcTemplate.queryForList(sql, String.class, vector);
