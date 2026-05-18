@@ -44,14 +44,9 @@ public class ExternalContentIndexerService {
     public int indexarPeliculasTMDB() {
         int contador = 0;
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(tmdbToken);
-            headers.set("accept", "application/json");
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
             for (int page = 1; page <= 5; page++) {
-                String url = "https://api.themoviedb.org/3/movie/popular?language=es-CL&page=" + page;
-                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+                String url = "https://api.themoviedb.org/3/movie/popular?api_key=" + tmdbToken + "&language=es-CL&page=" + page;
+                ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 if (response.getBody() == null) continue;
                 List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get("results");
                 if (results == null) continue;
@@ -86,14 +81,9 @@ public class ExternalContentIndexerService {
     public int indexarSeriesTMDB() {
         int contador = 0;
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(tmdbToken);
-            headers.set("accept", "application/json");
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
             for (int page = 1; page <= 3; page++) {
-                String url = "https://api.themoviedb.org/3/tv/popular?language=es-CL&page=" + page;
-                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+                String url = "https://api.themoviedb.org/3/tv/popular?api_key=" + tmdbToken + "&language=es-CL&page=" + page;
+                ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 if (response.getBody() == null) continue;
                 List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get("results");
                 if (results == null) continue;
