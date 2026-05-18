@@ -285,6 +285,43 @@ public class ExternalContentIndexerService {
         }
         return contador;
     }
+    
+    @SuppressWarnings("unchecked")
+    public int indexarLibrosBusqueda(String query) {
+        int contador = 0;
+        try {
+            String url = "https://openlibrary.org/search.json?q=" + query.replace(" ", "+") + "&limit=20";
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (response.getBody() == null) return 0;
+            List<Map<String, Object>> docs = (List<Map<String, Object>>) response.getBody().get("docs");
+            if (docs == null) return 0;
+            for (Map<String, Object> book : docs) {
+                try {
+                    String titulo = (String) book.getOrDefault("title", "Sin título");
+                    List<String> authorsList = (List<String>) book.getOrDefault("author_name", List.of());
+                    String autores = authorsList.stream().reduce((a, b) -> a + ", " + b).orElse("");
+                    Object año = book.getOrDefault("first_publish_year", "");
+                    List<String> subjectsList = (List<String>) book.getOrDefault("subject", List.of());
+                    String generos = subjectsList.stream().limit(3).reduce((a, b) -> a + ", " + b).orElse(query);
+                    String contenido = """
+                            Nombre: %s
+                            Tipo: Libro
+                            Autor: %s
+                            Año: %s
+                            Géneros: %s
+                            Fuente: OPENLIBRARY
+                            """.formatted(titulo, autores, año, generos);
+                    guardarEmbeddingExterno(titulo, contenido, "OPENLIBRARY");
+                    contador++;
+                } catch (Exception e) {
+                    log.warn("Error indexando libro búsqueda: {}", e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error al indexar libros por búsqueda: {}", e.getMessage());
+        }
+        return contador;
+    }
 
     private void guardarEmbeddingExterno(String titulo, String contenido, String fuente) {
         List<Float> embedding = embeddingService.generarEmbedding(contenido);

@@ -55,4 +55,10 @@ public class ExternalContentIndexerController {
         int total = indexerService.indexarLibrosOpenLibrary();
         return "Libros OpenLibrary indexados: " + total;
     }
+
+    @PostMapping("/indexar-libro")
+    public String indexarLibroBusqueda(@RequestParam String q) {
+        int total = indexerService.indexarLibrosBusqueda(q);
+        return "Libros indexados para '" + q + "': " + total;
+    }
 }
