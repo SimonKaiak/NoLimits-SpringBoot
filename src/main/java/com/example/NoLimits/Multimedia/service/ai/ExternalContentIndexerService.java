@@ -40,11 +40,13 @@ public class ExternalContentIndexerService {
         this.igdbTokenService = igdbTokenService;
     }
 
+    // ─── TMDB PELÍCULAS — más populares ────────────────────────────────────────
     @SuppressWarnings("unchecked")
     public int indexarPeliculasTMDB() {
         int contador = 0;
         try {
             for (int page = 1; page <= 5; page++) {
+                // popular = ordenado por popularidad real, no por rating
                 String url = "https://api.themoviedb.org/3/movie/popular?api_key=" + tmdbToken + "&language=es-CL&page=" + page;
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 if (response.getBody() == null) continue;
@@ -55,15 +57,17 @@ public class ExternalContentIndexerService {
                         String titulo = (String) movie.getOrDefault("title", "Sin título");
                         String descripcion = (String) movie.getOrDefault("overview", "");
                         Object rating = movie.getOrDefault("vote_average", 0);
+                        Object popularidad = movie.getOrDefault("popularity", 0);
                         Object año = movie.getOrDefault("release_date", "");
                         String contenido = """
                                 Nombre: %s
                                 Tipo: Película
                                 Descripción: %s
                                 Rating: %s
+                                Popularidad: %s
                                 Año: %s
                                 Fuente: TMDB
-                                """.formatted(titulo, descripcion, rating, año);
+                                """.formatted(titulo, descripcion, rating, popularidad, año);
                         guardarEmbeddingExterno(titulo, contenido, "TMDB");
                         contador++;
                     } catch (Exception e) {
@@ -77,6 +81,7 @@ public class ExternalContentIndexerService {
         return contador;
     }
 
+    // ─── TMDB SERIES — más populares ───────────────────────────────────────────
     @SuppressWarnings("unchecked")
     public int indexarSeriesTMDB() {
         int contador = 0;
@@ -92,15 +97,17 @@ public class ExternalContentIndexerService {
                         String titulo = (String) serie.getOrDefault("name", "Sin título");
                         String descripcion = (String) serie.getOrDefault("overview", "");
                         Object rating = serie.getOrDefault("vote_average", 0);
+                        Object popularidad = serie.getOrDefault("popularity", 0);
                         Object año = serie.getOrDefault("first_air_date", "");
                         String contenido = """
                                 Nombre: %s
                                 Tipo: Serie
                                 Descripción: %s
                                 Rating: %s
+                                Popularidad: %s
                                 Año: %s
                                 Fuente: TMDB
-                                """.formatted(titulo, descripcion, rating, año);
+                                """.formatted(titulo, descripcion, rating, popularidad, año);
                         guardarEmbeddingExterno(titulo, contenido, "TMDB");
                         contador++;
                     } catch (Exception e) {
@@ -114,12 +121,14 @@ public class ExternalContentIndexerService {
         return contador;
     }
 
+    // ─── RAWG — ordenado por cantidad de jugadores (más populares) ─────────────
     @SuppressWarnings("unchecked")
     public int indexarJuegosRAWG() {
         int contador = 0;
         try {
             for (int page = 1; page <= 5; page++) {
-                String url = "https://api.rawg.io/api/games?key=" + rawgKey + "&page=" + page + "&page_size=20&ordering=-rating";
+                // -added = más jugadores que lo tienen en su lista (popularidad real)
+                String url = "https://api.rawg.io/api/games?key=" + rawgKey + "&page=" + page + "&page_size=20&ordering=-added";
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 if (response.getBody() == null) continue;
                 List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get("results");
@@ -129,19 +138,27 @@ public class ExternalContentIndexerService {
                         String titulo = (String) game.getOrDefault("name", "Sin título");
                         Object rating = game.getOrDefault("rating", 0);
                         Object año = game.getOrDefault("released", "");
+                        Object added = game.getOrDefault("added", 0);
                         List<Map<String, Object>> genresList = (List<Map<String, Object>>) game.getOrDefault("genres", List.of());
-                        String generos = genresList.stream().map(g -> (String) g.getOrDefault("name", "")).filter(s -> !s.isEmpty()).reduce((a, b) -> a + ", " + b).orElse("");
+                        String generos = genresList.stream()
+                                .map(g -> (String) g.getOrDefault("name", ""))
+                                .filter(s -> !s.isEmpty())
+                                .reduce((a, b) -> a + ", " + b).orElse("");
                         List<Map<String, Object>> platformsList = (List<Map<String, Object>>) game.getOrDefault("platforms", List.of());
-                        String plataformas = platformsList.stream().map(p -> { Map<String, Object> platform = (Map<String, Object>) p.get("platform"); return platform != null ? (String) platform.getOrDefault("name", "") : ""; }).filter(s -> !s.isEmpty()).reduce((a, b) -> a + ", " + b).orElse("");
+                        String plataformas = platformsList.stream()
+                                .map(p -> { Map<String, Object> platform = (Map<String, Object>) p.get("platform"); return platform != null ? (String) platform.getOrDefault("name", "") : ""; })
+                                .filter(s -> !s.isEmpty())
+                                .reduce((a, b) -> a + ", " + b).orElse("");
                         String contenido = """
                                 Nombre: %s
                                 Tipo: Videojuego
                                 Rating: %s
                                 Año: %s
+                                Jugadores que lo tienen: %s
                                 Géneros: %s
                                 Plataformas: %s
                                 Fuente: RAWG
-                                """.formatted(titulo, rating, año, generos, plataformas);
+                                """.formatted(titulo, rating, año, added, generos, plataformas);
                         guardarEmbeddingExterno(titulo, contenido, "RAWG");
                         contador++;
                     } catch (Exception e) {
@@ -155,6 +172,7 @@ public class ExternalContentIndexerService {
         return contador;
     }
 
+    // ─── IGDB — populares por cantidad de votos (hypes + rating_count) ─────────
     @SuppressWarnings("unchecked")
     public int indexarJuegosIGDB() {
         int contador = 0;
@@ -164,7 +182,8 @@ public class ExternalContentIndexerService {
             headers.set("Client-ID", igdbClientId);
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.TEXT_PLAIN);
-            String body = "fields name,summary,genres.name,platforms.name,rating,first_release_date; where rating > 70 & rating_count > 50; sort rating desc; limit 100;";
+            // Ordenar por rating_count (cantidad de votos) = más conocidos/populares
+            String body = "fields name,summary,genres.name,platforms.name,rating,rating_count,first_release_date; where rating_count > 100; sort rating_count desc; limit 100;";
             HttpEntity<String> entity = new HttpEntity<>(body, headers);
             ResponseEntity<List> response = restTemplate.exchange("https://api.igdb.com/v4/games", HttpMethod.POST, entity, List.class);
             if (response.getBody() == null) return 0;
@@ -174,19 +193,27 @@ public class ExternalContentIndexerService {
                     String titulo = (String) game.getOrDefault("name", "Sin título");
                     String resumen = (String) game.getOrDefault("summary", "");
                     Object rating = game.getOrDefault("rating", 0);
+                    Object ratingCount = game.getOrDefault("rating_count", 0);
                     List<Map<String, Object>> genresList = (List<Map<String, Object>>) game.getOrDefault("genres", List.of());
-                    String generos = genresList.stream().map(g -> (String) g.getOrDefault("name", "")).filter(s -> !s.isEmpty()).reduce((a, b) -> a + ", " + b).orElse("");
+                    String generos = genresList.stream()
+                            .map(g -> (String) g.getOrDefault("name", ""))
+                            .filter(s -> !s.isEmpty())
+                            .reduce((a, b) -> a + ", " + b).orElse("");
                     List<Map<String, Object>> platformsList = (List<Map<String, Object>>) game.getOrDefault("platforms", List.of());
-                    String plataformas = platformsList.stream().map(p -> (String) p.getOrDefault("name", "")).filter(s -> !s.isEmpty()).reduce((a, b) -> a + ", " + b).orElse("");
+                    String plataformas = platformsList.stream()
+                            .map(p -> (String) p.getOrDefault("name", ""))
+                            .filter(s -> !s.isEmpty())
+                            .reduce((a, b) -> a + ", " + b).orElse("");
                     String contenido = """
                             Nombre: %s
                             Tipo: Videojuego
                             Descripción: %s
                             Rating: %s
+                            Votos: %s
                             Géneros: %s
                             Plataformas: %s
                             Fuente: IGDB
-                            """.formatted(titulo, resumen, rating, generos, plataformas);
+                            """.formatted(titulo, resumen, rating, ratingCount, generos, plataformas);
                     guardarEmbeddingExterno(titulo, contenido, "IGDB");
                     contador++;
                 } catch (Exception e) {
@@ -199,12 +226,14 @@ public class ExternalContentIndexerService {
         return contador;
     }
 
+    // ─── JIKAN — top anime por POPULARIDAD (no por score) ──────────────────────
     @SuppressWarnings("unchecked")
     public int indexarAnimeJikan() {
         int contador = 0;
         try {
             for (int page = 1; page <= 5; page++) {
-                String url = "https://api.jikan.moe/v4/top/anime?page=" + page + "&limit=20";
+                // type=bypopularity = ordenado por miembros que lo siguen en MAL
+                String url = "https://api.jikan.moe/v4/top/anime?page=" + page + "&limit=20&filter=bypopularity";
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 if (response.getBody() == null) continue;
                 List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get("data");
@@ -214,20 +243,25 @@ public class ExternalContentIndexerService {
                         String titulo = (String) anime.getOrDefault("title", "Sin título");
                         String tituloEn = (String) anime.getOrDefault("title_english", "");
                         String synopsis = (String) anime.getOrDefault("synopsis", "");
-                        Object rating = anime.getOrDefault("score", 0);
+                        Object score = anime.getOrDefault("score", 0);
+                        Object miembros = anime.getOrDefault("members", 0);
                         Object año = anime.getOrDefault("year", "");
                         List<Map<String, Object>> genresList = (List<Map<String, Object>>) anime.getOrDefault("genres", List.of());
-                        String generos = genresList.stream().map(g -> (String) g.getOrDefault("name", "")).filter(s -> !s.isEmpty()).reduce((a, b) -> a + ", " + b).orElse("");
+                        String generos = genresList.stream()
+                                .map(g -> (String) g.getOrDefault("name", ""))
+                                .filter(s -> !s.isEmpty())
+                                .reduce((a, b) -> a + ", " + b).orElse("");
                         String contenido = """
                                 Nombre: %s
                                 Nombre en inglés: %s
                                 Tipo: Anime
                                 Descripción: %s
                                 Rating: %s
+                                Miembros MAL: %s
                                 Año: %s
                                 Géneros: %s
                                 Fuente: JIKAN
-                                """.formatted(titulo, tituloEn, synopsis, rating, año, generos);
+                                """.formatted(titulo, tituloEn, synopsis, score, miembros, año, generos);
                         guardarEmbeddingExterno(titulo, contenido, "JIKAN");
                         contador++;
                         Thread.sleep(400);
@@ -243,13 +277,15 @@ public class ExternalContentIndexerService {
         return contador;
     }
 
+    // ─── OPENLIBRARY — temas populares + sagas famosas ─────────────────────────
     @SuppressWarnings("unchecked")
     public int indexarLibrosOpenLibrary() {
         int contador = 0;
+        // Temas generales
         String[] temas = {"fantasy", "science_fiction", "romance", "thriller", "horror", "adventure", "mystery"};
         try {
             for (String tema : temas) {
-                String url = "https://openlibrary.org/subjects/" + tema + ".json?limit=20";
+                String url = "https://openlibrary.org/subjects/" + tema + ".json?limit=20&sort=edition_count";
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
                 if (response.getBody() == null) continue;
                 List<Map<String, Object>> works = (List<Map<String, Object>>) response.getBody().get("works");
@@ -261,8 +297,7 @@ public class ExternalContentIndexerService {
                         String autores = authorsList.stream()
                                 .map(a -> (String) a.getOrDefault("name", ""))
                                 .filter(s -> !s.isEmpty())
-                                .reduce((a, b) -> a + ", " + b)
-                                .orElse("");
+                                .reduce((a, b) -> a + ", " + b).orElse("");
                         Object año = book.getOrDefault("first_publish_year", "");
                         String contenido = """
                                 Nombre: %s
@@ -283,14 +318,26 @@ public class ExternalContentIndexerService {
         } catch (Exception e) {
             log.error("Error al indexar libros OpenLibrary: {}", e.getMessage());
         }
+
+        // Sagas y autores famosos específicos
+        String[] queries = {
+            "harry potter", "naruto", "one piece", "lord of the rings",
+            "game of thrones", "the witcher", "dune", "attack on titan",
+            "dragon ball", "death note", "fullmetal alchemist", "evangelion"
+        };
+        for (String query : queries) {
+            contador += indexarLibrosBusqueda(query);
+            try { Thread.sleep(500); } catch (Exception ignored) {}
+        }
+
         return contador;
     }
-    
+
     @SuppressWarnings("unchecked")
     public int indexarLibrosBusqueda(String query) {
         int contador = 0;
         try {
-            String url = "https://openlibrary.org/search.json?q=" + query.replace(" ", "+") + "&limit=20";
+            String url = "https://openlibrary.org/search.json?q=" + query.replace(" ", "+") + "&limit=20&sort=editions";
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
             if (response.getBody() == null) return 0;
             List<Map<String, Object>> docs = (List<Map<String, Object>>) response.getBody().get("docs");
