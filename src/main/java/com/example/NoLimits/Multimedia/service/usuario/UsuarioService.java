@@ -1,5 +1,6 @@
 package com.example.NoLimits.Multimedia.service.usuario;
 
+import com.example.NoLimits.Multimedia.config.AdminInitializer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,9 @@ import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.FavoritoRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO;
+import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 
+import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.transaction.Transactional;
@@ -51,6 +54,8 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class UsuarioService {
+
+    private final  AdminInitializer adminInitializer;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -73,6 +78,13 @@ public class UsuarioService {
     @Autowired
     private FavoritoRepository favoritoRepository;
 
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+   UsuarioService(AdminInitializer adminInitializer) {
+    this.adminInitializer = adminInitializer;
+   }
     /* ================= CRUD BÁSICO ================= */
 
     // Obtener todos los usuarios
@@ -84,6 +96,11 @@ public class UsuarioService {
             respuesta.add(toResponseDTO(u));
         }
         return respuesta;
+    }
+
+    //contar usuarios prueba
+    public long countUsuarios() {
+        return usuarioRepository.count();
     }
 
     // Obtener un usuario por ID (404 si no existe)
@@ -408,6 +425,15 @@ public class UsuarioService {
             u.setTelefono(d.getTelefono());
         }
 
+        // Foto perfil
+        if (d.getFotoPerfil() != null &&
+            !d.getFotoPerfil().trim().isEmpty()) {
+
+            u.setFotoPerfil(
+                 d.getFotoPerfil().trim()
+            );
+        }
+            
         // Password
         if (d.getPassword() != null && !d.getPassword().isEmpty()) {
             if (d.getPassword().length() < 8 || d.getPassword().length() > 255) {
@@ -597,6 +623,7 @@ public class UsuarioService {
 
         dto.setCorreo(u.getCorreo());
         dto.setTelefono(u.getTelefono());
+        dto.setFotoPerfil(u.getFotoPerfil());
 
         if (u.getRol() != null) {
             dto.setRolId(u.getRol().getId());
