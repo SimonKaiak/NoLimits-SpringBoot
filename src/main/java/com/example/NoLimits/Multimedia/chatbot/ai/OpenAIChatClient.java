@@ -32,36 +32,30 @@ public class OpenAIChatClient {
 
     public String askNoLimits(String userMessage) {
 
-        List<String> resultadosBD = productoEmbeddingService.buscarSimilares(userMessage);
+        // Traer más resultados para cubrir sagas y títulos alternativos
+        List<String> resultadosBD = productoEmbeddingService.buscarSimilares(userMessage, 10);
 
         String contextoBD = resultadosBD.isEmpty()
                 ? "SIN_RESULTADOS"
-                : String.join("\n", resultadosBD);
-
-        String[] estilos = {
-                "Hoy usa un estilo energético, pero sin frases en mayúsculas.",
-                "Hoy usa un estilo impaciente cómico, pero sin repetir frases hechas.",
-                "Hoy usa un estilo competitivo y directo, sin usar frases repetitivas.",
-                "Hoy usa un estilo motivador, breve y claro.",
-                "Hoy responde normal, con solo un toque energético al final.",
-                "Hoy usa poca paciencia de forma cómica, pero responde con respeto.",
-                "Hoy responde rápido y con seguridad, pero sin exagerar la personalidad."
-        };
-
-        String estiloDinamico = estilos[(int) (Math.random() * estilos.length)];
+                : String.join("\n---\n", resultadosBD);
 
         String systemPrompt = """
-                Eres el asistente oficial de NoLimits.
-                Responde siempre en español, de forma clara, amable y útil.
-                NoLimits ofrece productos relacionados con: Películas, series, videojuegos, accesorios, música y libros.
-                Usa la información disponible para responder sobre productos.
-                No inventes productos que no estén en la información disponible.
-                Si la información disponible es "SIN_RESULTADOS", indícale al usuario que no encontraste ese título en tu lista pero que puede buscarlo directamente usando el buscador de NoLimits. Luego pregunta si necesita ayuda con algo más.
-                Si encuentras productos similares aunque no sean exactos, menciónalos como sugerencias.
-                Dirígete siempre al usuario de forma formal usando "usted".
-                Estilo dinámico para esta respuesta: %s
+                Eres el asistente oficial de NoLimits, una plataforma de contenido multimedia.
+                NoLimits ofrece información sobre: Películas, Series, Videojuegos, Anime, Música y Libros.
+                Responde SIEMPRE en español, de forma clara, amable y formal usando "usted".
                 No uses Markdown, ni *, **, #, ##. Responde en texto plano.
-                """.formatted(estiloDinamico);
+
+                REGLAS ESTRICTAS:
+                1. Solo habla de títulos que aparezcan en la "Información disponible". No inventes ni agregues títulos externos.
+                2. Si el usuario pregunta por una saga o personaje (ej: "Naruto", "Harry Potter", "Star Wars"), busca TODOS los títulos relacionados en la información disponible y menciónalos todos.
+                3. Si no hay ningún resultado relacionado, dile al usuario que no encontraste ese título en NoLimits y sugiérele usar el buscador de la plataforma.
+                4. Cuando el usuario pregunte DÓNDE VER o DÓNDE CONSEGUIR un título:
+                   - Si la fuente es TMDB o JIKAN o IGDB o RAWG, dile que puede buscarlo en el buscador de NoLimits usando el nombre del título.
+                   - Si conoces la plataforma de streaming del título (Netflix, Crunchyroll, Disney+, etc.) menciónala como sugerencia externa.
+                   - Nunca inventes links ni precios.
+                5. Si el usuario pregunta por un título específico, responde SOLO sobre ese título o saga. No menciones otros títulos no relacionados.
+                6. Sé breve y directo. Máximo 4 líneas por título mencionado.
+                """;
 
         try {
             log.info("Llamando a OpenAI con mensaje: {}", userMessage);
@@ -70,7 +64,7 @@ public class OpenAIChatClient {
                     .model(ChatModel.GPT_4O_MINI)
                     .addSystemMessage(systemPrompt)
                     .addUserMessage("""
-                            Información disponible de NoLimits:
+                            Información disponible en NoLimits:
                             %s
 
                             Pregunta del usuario:
@@ -88,7 +82,7 @@ public class OpenAIChatClient {
 
         } catch (Exception e) {
             log.error("ERROR EN OPENAI: {} - {}", e.getClass().getName(), e.getMessage());
-            return "Error al conectar con el asistente: " + e.getMessage();
+            return "Lo siento, el asistente no está disponible en este momento. Puede usar el buscador de NoLimits directamente.";
         }
     }
 
