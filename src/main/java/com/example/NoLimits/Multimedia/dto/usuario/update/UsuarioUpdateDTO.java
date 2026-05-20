@@ -24,6 +24,9 @@ public class UsuarioUpdateDTO {
     @Schema(description = "Nueva contraseña del usuario (máx. 10 caracteres)", example = "nuevaClave")
     private String password;
 
+    @Schema(description = "URL de la foto de perfil del usuario")
+    private String fotoPerfil;
+
     @Schema(
         description = "ID del rol asignado al usuario",
         example = "2"
