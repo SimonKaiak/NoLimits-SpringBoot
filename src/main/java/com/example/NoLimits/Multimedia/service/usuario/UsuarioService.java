@@ -79,7 +79,6 @@ public class UsuarioService {
     UsuarioService(AdminInitializer adminInitializer) {
         this.adminInitializer = adminInitializer;
     }
-    
     /* ================= CRUD BÁSICO ================= */
 
     // Obtener todos los usuarios
