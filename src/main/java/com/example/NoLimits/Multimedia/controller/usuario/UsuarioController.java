@@ -475,17 +475,5 @@ public class UsuarioController {
             "Cuenta eliminada correctamente"
         );
     }
-    //Prueba para produccion, Borrar una veza hacha la prueba
-    @GetMapping("/debug-count")
-    public Long debugCount() {
-        return usuarioService.findAll().stream().count();
-    }
-    //temporal 
-    @GetMapping("/debug-db")
-    @SecurityRequirement(name = "bearerAuth")
-    public String debugDb() {
-        return System.getenv("SPRING_DATASOURCE_URL");
-    }
-
-
+    
 }
