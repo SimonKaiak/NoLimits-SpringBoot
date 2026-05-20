@@ -70,6 +70,8 @@ public class UsuarioModel {
     @NotNull(message = "El usuario requiere de un teléfono.")
     @Schema(description = "Número de teléfono del usuario", example = "987654321")
     private Long telefono;
+
+    @Column(name = "foto_perfil")
     private String fotoPerfil;
 
     /**
