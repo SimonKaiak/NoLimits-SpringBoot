@@ -5,12 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-    name = "reviews",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"usuario_id", "obra_id"})
-    }
-)
+@Table(name = "reviews")
 public class Review {
 
     @Id
@@ -34,6 +29,30 @@ public class Review {
 
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_review_id")
+    private Review parentReview;
+
+    @ManyToOne
+    @JoinColumn(name = "root_review_id")
+    private Review rootReview;
+
+    public Review getParentReview() {
+        return parentReview;
+    }
+
+    public void setParentReview(Review parentReview) {
+        this.parentReview = parentReview;
+    }
+
+    public Review getRootReview() {
+        return rootReview;
+    }
+
+    public void setRootReview(Review rootReview) {
+        this.rootReview = rootReview;
+    }
 
     @PrePersist
     public void prePersist() {

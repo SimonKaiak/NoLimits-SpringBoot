@@ -92,4 +92,13 @@ public class ReviewController {
         reviewService.reaccionarReview(reviewId, usuarioId, request);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{usuarioId}/review/{reviewId}")
+    public ResponseEntity<Void> eliminarReviewPorId(
+           @PathVariable Long usuarioId,
+           @PathVariable Long reviewId
+    ) {
+        reviewService.eliminarReviewPorId(usuarioId, reviewId);
+        return ResponseEntity.noContent().build();
+    }
 }
