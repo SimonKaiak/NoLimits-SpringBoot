@@ -5,6 +5,7 @@ import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.embeddings.EmbeddingCreateParams;
 import com.openai.models.embeddings.CreateEmbeddingResponse;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,9 +15,14 @@ public class EmbeddingService {
 
     private OpenAIClient client;
 
+    @Value("${openai.api-key}")
+    private String openAiApiKey;
+
     @PostConstruct
     public void init() {
-        this.client = OpenAIOkHttpClient.fromEnv();
+        this.client = OpenAIOkHttpClient.builder()
+                .apiKey(openAiApiKey)
+                .build();
     }
 
     public List<Float> generarEmbedding(String texto) {
