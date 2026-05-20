@@ -15,6 +15,8 @@ public class ReviewResponseDTO {
     private LocalDateTime fechaActualizacion;
     private Long likes;
     private Long dislikes;
+    private Long parentReviewId;
+    private Long rootReviewId;
 
     public ReviewResponseDTO() {
     }
@@ -30,7 +32,9 @@ public class ReviewResponseDTO {
         LocalDateTime fechaCreacion,
         LocalDateTime fechaActualizacion,
         Long likes,
-        Long dislikes
+        Long dislikes,
+        Long parentReviewId,
+        Long rootReviewId
     ) {
         this.id = id;
         this.usuarioId = usuarioId;
@@ -43,6 +47,8 @@ public class ReviewResponseDTO {
         this.fechaActualizacion = fechaActualizacion;
         this.likes = likes;
         this.dislikes = dislikes;
+        this.parentReviewId = parentReviewId;
+        this.rootReviewId = rootReviewId;
     }
 
     public Long getId() {
@@ -87,5 +93,13 @@ public class ReviewResponseDTO {
 
     public Long getDislikes() {
         return dislikes;
+    }
+
+    public Long getParentReviewId() {
+        return parentReviewId;
+    }
+
+    public Long getRootReviewId() {
+        return rootReviewId;
     }
 }

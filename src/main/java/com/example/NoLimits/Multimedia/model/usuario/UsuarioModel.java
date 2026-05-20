@@ -71,6 +71,9 @@ public class UsuarioModel {
     @Schema(description = "Número de teléfono del usuario", example = "987654321")
     private Long telefono;
 
+    @Column(name = "foto_perfil")
+    private String fotoPerfil;
+
     /**
      * Contraseña del usuario.
      *

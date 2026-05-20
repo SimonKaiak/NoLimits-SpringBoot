@@ -1,5 +1,6 @@
 package com.example.NoLimits.Multimedia.service.usuario;
 
+import com.example.NoLimits.Multimedia.config.AdminInitializer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,20 +21,19 @@ import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
-import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.ComunaModel;
 import com.example.NoLimits.Multimedia.model.ubicacion.DireccionModel;
 import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
-import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
 import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.FavoritoRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
+import com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -52,6 +52,8 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class UsuarioService {
+
+    private final  AdminInitializer adminInitializer;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -74,9 +76,13 @@ public class UsuarioService {
     @Autowired
     private FavoritoRepository favoritoRepository;
 
+
     @Autowired
     private ProductoRepository productoRepository;
 
+   UsuarioService(AdminInitializer adminInitializer) {
+    this.adminInitializer = adminInitialize;
+     
     /* ================= CRUD BÁSICO ================= */
 
     // Obtener todos los usuarios
@@ -88,6 +94,11 @@ public class UsuarioService {
             respuesta.add(toResponseDTO(u));
         }
         return respuesta;
+    }
+
+    //contar usuarios prueba
+    public long countUsuarios() {
+        return usuarioRepository.count();
     }
 
     // Obtener un usuario por ID (404 si no existe)
@@ -412,6 +423,15 @@ public class UsuarioService {
             u.setTelefono(d.getTelefono());
         }
 
+        // Foto perfil
+        if (d.getFotoPerfil() != null &&
+            !d.getFotoPerfil().trim().isEmpty()) {
+
+            u.setFotoPerfil(
+                 d.getFotoPerfil().trim()
+            );
+        }
+            
         // Password
         if (d.getPassword() != null && !d.getPassword().isEmpty()) {
             if (d.getPassword().length() < 8 || d.getPassword().length() > 255) {
@@ -601,6 +621,7 @@ public class UsuarioService {
 
         dto.setCorreo(u.getCorreo());
         dto.setTelefono(u.getTelefono());
+        dto.setFotoPerfil(u.getFotoPerfil());
 
         if (u.getRol() != null) {
             dto.setRolId(u.getRol().getId());
@@ -629,33 +650,141 @@ public class UsuarioService {
         return favoritoRepository.findByUsuario_Id(usuarioId);
     }
 
-    public FavoritoModel agregarFavorito(Long usuarioId, Long productoId) {
+    public FavoritoModel agregarFavorito(Long usuarioId, FavoritoRequestDTO dto) {
         UsuarioModel usuario = getUsuarioOrThrow(usuarioId);
 
-        ProductoModel producto = productoRepository.findById(productoId)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + productoId));
-
-        if (favoritoRepository.existsByUsuario_IdAndProducto_Id(usuarioId, productoId)) {
+        if (dto.getObraId() == null || dto.getObraId().trim().isEmpty()) {
             throw new ResponseStatusException(
-                HttpStatus.CONFLICT, "El producto ya está en favoritos.");
+                HttpStatus.BAD_REQUEST, "El obraId es obligatorio.");
+        }
+
+        if (favoritoRepository.existsByUsuario_IdAndObraId(usuarioId, dto.getObraId())) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT, "La obra ya está en favoritos.");
         }
 
         FavoritoModel favorito = new FavoritoModel();
         favorito.setUsuario(usuario);
-        favorito.setProducto(producto);
+        favorito.setObraId(dto.getObraId());
+        favorito.setTitulo(dto.getTitulo());
+        favorito.setTipo(dto.getTipo());
+        favorito.setPoster(dto.getPoster());
+        favorito.setSource(dto.getSource());
 
         return favoritoRepository.save(favorito);
     }
 
-    public void eliminarFavorito(Long usuarioId, Long productoId) {
+    public void eliminarFavorito(Long usuarioId, String obraId) {
         getUsuarioOrThrow(usuarioId);
 
         FavoritoModel favorito = favoritoRepository
-            .findByUsuario_IdAndProducto_Id(usuarioId, productoId)
+            .findByUsuario_IdAndObraId(usuarioId, obraId)
             .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Favorito no encontrado para ese usuario y producto."));
+                HttpStatus.NOT_FOUND, "Favorito no encontrado para ese usuario y obra."));
 
         favoritoRepository.delete(favorito);
     }
+
+    public void cambiarPassword(
+        String correo,
+        String passwordActual,
+        String nuevaPassword
+    ) {
+
+        UsuarioModel usuario =
+            usuarioRepository
+                    .findByCorreoIgnoreCase(correo)
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Usuario no encontrado"
+                            ));
+
+        if (
+            !passwordEncoder.matches(
+                passwordActual,
+                usuario.getPassword()
+            )
+        ) {
+
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La contraseña actual es incorrecta"
+            );
+        }
+
+        if (
+            nuevaPassword == null ||
+            nuevaPassword.trim().length() < 8
+        ) {
+
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La nueva contraseña debe tener mínimo 8 caracteres"
+            );
+        }
+
+        usuario.setPassword(
+            passwordEncoder.encode(
+                    nuevaPassword.trim()
+            )
+        );
+
+        usuarioRepository.save(usuario);
+    }
+
+    public void eliminarCuenta(String correo) {
+        UsuarioModel usuario = usuarioRepository
+                .findByCorreoIgnoreCase(correo)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Usuario no encontrado"
+                        )
+                );
+        usuarioRepository.delete(usuario);
+    }
+
+    public void cambiarCorreo(
+        String correoActual,
+        String nuevoCorreo,
+        String passwordActual
+    ) {
+        UsuarioModel usuario = usuarioRepository
+            .findByCorreoIgnoreCase(correoActual)
+            .orElseThrow(() ->
+                    new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                    "Usuario no encontrado" 
+                        )
+            );
+        //Validar contraseña actual
+        if (
+            !passwordEncoder.matches(passwordActual, usuario.getPassword())
+
+        )   {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La contraseña actual es incorrecta"
+            );
+        }
+        //Validar correo duplicado
+        if (
+            usuarioRepository.existsByCorreo(
+                nuevoCorreo.trim().toLowerCase()
+            )
+        ) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "El nuevo correo ya está registrado"
+            );
+        }
+        //Actualizar correo
+        usuario.setCorreo(
+            nuevoCorreo.trim().toLowerCase()
+        );
+        usuarioRepository.save(usuario);
+    }
+
+
 }

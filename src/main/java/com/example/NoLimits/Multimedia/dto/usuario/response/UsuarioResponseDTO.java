@@ -25,6 +25,9 @@ public class UsuarioResponseDTO {
     @Schema(description = "Número de teléfono del usuario", example = "987654321")
     private Long telefono;
 
+    @Schema(description = "URL de la foto de perfil")
+    private String fotoPerfil;
+
     @Schema(description = "ID del rol del usuario", example = "1")
     private Long rolId;
 
