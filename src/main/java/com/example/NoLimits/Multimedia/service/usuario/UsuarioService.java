@@ -659,4 +659,107 @@ public class UsuarioService {
 
         favoritoRepository.delete(favorito);
     }
+
+    public void cambiarPassword(
+        String correo,
+        String passwordActual,
+        String nuevaPassword
+    ) {
+
+        UsuarioModel usuario =
+            usuarioRepository
+                    .findByCorreoIgnoreCase(correo)
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Usuario no encontrado"
+                            ));
+
+        if (
+            !passwordEncoder.matches(
+                passwordActual,
+                usuario.getPassword()
+            )
+        ) {
+
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La contraseña actual es incorrecta"
+            );
+        }
+
+        if (
+            nuevaPassword == null ||
+            nuevaPassword.trim().length() < 8
+        ) {
+
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La nueva contraseña debe tener mínimo 8 caracteres"
+            );
+        }
+
+        usuario.setPassword(
+            passwordEncoder.encode(
+                    nuevaPassword.trim()
+            )
+        );
+
+        usuarioRepository.save(usuario);
+    }
+
+    public void eliminarCuenta(String correo) {
+        UsuarioModel usuario = usuarioRepository
+                .findByCorreoIgnoreCase(correo)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Usuario no encontrado"
+                        )
+                );
+        usuarioRepository.delete(usuario);
+    }
+
+    public void cambiarCorreo(
+        String correoActual,
+        String nuevoCorreo,
+        String passwordActual
+    ) {
+        UsuarioModel usuario = usuarioRepository
+            .findByCorreoIgnoreCase(correoActual)
+            .orElseThrow(() ->
+                    new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                    "Usuario no encontrado" 
+                        )
+            );
+        //Validar contraseña actual
+        if (
+            !passwordEncoder.matches(passwordActual, usuario.getPassword())
+
+        )   {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "La contraseña actual es incorrecta"
+            );
+        }
+        //Validar correo duplicado
+        if (
+            usuarioRepository.existsByCorreo(
+                nuevoCorreo.trim().toLowerCase()
+            )
+        ) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "El nuevo correo ya está registrado"
+            );
+        }
+        //Actualizar correo
+        usuario.setCorreo(
+            nuevoCorreo.trim().toLowerCase()
+        );
+        usuarioRepository.save(usuario);
+    }
+
+
 }

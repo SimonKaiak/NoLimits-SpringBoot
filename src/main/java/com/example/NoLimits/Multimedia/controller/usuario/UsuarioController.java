@@ -1,6 +1,7 @@
 // Ruta: backend/src/main/java/com/example/NoLimits/Multimedia/controller/usuario/UsuarioController.java
 package com.example.NoLimits.Multimedia.controller.usuario;
 
+import com.example.NoLimits.Multimedia.config.AdminInitializer;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,8 @@ import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.PasswordUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.update.CambiarCorreoDTO;
 import com.example.NoLimits.Multimedia.model.usuario.FavoritoModel;
 import com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
@@ -52,9 +55,14 @@ import jakarta.validation.Valid;
 @Tag(name = "Usuarios-Controller", description = "Operaciones relacionadas con los usuarios.")
 public class UsuarioController {
 
+    private final AdminInitializer adminInitializer;
     // Servicio donde está la lógica de negocio de los usuarios.
     @Autowired
     private UsuarioService usuarioService;
+
+    UsuarioController(AdminInitializer adminInitializer) {
+        this.adminInitializer = adminInitializer;
+    }
 
     /**
      * Listar todos los usuarios.
@@ -401,4 +409,72 @@ public class UsuarioController {
         UsuarioResponseDTO actualizado = usuarioService.patch(usuario.getId(), cambios);
         return ResponseEntity.ok(actualizado);
     }
+    /**
+     * cambiar contraseña del usuario autenticado.
+     */
+    @PatchMapping("/me/password")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+        summary = "Cambiar mi contraseña",
+        description = "Permite al usuario autenticado cambiar su contraseña actual por una nueva."
+    )
+    public ResponseEntity<?> cambiarPassword(
+            @RequestBody PasswordUpdateDTO dto) {
+        
+        Authentication auth =   SecurityContextHolder.getContext().getAuthentication();
+
+
+        if (
+            auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())
+        ) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String correo = (String) auth.getPrincipal();
+
+        usuarioService.cambiarPassword(correo, dto.getPasswordActual(), dto.getNuevaPassword()
+        );
+
+        return ResponseEntity.ok().build();
+            
+    }
+    /**
+     * Cambiar correo
+     */
+    @PatchMapping("/cambiar-correo")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<?> cambiarCorreo(
+        @RequestBody CambiarCorreoDTO dto,
+        Authentication authentication
+    ) {
+        String correoActual = authentication.getName();
+
+        usuarioService.cambiarCorreo(correoActual, dto.getNuevoCorreo(), dto.getPasswordActual()
+        );
+
+        return ResponseEntity.ok(
+            "Correo actualizado correctamente"
+        );
+    }
+
+    /**
+     * Eliminar cuenta del usuario autenticado.
+     */
+    @DeleteMapping("/eliminar-cuenta")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+        summary = "Eliminar mi cuenta",
+        description = "Elimina la cuenta del usuario autenticado."
+    )
+    public ResponseEntity<?> eliminarCuenta(
+        Authentication authentication
+    ) {
+        String correo = authentication.getName();
+        usuarioService.eliminarCuenta(correo);
+
+        return ResponseEntity.ok(
+            "Cuenta eliminada correctamente"
+        );
+    }
+
+
 }
