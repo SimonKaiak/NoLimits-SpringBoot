@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class OpenAIChatClient {
     private static final Logger log = LoggerFactory.getLogger(OpenAIChatClient.class);
 
     private OpenAIClient client;
+    @Value("${openai.api-key}")
+    private String openAiApiKey;
     private final ProductoEmbeddingService productoEmbeddingService;
 
     public OpenAIChatClient(ProductoEmbeddingService productoEmbeddingService) {
@@ -27,7 +30,9 @@ public class OpenAIChatClient {
 
     @PostConstruct
     public void init() {
-        this.client = OpenAIOkHttpClient.fromEnv();
+        this.client = OpenAIOkHttpClient.builder()
+                .apiKey(openAiApiKey)
+                .build();
     }
 
     public String askNoLimits(String userMessage) {
