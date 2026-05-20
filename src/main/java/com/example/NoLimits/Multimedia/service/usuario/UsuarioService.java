@@ -96,6 +96,11 @@ public class UsuarioService {
         return respuesta;
     }
 
+    //contar usuarios prueba
+    public long countUsuarios() {
+        return usuarioRepository.count();
+    }
+
     // Obtener un usuario por ID (404 si no existe)
     public UsuarioResponseDTO findById(long id) {
         UsuarioModel usuario = getUsuarioOrThrow(id);
