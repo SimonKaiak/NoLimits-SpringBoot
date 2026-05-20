@@ -1,5 +1,6 @@
 package com.example.NoLimits.Multimedia.service.usuario;
 
+import com.example.NoLimits.Multimedia.config.AdminInitializer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,8 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class UsuarioService {
 
+    private final  AdminInitializer adminInitializer;
+
     @Autowired
     private UsuarioRepository usuarioRepository;
 
@@ -73,6 +76,13 @@ public class UsuarioService {
     @Autowired
     private FavoritoRepository favoritoRepository;
 
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+   UsuarioService(AdminInitializer adminInitializer) {
+    this.adminInitializer = adminInitialize;
+     
     /* ================= CRUD BÁSICO ================= */
 
     // Obtener todos los usuarios
@@ -408,6 +418,15 @@ public class UsuarioService {
             u.setTelefono(d.getTelefono());
         }
 
+        // Foto perfil
+        if (d.getFotoPerfil() != null &&
+            !d.getFotoPerfil().trim().isEmpty()) {
+
+            u.setFotoPerfil(
+                 d.getFotoPerfil().trim()
+            );
+        }
+            
         // Password
         if (d.getPassword() != null && !d.getPassword().isEmpty()) {
             if (d.getPassword().length() < 8 || d.getPassword().length() > 255) {
@@ -597,6 +616,7 @@ public class UsuarioService {
 
         dto.setCorreo(u.getCorreo());
         dto.setTelefono(u.getTelefono());
+        dto.setFotoPerfil(u.getFotoPerfil());
 
         if (u.getRol() != null) {
             dto.setRolId(u.getRol().getId());
