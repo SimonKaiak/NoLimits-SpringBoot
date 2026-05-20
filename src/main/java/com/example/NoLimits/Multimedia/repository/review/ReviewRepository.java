@@ -14,10 +14,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             String obraId
     );
 
+    Optional<Review> findByUsuarioAndObraIdAndParentReviewIsNull(
+            UsuarioModel usuario,
+            String obraId
+    );
+
     List<Review> findByObraId(String obraId);
 
     void deleteByUsuarioAndObraId(
             UsuarioModel usuario,
             String obraId
     );
+
+    void deleteByParentReview(Review parentReview);
 }

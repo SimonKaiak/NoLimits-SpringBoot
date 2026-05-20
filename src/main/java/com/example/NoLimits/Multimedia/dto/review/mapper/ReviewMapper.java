@@ -26,7 +26,13 @@ public class ReviewMapper {
                 review.getFechaCreacion(),
                 review.getFechaActualizacion(),
                 likes,
-                dislikes
+                dislikes,
+                review.getParentReview() != null
+                        ? review.getParentReview().getId()
+                        : null,
+                review.getRootReview() != null
+                        ? review.getRootReview().getId()
+                        : null
         );
     }
 }

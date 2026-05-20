@@ -34,9 +34,45 @@ public class ReviewService {
         UsuarioModel usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Review review = reviewRepository
-                .findByUsuarioAndObraId(usuario, request.getObraId())
+        Review review;
+
+        // ── Editar review/respuesta existente ─────────────────
+        if (request.getReviewId() != null) {
+
+        review = reviewRepository.findById(request.getReviewId())
+                .orElseThrow(() -> new RuntimeException("Review no encontrada"));
+
+        if (!review.getUsuario().getId().equals(usuario.getId())) {
+                throw new RuntimeException("No puedes editar esta review");
+        }
+
+        // ── Si es respuesta nueva ─────────────────────────────
+        } else if (request.getParentReviewId() != null) {
+
+        Review parentReview = reviewRepository.findById(request.getParentReviewId())
+                .orElseThrow(() -> new RuntimeException("Comentario padre no encontrado"));
+
+        review = new Review();
+
+        review.setParentReview(parentReview);
+
+        // ── Root review tipo YouTube ─────────────────
+        if (parentReview.getRootReview() != null) {
+        review.setRootReview(parentReview.getRootReview());
+        } else {
+        review.setRootReview(parentReview);
+        }
+
+        // ── Review principal ──────────────────────────────────
+        } else {
+
+        review = reviewRepository
+                .findByUsuarioAndObraIdAndParentReviewIsNull(
+                        usuario,
+                        request.getObraId()
+                )
                 .orElse(new Review());
+        }
 
         review.setUsuario(usuario);
         review.setObraId(request.getObraId());
@@ -80,5 +116,24 @@ public class ReviewService {
         reaction.setTipoReaccion(request.getTipoReaccion());
 
         reviewReactionRepository.save(reaction);
+    }
+
+    @Transactional
+    public void eliminarReviewPorId(Long usuarioId, Long reviewId) {
+        UsuarioModel usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Reseña no encontrada"));
+
+        if (!review.getUsuario().getId().equals(usuario.getId())) {
+            throw new RuntimeException("No puedes eliminar una reseña que no es tuya");
+        }
+
+        reviewRepository.deleteByParentReview(review);
+
+        reviewReactionRepository.deleteByReview(review);
+
+        reviewRepository.delete(review);
     }
 }

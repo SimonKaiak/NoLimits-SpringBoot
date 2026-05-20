@@ -475,6 +475,11 @@ public class UsuarioController {
             "Cuenta eliminada correctamente"
         );
     }
+    //Prueba para produccion, Borrar una veza hacha la prueba
+    @GetMapping("/debug-count")
+    public Long debugCount() {
+        return usuarioService.findAll().stream().count();
+}
 
 
 }

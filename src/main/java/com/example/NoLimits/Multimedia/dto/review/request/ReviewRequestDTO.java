@@ -5,6 +5,8 @@ public class ReviewRequestDTO {
     private String obraId;
     private String contenido;
     private Integer rating;
+    private Long parentReviewId;
+    private Long reviewId;
 
     public ReviewRequestDTO() {
     }
@@ -31,5 +33,21 @@ public class ReviewRequestDTO {
 
     public void setRating(Integer rating) {
         this.rating = rating;
+    }
+
+    public Long getParentReviewId() {
+        return parentReviewId;
+    }
+
+    public void setParentReviewId(Long parentReviewId) {
+        this.parentReviewId = parentReviewId;
+    }
+
+    public Long getReviewId() {
+        return reviewId;
+    }
+
+    public void setReviewId(Long reviewId) {
+        this.reviewId = reviewId;
     }
 }
