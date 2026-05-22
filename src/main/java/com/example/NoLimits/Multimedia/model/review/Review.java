@@ -2,9 +2,10 @@ package com.example.NoLimits.Multimedia.model.review;
 
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reviews")
@@ -32,6 +33,10 @@ public class Review {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
+    // =========================
+    // RELACIONES PADRE / HIJOS
+    // =========================
+
     @ManyToOne
     @JoinColumn(name = "parent_review_id")
     private Review parentReview;
@@ -46,6 +51,28 @@ public class Review {
         orphanRemoval = true
     )
     private List<Review> replies = new ArrayList<>();
+
+    @OneToMany(
+        mappedBy = "rootReview",
+        cascade = CascadeType.REMOVE,
+        orphanRemoval = true
+    )
+    private List<Review> threadReplies = new ArrayList<>();
+
+    // =========================
+    // REACCIONES
+    // =========================
+
+    @OneToMany(
+        mappedBy = "review",
+        cascade = CascadeType.REMOVE,
+        orphanRemoval = true
+    )
+    private List<ReviewReaction> reactions = new ArrayList<>();
+
+    // =========================
+    // GETTERS / SETTERS
+    // =========================
 
     public Review getParentReview() {
         return parentReview;
@@ -71,6 +98,26 @@ public class Review {
         this.replies = replies;
     }
 
+    public List<Review> getThreadReplies() {
+        return threadReplies;
+    }
+
+    public void setThreadReplies(List<Review> threadReplies) {
+        this.threadReplies = threadReplies;
+    }
+
+    public List<ReviewReaction> getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(List<ReviewReaction> reactions) {
+        this.reactions = reactions;
+    }
+
+    // =========================
+    // FECHAS AUTOMÁTICAS
+    // =========================
+
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDateTime.now();
@@ -82,8 +129,16 @@ public class Review {
         this.fechaActualizacion = LocalDateTime.now();
     }
 
+    // =========================
+    // CONSTRUCTOR
+    // =========================
+
     public Review() {
     }
+
+    // =========================
+    // GETTERS / SETTERS BÁSICOS
+    // =========================
 
     public Long getId() {
         return id;
