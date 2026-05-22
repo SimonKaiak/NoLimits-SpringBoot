@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/tmdb/**").permitAll()
                 .requestMatchers("/api/rawg/**").permitAll()
                 .requestMatchers("/api/books/**").permitAll()
+                .requestMatchers("/api/translate/**").permitAll()
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
