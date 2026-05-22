@@ -3,6 +3,8 @@ package com.example.NoLimits.Multimedia.model.review;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "reviews")
@@ -38,6 +40,13 @@ public class Review {
     @JoinColumn(name = "root_review_id")
     private Review rootReview;
 
+    @OneToMany(
+        mappedBy = "parentReview",
+        cascade = CascadeType.REMOVE,
+        orphanRemoval = true
+    )
+    private List<Review> replies = new ArrayList<>();
+
     public Review getParentReview() {
         return parentReview;
     }
@@ -52,6 +61,14 @@ public class Review {
 
     public void setRootReview(Review rootReview) {
         this.rootReview = rootReview;
+    }
+
+    public List<Review> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<Review> replies) {
+        this.replies = replies;
     }
 
     @PrePersist
