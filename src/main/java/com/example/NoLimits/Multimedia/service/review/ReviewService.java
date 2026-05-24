@@ -65,13 +65,7 @@ public class ReviewService {
 
         // ── Review principal ──────────────────────────────────
         } else {
-
-        review = reviewRepository
-                .findByUsuarioAndObraIdAndParentReviewIsNull(
-                        usuario,
-                        request.getObraId()
-                )
-                .orElse(new Review());
+            review = new Review();
         }
 
         review.setUsuario(usuario);
