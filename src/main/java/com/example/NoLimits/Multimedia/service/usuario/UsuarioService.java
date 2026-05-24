@@ -34,6 +34,9 @@ import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.FavoritoRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO;
+import com.example.NoLimits.Multimedia.repository.review.ReviewRepository;
+import com.example.NoLimits.Multimedia.repository.review.ReviewReactionRepository;
+import com.example.NoLimits.Multimedia.model.review.Review;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -75,6 +78,12 @@ public class UsuarioService {
 
     @Autowired
     private FavoritoRepository favoritoRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private ReviewReactionRepository reviewReactionRepository;
 
     UsuarioService(AdminInitializer adminInitializer) {
         this.adminInitializer = adminInitializer;
@@ -733,6 +742,20 @@ public class UsuarioService {
                                 "Usuario no encontrado"
                         )
                 );
+
+        Long usuarioId = usuario.getId();
+
+        // 1. Borrar reacciones hechas por el usuario
+        reviewReactionRepository.deleteByUsuario_Id(usuarioId);
+
+        // 2. Borrar favoritos del usuario
+        favoritoRepository.deleteByUsuario_Id(usuarioId);
+
+        // 3. Borrar reviews/comentarios del usuario
+        List<Review> reviewsUsuario = reviewRepository.findByUsuario_Id(usuarioId);
+        reviewRepository.deleteAll(reviewsUsuario);
+
+        // 4. Borrar usuario
         usuarioRepository.delete(usuario);
     }
 
