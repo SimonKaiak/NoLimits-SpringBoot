@@ -4,6 +4,7 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.GeneroRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.GeneroResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.GeneroUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.GeneroRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.GeneroService;
@@ -14,7 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -237,5 +245,58 @@ public class GeneroServiceTest extends AbstractContainerBaseTest{
         assertEquals(10L, resumen.get(0)[0]);
         assertEquals("Acción", resumen.get(0)[1]);
         assertEquals(5L, resumen.get(0)[2]);
+    }
+
+    @Test
+    public void testListarPaginado_SinBusqueda() {
+
+        GeneroModel genero = createGenero();
+
+        Page<GeneroModel> pageResult =
+                new PageImpl<>(List.of(genero), PageRequest.of(0, 10), 1);
+
+        when(generoRepository.findAll(any(Pageable.class)))
+                .thenReturn(pageResult);
+
+        PagedResponse<GeneroResponseDTO> resultado =
+                generoService.listarPaginado(1, 10, null);
+
+        assertNotNull(resultado);
+
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals(1, resultado.getPagina());
+        assertEquals(1, resultado.getTotalPaginas());
+        assertEquals(1, resultado.getTotalElementos());
+
+        assertEquals(
+                "Acción",
+                resultado.getContenido().get(0).getNombre()
+        );
+    }
+
+    @Test
+    public void testListarPaginado_ConBusqueda() {
+
+        GeneroModel genero = createGenero();
+
+        when(generoRepository.findByNombreContainingIgnoreCase(
+                any(String.class),
+                any(Pageable.class)
+        )).thenReturn(List.of(genero));
+
+        PagedResponse<GeneroResponseDTO> resultado =
+                generoService.listarPaginado(1, 10, " acción ");
+
+        assertNotNull(resultado);
+
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals(1, resultado.getPagina());
+        assertEquals(1, resultado.getTotalPaginas());
+        assertEquals(1, resultado.getTotalElementos());
+
+        assertEquals(
+                "Acción",
+                resultado.getContenido().get(0).getNombre()
+        );
     }
 }

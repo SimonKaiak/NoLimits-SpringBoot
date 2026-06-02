@@ -8,6 +8,7 @@ import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformaService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -210,5 +215,51 @@ public class PlataformaServiceTest extends AbstractContainerBaseTest{
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> plataformaService.deleteById(1L));
+    }
+
+    // ================== TESTS PAGINACIÓN ==================
+
+    @Test
+    void testListarPaginado_SinBusqueda() {
+        PlataformaModel plataforma = createPlataforma();
+
+        Page<PlataformaModel> pageResult =
+                new PageImpl<>(List.of(plataforma), PageRequest.of(0, 10), 1);
+
+        when(plataformaRepository.findAll(any(Pageable.class)))
+                .thenReturn(pageResult);
+
+        PagedResponse<PlataformaResponseDTO> resultado =
+                plataformaService.listarPaginado(1, 10, null);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals(1, resultado.getPagina());
+        assertEquals(1, resultado.getTotalPaginas());
+        assertEquals(1, resultado.getTotalElementos());
+        assertEquals("PlayStation", resultado.getContenido().get(0).getNombre());
+    }
+
+    @Test
+    void testListarPaginado_ConBusqueda() {
+        PlataformaModel plataforma = createPlataforma();
+
+        Page<PlataformaModel> pageResult =
+                new PageImpl<>(List.of(plataforma), PageRequest.of(0, 10), 1);
+
+        when(plataformaRepository.findByNombreContainingIgnoreCase(
+                any(String.class),
+                any(Pageable.class)
+        )).thenReturn(pageResult);
+
+        PagedResponse<PlataformaResponseDTO> resultado =
+                plataformaService.listarPaginado(1, 10, " play ");
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals(1, resultado.getPagina());
+        assertEquals(1, resultado.getTotalPaginas());
+        assertEquals(1, resultado.getTotalElementos());
+        assertEquals("PlayStation", resultado.getContenido().get(0).getNombre());
     }
 }

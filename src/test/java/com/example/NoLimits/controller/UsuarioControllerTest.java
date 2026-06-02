@@ -53,17 +53,17 @@ class UsuarioControllerTest {
     void debeListarUsuariosCorrectamente() throws Exception {
         UsuarioResponseDTO usuario = new UsuarioResponseDTO();
         usuario.setId(1L);
-        usuario.setNombre("James");
-        usuario.setApellidos("Videla");
-        usuario.setCorreo("james@test.com");
+        usuario.setNombre("Eduardo");
+        usuario.setApellidos("Hernandez");
+        usuario.setCorreo("eduardo@test.com");
 
         when(usuarioService.findAll())
                 .thenReturn(List.of(usuario));
 
         mockMvc.perform(get("/api/v1/usuarios"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombre").value("James"))
-                .andExpect(jsonPath("$[0].correo").value("james@test.com"));
+                .andExpect(jsonPath("$[0].nombre").value("Eduardo"))
+                .andExpect(jsonPath("$[0].correo").value("eduardo@test.com"));
     }
 
     @Test
@@ -81,8 +81,8 @@ class UsuarioControllerTest {
     void debeBuscarUsuarioPorId() throws Exception {
         UsuarioResponseDTO usuario = new UsuarioResponseDTO();
         usuario.setId(1L);
-        usuario.setNombre("James");
-        usuario.setCorreo("james@test.com");
+        usuario.setNombre("Eduardo");
+        usuario.setCorreo("eduardo@test.com");
 
         when(usuarioService.findById(1L))
                 .thenReturn(usuario);
@@ -90,7 +90,7 @@ class UsuarioControllerTest {
         mockMvc.perform(get("/api/v1/usuarios/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.nombre").value("James"));
+                .andExpect(jsonPath("$.nombre").value("Eduardo"));
     }
 
     @Test
@@ -129,8 +129,8 @@ class UsuarioControllerTest {
     void debeRegistrarUsuarioPublico() throws Exception {
         UsuarioResponseDTO creado = new UsuarioResponseDTO();
         creado.setId(10L);
-        creado.setNombre("James");
-        creado.setCorreo("james@test.com");
+        creado.setNombre("Eduardo");
+        creado.setCorreo("eduardo@test.com");
 
         when(usuarioService.save(any()))
                 .thenReturn(creado);
@@ -139,15 +139,15 @@ class UsuarioControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "nombre": "James",
-                          "apellidos": "Videla",
-                          "correo": "james@test.com",
+                          "nombre": "Eduardo",
+                          "apellidos": "Hernandez",
+                          "correo": "eduardo@test.com",
                           "telefono": 912345678,
                           "password": "clave123"
                         }
                         """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.nombre").value("James"));
+                .andExpect(jsonPath("$.nombre").value("Eduardo"));
     }
 
     @Test
@@ -165,14 +165,14 @@ class UsuarioControllerTest {
     void debeBuscarUsuariosPorNombre() throws Exception {
         UsuarioResponseDTO usuario = new UsuarioResponseDTO();
         usuario.setId(1L);
-        usuario.setNombre("James");
+        usuario.setNombre("Eduardo");
 
-        when(usuarioService.findByNombre("James"))
+        when(usuarioService.findByNombre("Eduardo"))
                 .thenReturn(List.of(usuario));
 
-        mockMvc.perform(get("/api/v1/usuarios/nombre/James"))
+        mockMvc.perform(get("/api/v1/usuarios/nombre/Eduardo"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombre").value("James"));
+                .andExpect(jsonPath("$[0].nombre").value("Eduardo"));
     }
 
     @Test
@@ -180,14 +180,14 @@ class UsuarioControllerTest {
     void debeBuscarUsuarioPorCorreo() throws Exception {
         UsuarioResponseDTO usuario = new UsuarioResponseDTO();
         usuario.setId(1L);
-        usuario.setCorreo("james@test.com");
+        usuario.setCorreo("eduardo@test.com");
 
-        when(usuarioService.findByCorreo("james@test.com"))
+        when(usuarioService.findByCorreo("eduardo@test.com"))
                 .thenReturn(usuario);
 
-        mockMvc.perform(get("/api/v1/usuarios/correo/james@test.com"))
+        mockMvc.perform(get("/api/v1/usuarios/correo/eduardo@test.com"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.correo").value("james@test.com"));
+                .andExpect(jsonPath("$.correo").value("eduardo@test.com"));
     }
 
     @Test
@@ -195,18 +195,18 @@ class UsuarioControllerTest {
     void debeObtenerMiPerfilAutenticado() throws Exception {
         UsuarioResponseDTO usuario = new UsuarioResponseDTO();
         usuario.setId(1L);
-        usuario.setCorreo("james@test.com");
+        usuario.setCorreo("eduardo@test.com");
 
         SecurityContextHolder.getContext().setAuthentication(
-                new TestingAuthenticationToken("james@test.com", null, "ROLE_USER")
+                new TestingAuthenticationToken("eduardo@test.com", null, "ROLE_USER")
         );
 
-        when(usuarioService.findByCorreo("james@test.com"))
+        when(usuarioService.findByCorreo("eduardo@test.com"))
                 .thenReturn(usuario);
 
         mockMvc.perform(get("/api/v1/usuarios/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.correo").value("james@test.com"));
+                .andExpect(jsonPath("$.correo").value("eduardo@test.com"));
     }
 
     @Test
@@ -217,4 +217,144 @@ class UsuarioControllerTest {
         mockMvc.perform(get("/api/v1/usuarios/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+    // ================== PAGINADO ==================
+
+    @Test
+    @DisplayName("Debe listar usuarios paginados")
+    void debeListarUsuariosPaginados() throws Exception {
+        UsuarioResponseDTO usuario = new UsuarioResponseDTO();
+        usuario.setId(1L);
+        usuario.setNombre("Eduardo");
+        usuario.setCorreo("eduardo@test.com");
+
+        var respuesta = new com.example.NoLimits.Multimedia.dto.pagination.PagedResponse<>(
+                List.of(usuario),
+                1,
+                1,
+                1
+        );
+
+        when(usuarioService.findAllPaged(1, 4)).thenReturn(respuesta);
+
+        mockMvc.perform(get("/api/v1/usuarios/paginado"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido[0].nombre").value("Eduardo"))
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.totalPaginas").value(1))
+                .andExpect(jsonPath("$.totalElementos").value(1));
+    } 
+
+    // ================== CREATE ==================
+
+    @Test
+    @DisplayName("Debe crear usuario desde admin")
+    void debeCrearUsuarioDesdeAdmin() throws Exception {
+        UsuarioResponseDTO creado = new UsuarioResponseDTO();
+        creado.setId(20L);
+        creado.setNombre("Lucas");
+        creado.setCorreo("lucas@example.com");
+
+        when(usuarioService.saveDesdeAdmin(any())).thenReturn(creado);
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                        "nombre": "Lucas",
+                        "apellidos": "Fernández",
+                        "correo": "lucas@example.com",
+                        "telefono": 912345678,
+                        "password": "clave12345",
+                        "rolId": 1
+                        }
+                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(20))
+                .andExpect(jsonPath("$.nombre").value("Lucas"))
+                .andExpect(jsonPath("$.correo").value("lucas@example.com"));
+    }
+
+    // ================== PUT ==================
+
+    @Test
+    @DisplayName("Debe actualizar usuario con PUT")
+    void debeActualizarUsuarioConPut() throws Exception {
+        UsuarioResponseDTO actualizado = new UsuarioResponseDTO();
+        actualizado.setId(1L);
+        actualizado.setNombre("Franco");
+        actualizado.setCorreo("franco@example.com");
+
+        when(usuarioService.update(eq(1L), any())).thenReturn(actualizado);
+
+        mockMvc.perform(put("/api/v1/usuarios/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                        "nombre": "Franco",
+                        "apellidos": "Medhurst",
+                        "correo": "franco@example.com",
+                        "telefono": 912345678,
+                        "password": "clave123",
+                        "rolId": 1
+                        }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Franco"))
+                .andExpect(jsonPath("$.correo").value("franco@example.com"));
+    }
+
+    // ================== PATCH ==================
+
+    @Test
+    @DisplayName("Debe editar usuario parcialmente con PATCH")
+    void debeEditarUsuarioParcialmente() throws Exception {
+        UsuarioResponseDTO actualizado = new UsuarioResponseDTO();
+        actualizado.setId(1L);
+        actualizado.setNombre("Eduardo");
+        actualizado.setCorreo("nuevo@test.com");
+
+        when(usuarioService.patch(eq(1L), any())).thenReturn(actualizado);
+
+        mockMvc.perform(patch("/api/v1/usuarios/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                        "correo": "nuevo@test.com"
+                        }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.correo").value("nuevo@test.com"));
+    }
+
+    @Test
+    @DisplayName("Debe actualizar mi perfil si está autenticado")
+    void debeActualizarMiPerfilAutenticado() throws Exception {
+        UsuarioResponseDTO usuario = new UsuarioResponseDTO();
+        usuario.setId(1L);
+        usuario.setCorreo("eduardo@test.com");
+
+        UsuarioResponseDTO actualizado = new UsuarioResponseDTO();
+        actualizado.setId(1L);
+        actualizado.setNombre("Eduardo Actualizado");
+        actualizado.setCorreo("eduardo@test.com");
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken("eduardo@test.com", null, "ROLE_USER")
+        );
+
+        when(usuarioService.findByCorreo("eduardo@test.com")).thenReturn(usuario);
+        when(usuarioService.patch(eq(1L), any())).thenReturn(actualizado);
+
+        mockMvc.perform(patch("/api/v1/usuarios/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                        "nombre": "Eduardo Actualizado"
+                        }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Eduardo Actualizado"));
+    }
+
 }
