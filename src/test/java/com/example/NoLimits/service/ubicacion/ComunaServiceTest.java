@@ -21,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -100,6 +101,24 @@ public class ComunaServiceTest extends AbstractContainerBaseTest {
         assertEquals(10L, result.getId());
         assertEquals("Santiago", result.getNombre());
         assertEquals(1L, result.getRegionId());
+    }
+
+    @Test
+    public void testFindById_ComunaSinRegion_RetornaRegionNull() {
+        ComunaModel comuna = new ComunaModel();
+        comuna.setId(20L);
+        comuna.setNombre("Comuna sin región");
+        comuna.setRegion(null);
+
+        when(comunaRepository.findById(20L)).thenReturn(Optional.of(comuna));
+
+        ComunaResponseDTO result = comunaService.findById(20L);
+
+        assertNotNull(result);
+        assertEquals(20L, result.getId());
+        assertEquals("Comuna sin región", result.getNombre());
+        assertNull(result.getRegionId());
+        assertNull(result.getRegionNombre());
     }
 
     @Test

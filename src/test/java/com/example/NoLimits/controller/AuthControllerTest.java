@@ -56,34 +56,34 @@ class AuthControllerTest {
 
         UsuarioModel usuario = new UsuarioModel();
         usuario.setId(10L);
-        usuario.setNombre("James");
-        usuario.setApellidos("Videla");
-        usuario.setCorreo("james@test.com");
+        usuario.setNombre("Eduardo");
+        usuario.setApellidos("Hernandez");
+        usuario.setCorreo("eduardo@test.com");
         usuario.setPassword("password-encriptada");
         usuario.setRol(rol);
 
-        when(usuarioRepository.findByCorreoIgnoreCase("james@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("eduardo@test.com"))
                 .thenReturn(Optional.of(usuario));
 
         when(passwordEncoder.matches("123456", "password-encriptada"))
                 .thenReturn(true);
 
-        when(jwtUtil.generateToken("james@test.com", "ROLE_USER"))
+        when(jwtUtil.generateToken("eduardo@test.com", "ROLE_USER"))
                 .thenReturn("jwt-token-test");
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "correo": "james@test.com",
+                          "correo": "eduardo@test.com",
                           "password": "123456"
                         }
                         """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("jwt-token-test"))
                 .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.nombre").value("James"))
-                .andExpect(jsonPath("$.correo").value("james@test.com"))
+                .andExpect(jsonPath("$.nombre").value("Eduardo"))
+                .andExpect(jsonPath("$.correo").value("eduardo@test.com"))
                 .andExpect(jsonPath("$.rolNombre").value("ROLE_USER"));
     }
 
@@ -94,7 +94,7 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "correo": "james@test.com"
+                          "correo": "eduardo@test.com"
                         }
                         """))
                 .andExpect(status().isBadRequest())
@@ -104,14 +104,14 @@ class AuthControllerTest {
     @Test
     @DisplayName("Debe retornar 401 si las credenciales son incorrectas")
     void debeRetornarUnauthorizedSiCredencialesSonIncorrectas() throws Exception {
-        when(usuarioRepository.findByCorreoIgnoreCase("james@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("eduardo@test.com"))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "correo": "james@test.com",
+                          "correo": "eduardo@test.com",
                           "password": "incorrecta"
                         }
                         """))
@@ -124,10 +124,10 @@ class AuthControllerTest {
     void debeActualizarPasswordCorrectamente() throws Exception {
         UsuarioModel usuario = new UsuarioModel();
         usuario.setId(10L);
-        usuario.setCorreo("james@test.com");
+        usuario.setCorreo("eduardo@test.com");
         usuario.setPassword("old-password");
 
-        when(usuarioRepository.findByCorreoIgnoreCase("james@test.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("eduardo@test.com"))
                 .thenReturn(Optional.of(usuario));
 
         when(passwordEncoder.encode("nueva123"))
@@ -140,7 +140,7 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "correo": "james@test.com",
+                          "correo": "eduardo@test.com",
                           "password": "nueva123"
                         }
                         """))
@@ -157,28 +157,28 @@ class AuthControllerTest {
 
         UsuarioModel usuario = new UsuarioModel();
         usuario.setId(20L);
-        usuario.setNombre("James");
+        usuario.setNombre("Eduardo");
         usuario.setApellidos("Google");
-        usuario.setCorreo("james@gmail.com");
+        usuario.setCorreo("eduardo@gmail.com");
         usuario.setRol(rol);
 
-        when(usuarioRepository.findByCorreoIgnoreCase("james@gmail.com"))
+        when(usuarioRepository.findByCorreoIgnoreCase("eduardo@gmail.com"))
                 .thenReturn(Optional.of(usuario));
 
-        when(jwtUtil.generateToken("james@gmail.com", "ROLE_USER"))
+        when(jwtUtil.generateToken("eduardo@gmail.com", "ROLE_USER"))
                 .thenReturn("google-jwt-token");
 
         mockMvc.perform(post("/api/v1/auth/google/sync")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "correo": "james@gmail.com",
-                          "nombre": "James"
+                          "correo": "eduardo@gmail.com",
+                          "nombre": "Eduardo"
                         }
                         """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("google-jwt-token"))
-                .andExpect(jsonPath("$.correo").value("james@gmail.com"))
+                .andExpect(jsonPath("$.correo").value("eduardo@gmail.com"))
                 .andExpect(jsonPath("$.rolNombre").value("ROLE_USER"));
     }
 
