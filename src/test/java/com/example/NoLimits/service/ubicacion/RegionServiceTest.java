@@ -24,9 +24,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
+/**
+ * RegionServiceTest — Pruebas unitarias del servicio de regiones.
+ *
+ * Cubre: findAll, findById, save, update, patch, deleteById.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
-public class RegionServiceTest extends AbstractContainerBaseTest{
+public class RegionServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private RegionService regionService;
@@ -37,7 +42,7 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
     @MockBean
     private ComunaRepository comunaRepository;
 
-    // ============ HELPER ============
+    // ===================== HELPERS =====================
 
     private RegionModel crearRegion() {
         RegionModel r = new RegionModel();
@@ -46,10 +51,10 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
         return r;
     }
 
-    // ============ FIND ============
+    // ===================== FIND ALL =====================
 
     @Test
-    public void testFindAll() {
+    public void testFindAll_DevuelveLista() {
         when(regionRepository.findAll()).thenReturn(List.of(crearRegion()));
 
         List<RegionResponseDTO> result = regionService.findAll();
@@ -65,7 +70,34 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
-    public void testFindById_Existe() {
+    public void testFindAll_ListaVacia_DevuelveVacio() {
+        when(regionRepository.findAll()).thenReturn(List.of());
+
+        List<RegionResponseDTO> result = regionService.findAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testFindAll_MultipleRegiones_DevuelveTodas() {
+        RegionModel r2 = new RegionModel();
+        r2.setId(2L);
+        r2.setNombre("Región de Valparaíso");
+
+        when(regionRepository.findAll()).thenReturn(List.of(crearRegion(), r2));
+
+        List<RegionResponseDTO> result = regionService.findAll();
+
+        assertEquals(2, result.size());
+        assertEquals("Región Metropolitana", result.get(0).getNombre());
+        assertEquals("Región de Valparaíso", result.get(1).getNombre());
+    }
+
+    // ===================== FIND BY ID =====================
+
+    @Test
+    public void testFindById_Existe_DevuelveDTO() {
         when(regionRepository.findById(1L)).thenReturn(Optional.of(crearRegion()));
 
         RegionResponseDTO result = regionService.findById(1L);
@@ -76,29 +108,17 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
-    public void testFindById_NoExiste() {
+    public void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
         when(regionRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> regionService.findById(99L));
     }
 
-    // ============ SAVE ============
+    // ===================== SAVE =====================
 
     @Test
-    public void testSave_NombreVacio_LanzaIllegalArgumentException() {
-        RegionRequestDTO dto = new RegionRequestDTO();
-        dto.setNombre("   "); // solo espacios
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> regionService.save(dto));
-
-        assertTrue(ex.getMessage().contains("nombre de la región es obligatorio"));
-        verify(regionRepository, never()).save(any(RegionModel.class));
-    }
-
-    @Test
-    public void testSave_OK() {
+    public void testSave_OK_CreaRegion() {
         RegionRequestDTO dto = new RegionRequestDTO();
         dto.setNombre("  Región X  ");
 
@@ -113,10 +133,51 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
 
         assertNotNull(result);
         assertEquals(5L, result.getId());
-        assertEquals("Región X", result.getNombre());
+        assertEquals("Región X", result.getNombre()); // nombre normalizado sin espacios extra
+        verify(regionRepository, times(1)).save(any(RegionModel.class));
     }
 
-    // ============ UPDATE / PATCH ============
+    @Test
+    public void testSave_NombreVacio_LanzaIllegalArgumentException() {
+        RegionRequestDTO dto = new RegionRequestDTO();
+        dto.setNombre("   "); // solo espacios
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> regionService.save(dto));
+
+        assertTrue(ex.getMessage().contains("nombre de la región es obligatorio"));
+        verify(regionRepository, never()).save(any(RegionModel.class));
+    }
+
+    @Test
+    public void testSave_NombreNull_LanzaIllegalArgumentException() {
+        RegionRequestDTO dto = new RegionRequestDTO();
+        dto.setNombre(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> regionService.save(dto));
+
+        verify(regionRepository, never()).save(any(RegionModel.class));
+    }
+
+    @Test
+    public void testSave_NombreConEspacios_SeNormaliza() {
+        RegionRequestDTO dto = new RegionRequestDTO();
+        dto.setNombre("  Región del Maule  ");
+
+        when(regionRepository.save(any(RegionModel.class)))
+                .thenAnswer(inv -> {
+                    RegionModel r = inv.getArgument(0);
+                    r.setId(7L);
+                    return r;
+                });
+
+        RegionResponseDTO result = regionService.save(dto);
+
+        assertEquals("Región del Maule", result.getNombre());
+    }
+
+    // ===================== UPDATE (PUT) =====================
 
     @Test
     public void testUpdate_CambiaNombre() {
@@ -135,6 +196,53 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
         assertEquals(1L, result.getId());
         assertEquals("Nueva Región", result.getNombre());
     }
+
+    @Test
+    public void testUpdate_NombreVacio_LanzaIllegalArgument() {
+        RegionModel existente = crearRegion();
+
+        RegionUpdateDTO in = new RegionUpdateDTO();
+        in.setNombre("   ");
+
+        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> regionService.update(1L, in));
+
+        verify(regionRepository, never()).save(any(RegionModel.class));
+    }
+
+    @Test
+    public void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
+        RegionUpdateDTO in = new RegionUpdateDTO();
+        in.setNombre("Región Nueva");
+
+        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> regionService.update(99L, in));
+
+        verify(regionRepository, never()).save(any(RegionModel.class));
+    }
+
+    @Test
+    public void testUpdate_SinNombre_MantieneValorActual() {
+        RegionModel existente = crearRegion();
+
+        RegionUpdateDTO in = new RegionUpdateDTO();
+        in.setNombre(null); // no viene nombre en el DTO
+
+        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(regionRepository.save(any(RegionModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        RegionResponseDTO result = regionService.update(1L, in);
+
+        assertNotNull(result);
+        assertEquals("Región Metropolitana", result.getNombre()); // sin cambios
+    }
+
+    // ===================== PATCH =====================
 
     @Test
     public void testPatch_CambiaNombre() {
@@ -168,7 +276,15 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
         verify(regionRepository, never()).save(any(RegionModel.class));
     }
 
-    // ============ DELETE ============
+    @Test
+    public void testPatch_IdNoExiste_LanzaRecursoNoEncontrado() {
+        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> regionService.patch(99L, new RegionUpdateDTO()));
+    }
+
+    // ===================== DELETE =====================
 
     @Test
     public void testDeleteById_ConComunas_LanzaIllegalStateException() {
@@ -190,5 +306,15 @@ public class RegionServiceTest extends AbstractContainerBaseTest{
         regionService.deleteById(1L);
 
         verify(regionRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    public void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
+        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> regionService.deleteById(99L));
+
+        verify(regionRepository, never()).deleteById(anyLong());
     }
 }

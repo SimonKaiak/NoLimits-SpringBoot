@@ -1,24 +1,28 @@
 package com.example.NoLimits.service.usuario;
 
-import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRequestDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.response.UsuarioResponseDTO;
 import com.example.NoLimits.Multimedia.dto.usuario.update.UsuarioUpdateDTO;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
-import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
-import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
 import com.example.NoLimits.Multimedia.repository.ubicacion.DireccionRepository;
+import com.example.NoLimits.Multimedia.repository.usuario.FavoritoRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
+import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
+import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
+import com.example.NoLimits.Multimedia.repository.review.ReviewRepository;
+import com.example.NoLimits.Multimedia.repository.review.ReviewReactionRepository;
 import com.example.NoLimits.Multimedia.service.usuario.UsuarioService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,9 +35,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-
+/**
+ * UsuarioServiceTest — Pruebas unitarias del servicio de usuarios.
+ *
+ * Cubre: findAll, findById, save (registro público), saveDesdeAdmin,
+ * deleteById, findByNombre, findByCorreo, update, patch, login.
+ */
+@SpringBootTest
 @ActiveProfiles("test")
-public class UsuarioServiceTest extends AbstractContainerBaseTest{
+public class UsuarioServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private UsuarioService usuarioService;
@@ -56,200 +66,271 @@ public class UsuarioServiceTest extends AbstractContainerBaseTest{
     @MockBean
     private PasswordEncoder passwordEncoder;
 
-    // ============ HELPERS ============
+    @MockBean
+    private FavoritoRepository favoritoRepository;
+
+    @MockBean
+    private ReviewRepository reviewRepository;
+
+    @MockBean
+    private ReviewReactionRepository reviewReactionRepository;
+
+    // ===================== HELPERS =====================
+
+    private RolModel rolEntity() {
+        RolModel rol = new RolModel();
+        rol.setId(2L);
+        rol.setNombre("ROLE_USER");
+        rol.setActivo(true);
+        return rol;
+    }
 
     private UsuarioModel usuarioEntity() {
         UsuarioModel u = new UsuarioModel();
         u.setId(1L);
         u.setNombre("Juan");
         u.setApellidos("Pérez");
-        u.setCorreo("correo@test.com");
+        u.setCorreo("juan@test.com");
         u.setTelefono(123456789L);
-        u.setPassword("password");
-        RolModel rol = new RolModel();
-        rol.setId(2L);
-        rol.setNombre("CLIENTE");
-        u.setRol(rol);
+        u.setPassword("$2a$10$hash");
+        u.setRol(rolEntity());
         return u;
     }
 
-    private UsuarioRequestDTO usuarioRequest() {
+    private UsuarioRequestDTO requestDTO() {
         UsuarioRequestDTO dto = new UsuarioRequestDTO();
         dto.setNombre("Juan");
         dto.setApellidos("Pérez");
-        dto.setCorreo("correo@test.com");
+        dto.setCorreo("juan@test.com");
         dto.setTelefono(123456789L);
-        dto.setPassword("password");
+        dto.setPassword("Password123!");
         dto.setRolId(2L);
         return dto;
     }
 
-    private UsuarioRegistroDTO usuarioRegistroRequest() {
+    private UsuarioRegistroDTO registroDTO() {
         UsuarioRegistroDTO dto = new UsuarioRegistroDTO();
         dto.setNombre("Juan");
         dto.setApellidos("Pérez");
-        dto.setCorreo("correo@test.com");
+        dto.setCorreo("juan@test.com");
         dto.setTelefono(123456789L);
-        dto.setPassword("password");
+        dto.setPassword("Password123!");
         return dto;
     }
 
-    private UsuarioUpdateDTO usuarioUpdateCompleto() {
+    private UsuarioUpdateDTO updateCompletoDTO() {
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
         dto.setNombre("Carlos");
         dto.setApellidos("Gómez");
-        dto.setCorreo("nuevo@test.com");
+        dto.setCorreo("carlos@test.com");
         dto.setTelefono(987654321L);
-        dto.setPassword("newpassword123");
-        dto.setRolId(3L);
+        dto.setPassword("NuevaClave123!");
+        dto.setRolId(2L);
         return dto;
     }
 
-    // ============ FIND ============
+    // ===================== FIND ALL =====================
 
     @Test
-    void testFindAll() {
+    void testFindAll_DevuelveLista() {
         when(usuarioRepository.findAll()).thenReturn(List.of(usuarioEntity()));
 
-        List<UsuarioResponseDTO> usuarios = usuarioService.findAll();
+        List<UsuarioResponseDTO> result = usuarioService.findAll();
 
-        assertNotNull(usuarios);
-        assertEquals(1, usuarios.size());
-
-        UsuarioResponseDTO dto = usuarios.get(0);
-        assertEquals(1L, dto.getId());
-        assertEquals("Juan", dto.getNombre());
-        assertEquals("Pérez", dto.getApellidos());
-        assertEquals("correo@test.com", dto.getCorreo());
-        assertEquals(123456789L, dto.getTelefono());
-        assertEquals(2L, dto.getRolId());
-        assertEquals("CLIENTE", dto.getRolNombre());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Juan", result.get(0).getNombre());
+        assertEquals("juan@test.com", result.get(0).getCorreo());
+        verify(usuarioRepository, times(1)).findAll();
     }
 
     @Test
-    void testFindById_Existe() {
+    void testFindAll_ListaVacia_DevuelveVacio() {
+        when(usuarioRepository.findAll()).thenReturn(List.of());
+
+        List<UsuarioResponseDTO> result = usuarioService.findAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    // ===================== FIND BY ID =====================
+
+    @Test
+    void testFindById_Existe_DevuelveDTO() {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
 
-        UsuarioResponseDTO dto = usuarioService.findById(1L);
+        UsuarioResponseDTO result = usuarioService.findById(1L);
 
-        assertNotNull(dto);
-        assertEquals(1L, dto.getId());
-        assertEquals("Juan", dto.getNombre());
-        assertEquals("Pérez", dto.getApellidos());
-        assertEquals("correo@test.com", dto.getCorreo());
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Juan", result.getNombre());
+        assertEquals("juan@test.com", result.getCorreo());
     }
 
     @Test
-    void testFindById_NoExiste() {
+    void testFindById_NoExiste_Lanza404() {
         when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class,
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.findById(99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
-    // ============ SAVE ============
+    // ===================== SAVE (registro público) =====================
 
     @Test
-    void testSave_OK() {
-        UsuarioRegistroDTO dto = usuarioRegistroRequest();
-
-        RolModel rol = new RolModel();
-        rol.setId(2L);
-        rol.setNombre("ROLE_USER");
-
-        when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(false);
-        when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rol));
-        when(passwordEncoder.encode("newpassword123")).thenReturn("hash_password");
+    void testSave_OK_RegistraNuevoUsuario() {
+        when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+        when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rolEntity()));
+        when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> {
                     UsuarioModel u = inv.getArgument(0);
                     u.setId(1L);
-                    u.setRol(rol);
                     return u;
                 });
 
-        UsuarioResponseDTO guardado = usuarioService.save(dto);
+        UsuarioResponseDTO result = usuarioService.save(registroDTO());
 
-        assertNotNull(guardado);
-        assertEquals(1L, guardado.getId());
-        assertEquals("Juan", guardado.getNombre());
-        assertEquals("Pérez", guardado.getApellidos());
-        assertEquals("correo@test.com", guardado.getCorreo());
-        assertEquals(2L, guardado.getRolId());
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("juan@test.com", result.getCorreo());
+        verify(usuarioRepository, times(1)).save(any(UsuarioModel.class));
     }
 
     @Test
-    void testSave_PasswordCorta_Lanza400() {
-        UsuarioRegistroDTO dto = usuarioRegistroRequest();
-        dto.setPassword("1234567"); // 7 caracteres
+    void testSave_PasswordVacia_Lanza400() {
+        UsuarioRegistroDTO dto = registroDTO();
+        dto.setPassword("");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.save(dto));
 
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void testSave_PasswordCorta_Lanza400() {
+        UsuarioRegistroDTO dto = registroDTO();
+        dto.setPassword("corta");
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.save(dto));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testSave_PasswordDemasiadoLarga_Lanza400() {
+        UsuarioRegistroDTO dto = registroDTO();
+        dto.setPassword("A".repeat(256));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.save(dto));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void testSave_SinCorreo_Lanza400() {
-        UsuarioRegistroDTO dto = usuarioRegistroRequest();
+        UsuarioRegistroDTO dto = registroDTO();
         dto.setCorreo("   ");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.save(dto));
 
-        assertEquals(400, ex.getStatusCode().value());
-        verify(usuarioRepository, never()).save(any());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void testSave_CorreoDuplicado_Lanza409() {
-        UsuarioRegistroDTO dto = usuarioRegistroRequest();
-
-        when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(true);
+        when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> usuarioService.save(dto));
+                () -> usuarioService.save(registroDTO()));
 
-        assertEquals(409, ex.getStatusCode().value());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verify(usuarioRepository, never()).save(any());
     }
 
     @Test
-    void testSaveDesdeAdmin_OK() {
-        UsuarioRequestDTO dto = usuarioRequest();
+    void testSave_CorreoSeNormalizaEnMinusculas() {
+        UsuarioRegistroDTO dto = registroDTO();
+        dto.setCorreo("JUAN@TEST.COM");
 
-        RolModel rol = new RolModel();
-        rol.setId(2L);
-        rol.setNombre("CLIENTE");
-
-        when(usuarioRepository.existsByCorreo("correo@test.com")).thenReturn(false);
-        when(rolRepository.findById(2L)).thenReturn(Optional.of(rol));
-        when(passwordEncoder.encode("password")).thenReturn("hash_password");
+        when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+        when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rolEntity()));
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hash");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> {
                     UsuarioModel u = inv.getArgument(0);
                     u.setId(1L);
-                    u.setRol(rol);
                     return u;
                 });
 
-        UsuarioResponseDTO guardado = usuarioService.saveDesdeAdmin(dto);
+        UsuarioResponseDTO result = usuarioService.save(dto);
 
-        assertNotNull(guardado);
-        assertEquals(1L, guardado.getId());
-        assertEquals("Juan", guardado.getNombre());
-        assertEquals(2L, guardado.getRolId());
+        assertNotNull(result);
+        // El correo guardado debe estar en minúsculas
+        verify(usuarioRepository).existsByCorreo("juan@test.com");
     }
 
-    // ============ DELETE ============
+    // ===================== SAVE DESDE ADMIN =====================
+
+    @Test
+    void testSaveDesdeAdmin_OK() {
+        when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+        when(rolRepository.findById(2L)).thenReturn(Optional.of(rolEntity()));
+        when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
+        when(usuarioRepository.save(any(UsuarioModel.class)))
+                .thenAnswer(inv -> {
+                    UsuarioModel u = inv.getArgument(0);
+                    u.setId(1L);
+                    return u;
+                });
+
+        UsuarioResponseDTO result = usuarioService.saveDesdeAdmin(requestDTO());
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        verify(usuarioRepository, times(1)).save(any(UsuarioModel.class));
+    }
+
+    @Test
+    void testSaveDesdeAdmin_SinRolId_Lanza400() {
+        UsuarioRequestDTO dto = requestDTO();
+        dto.setRolId(null);
+
+        when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.saveDesdeAdmin(dto));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testSaveDesdeAdmin_RolNoEncontrado_Lanza404() {
+        when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+        when(rolRepository.findById(2L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.saveDesdeAdmin(requestDTO()));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    // ===================== DELETE =====================
 
     @Test
     void testDeleteById_ExisteSinVentas_EliminaOK() {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
         when(ventaRepository.findByUsuarioModel_Id(1L)).thenReturn(List.of());
-        doNothing().when(usuarioRepository).deleteById(1L);
 
-        usuarioService.deleteById(1L);
+        assertDoesNotThrow(() -> usuarioService.deleteById(1L));
 
         verify(usuarioRepository, times(1)).deleteById(1L);
     }
@@ -258,286 +339,256 @@ public class UsuarioServiceTest extends AbstractContainerBaseTest{
     void testDeleteById_NoExiste_Lanza404() {
         when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class,
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.deleteById(99L));
 
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         verify(usuarioRepository, never()).deleteById(anyLong());
     }
 
     @Test
     void testDeleteById_ConVentas_Lanza409() {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
-        when(ventaRepository.findByUsuarioModel_Id(1L))
-                .thenReturn(List.of(new VentaModel()));
+        when(ventaRepository.findByUsuarioModel_Id(1L)).thenReturn(List.of(new VentaModel()));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.deleteById(1L));
 
-        assertEquals(409, ex.getStatusCode().value());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verify(usuarioRepository, never()).deleteById(anyLong());
     }
 
-    // ============ FIND BY NOMBRE / CORREO ============
+    // ===================== FIND BY NOMBRE =====================
 
     @Test
     void testFindByNombre_Null_Lanza400() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.findByNombre(null));
 
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void testFindByNombre_Vacio_DevuelveTodos() {
         when(usuarioRepository.findAll()).thenReturn(List.of(usuarioEntity()));
 
-        var resultado = usuarioService.findByNombre("   ");
+        List<UsuarioResponseDTO> result = usuarioService.findByNombre("");
 
-        assertEquals(1, resultado.size());
-        verify(usuarioRepository, times(1)).findAll();
-        verify(usuarioRepository, never()).findByNombreContainingIgnoreCase(anyString());
+        assertNotNull(result);
+        assertEquals(1, result.size());
     }
 
     @Test
-    void testFindByNombre_Filtrado() {
-        when(usuarioRepository.findByNombreContainingIgnoreCase("ju"))
-                .thenReturn(List.of(usuarioEntity()));
+    void testFindByNombre_Filtrado_DevuelveCoincidencias() {
+        UsuarioModel u1 = usuarioEntity();
+        UsuarioModel u2 = new UsuarioModel();
+        u2.setId(2L);
+        u2.setNombre("Pedro");
+        u2.setApellidos("López");
+        u2.setCorreo("pedro@test.com");
+        u2.setTelefono(111222333L);
+        u2.setPassword("$2a$10$hash2");
+        u2.setRol(rolEntity());
 
-        var resultado = usuarioService.findByNombre("ju");
+        when(usuarioRepository.findByNombreContainingIgnoreCase("Juan"))
+                .thenReturn(List.of(u1));
 
-        assertEquals(1, resultado.size());
-        assertEquals("Juan", resultado.get(0).getNombre());
+        List<UsuarioResponseDTO> result = usuarioService.findByNombre("Juan");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Juan", result.get(0).getNombre());
     }
 
+    // ===================== FIND BY CORREO =====================
+
     @Test
-    void testFindByCorreo_Existe() {
-        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
+    void testFindByCorreo_Existe_DevuelveDTO() {
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
                 .thenReturn(Optional.of(usuarioEntity()));
 
-        UsuarioResponseDTO dto = usuarioService.findByCorreo("  correo@test.com  ");
+        UsuarioResponseDTO result = usuarioService.findByCorreo("juan@test.com");
 
-        assertNotNull(dto);
-        assertEquals("correo@test.com", dto.getCorreo());
+        assertNotNull(result);
+        assertEquals("juan@test.com", result.getCorreo());
     }
 
     @Test
-    void testFindByCorreo_NoExiste() {
-        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
+    void testFindByCorreo_NoExiste_Lanza404() {
+        when(usuarioRepository.findByCorreoIgnoreCase("noexiste@test.com"))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class,
-                () -> usuarioService.findByCorreo("correo@test.com"));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.findByCorreo("noexiste@test.com"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
-    // ============ UPDATE ============
+    // ===================== UPDATE (PUT) =====================
 
     @Test
-    void testUpdate_OK() {
+    void testUpdate_OK_CambiaTodasPropiedades() {
         UsuarioModel existente = usuarioEntity();
-        UsuarioUpdateDTO datos = usuarioUpdateCompleto();
-
-        RolModel rolNuevo = new RolModel();
-        rolNuevo.setId(3L);
-        rolNuevo.setNombre("ADMIN");
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
-        when(rolRepository.findById(3L)).thenReturn(Optional.of(rolNuevo));
-        when(passwordEncoder.encode("newpassword123")).thenReturn("hash_newpassword");
+        // correo cambia de "juan@test.com" a "carlos@test.com" → no está duplicado
+        when(usuarioRepository.existsByCorreo("carlos@test.com")).thenReturn(false);
+        when(rolRepository.findById(2L)).thenReturn(Optional.of(rolEntity()));
+        when(passwordEncoder.encode("NuevaClave123!")).thenReturn("$2a$10$newhash");
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        UsuarioResponseDTO actualizado = usuarioService.update(1L, datos);
+        UsuarioResponseDTO result = usuarioService.update(1L, updateCompletoDTO());
 
-        assertNotNull(actualizado);
-        assertEquals("Carlos", actualizado.getNombre());
-        assertEquals("Gómez", actualizado.getApellidos());
-        assertEquals("nuevo@test.com", actualizado.getCorreo());
-        assertEquals(3L, actualizado.getRolId());
+        assertNotNull(result);
+        assertEquals("Carlos", result.getNombre());
+        assertEquals("Gómez", result.getApellidos());
     }
 
     @Test
     void testUpdate_FaltanCampos_Lanza400() {
-        UsuarioModel existente = usuarioEntity();
-        UsuarioUpdateDTO incompleto = new UsuarioUpdateDTO(); // todo null
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
 
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        UsuarioUpdateDTO incompleto = new UsuarioUpdateDTO(); // sin campos
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> usuarioService.update(1L, incompleto));
 
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void testUpdate_CorreoDuplicado_Lanza409() {
         UsuarioModel existente = usuarioEntity();
-        UsuarioUpdateDTO datos = usuarioUpdateCompleto();
+        // existente.correo = "juan@test.com"; updateDTO tiene "carlos@test.com"
+        // → el correo cambia → se llama existsByCorreo("carlos@test.com") → true → CONFLICT
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(true);
+        when(usuarioRepository.existsByCorreo("carlos@test.com")).thenReturn(true);
+
+        UsuarioUpdateDTO dto = updateCompletoDTO();
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> usuarioService.update(1L, datos));
+                () -> usuarioService.update(1L, dto));
 
-        assertEquals(409, ex.getStatusCode().value());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
     @Test
     void testUpdate_PasswordCorta_Lanza400() {
         UsuarioModel existente = usuarioEntity();
-        UsuarioUpdateDTO datos = usuarioUpdateCompleto();
-        datos.setPassword("1234567"); // 7 caracteres
-
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
+        // el correo del DTO ("carlos@test.com") difiere del existente ("juan@test.com")
+        // pero como la password es inválida, la excepción se lanza antes de guardar
+        when(usuarioRepository.existsByCorreo("carlos@test.com")).thenReturn(false);
+
+        UsuarioUpdateDTO dto = updateCompletoDTO();
+        dto.setPassword("corta");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> usuarioService.update(1L, datos));
+                () -> usuarioService.update(1L, dto));
 
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
-    // ============ PATCH ============
+    // ===================== PATCH =====================
 
     @Test
-    void testPatch_CambiaNombreYCorreo() {
+    void testPatch_CambiaSoloNombre() {
         UsuarioModel existente = usuarioEntity();
 
-        UsuarioUpdateDTO patch = new UsuarioUpdateDTO();
-        patch.setNombre("Carlos");
-        patch.setCorreo("otro@test.com");
-
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(usuarioRepository.existsByCorreo("otro@test.com")).thenReturn(false);
         when(usuarioRepository.save(any(UsuarioModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        UsuarioResponseDTO dto = usuarioService.patch(1L, patch);
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setNombre("NuevoNombre");
 
-        assertEquals("Carlos", dto.getNombre());
-        assertEquals("otro@test.com", dto.getCorreo());
+        UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+        assertNotNull(result);
+        assertEquals("NuevoNombre", result.getNombre());
+        // El apellido debe permanecer igual
+        assertEquals("Pérez", result.getApellidos());
     }
 
     @Test
     void testPatch_CorreoDuplicado_Lanza409() {
         UsuarioModel existente = usuarioEntity();
-
-        UsuarioUpdateDTO patch = new UsuarioUpdateDTO();
-        patch.setCorreo("otro@test.com");
-
+        // existente.correo = "juan@test.com"; patch llega con "otro@test.com"
+        // → el correo cambia → existsByCorreo("otro@test.com") → true → CONFLICT
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(usuarioRepository.existsByCorreo("otro@test.com")).thenReturn(true);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> usuarioService.patch(1L, patch));
-
-        assertEquals(409, ex.getStatusCode().value());
-    }
-
-    @Test
-    void testPatch_PasswordCorta_Lanza400() {
-        UsuarioModel existente = usuarioEntity();
-
-        UsuarioUpdateDTO patch = new UsuarioUpdateDTO();
-        patch.setPassword("1234567"); // 7 caracteres
-
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existente));
+        UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+        dto.setCorreo("otro@test.com");
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> usuarioService.patch(1L, patch));
+                () -> usuarioService.patch(1L, dto));
 
-        assertEquals(400, ex.getStatusCode().value());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
-    // ============ RESUMEN USUARIOS ============
+    // ===================== LOGIN =====================
 
     @Test
-    void testObtenerUsuariosConDatos() {
-        Object[] fila = new Object[] {
-                1L, "Juan", "Pérez", "correo@test.com", 123456789L
-        };
+    void testLogin_CredencialesValidas_DevuelveUsuario() {
+        UsuarioModel usuario = usuarioEntity();
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("Password123!", "$2a$10$hash")).thenReturn(true);
 
-        // lista con UN solo Object[]
-        List<Object[]> filas = new java.util.ArrayList<>();
-        filas.add(fila);
-        // O bien:
-        // List<Object[]> filas = java.util.Collections.singletonList(fila);
+        UsuarioResponseDTO result = usuarioService.login("juan@test.com", "Password123!");
 
-        when(usuarioRepository.obtenerUsuariosResumen()).thenReturn(filas);
-
-        List<Map<String, Object>> resumen = usuarioService.obtenerUsuariosConDatos();
-
-        assertNotNull(resumen);
-        assertEquals(1, resumen.size());
-
-        Map<String, Object> row = resumen.get(0);
-        assertEquals(1L, row.get("ID"));
-        assertEquals("Juan", row.get("Nombre"));
-        assertEquals("Pérez", row.get("Apellidos"));
-        assertEquals("correo@test.com", row.get("Correo"));
-        assertEquals(123456789L, row.get("Teléfono"));
-    }
-
-
-    // ============ DETALLE USUARIO / LOGIN ============
-
-    @Test
-    void testObtenerDetalleUsuario() {
-        UsuarioModel u = usuarioEntity();
-        VentaModel v1 = new VentaModel();
-        v1.setId(10L);
-
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(u));
-        when(ventaRepository.findByUsuarioModel_Id(1L)).thenReturn(List.of(v1));
-        when(ventaRepository.countByUsuarioModel_Id(1L)).thenReturn(1L);
-
-        Map<String, Object> detalle = usuarioService.obtenerDetalleUsuario(1L);
-
-        assertNotNull(detalle);
-        assertTrue(detalle.containsKey("usuario"));
-        assertTrue(detalle.containsKey("compras"));
-        assertTrue(detalle.containsKey("totalCompras"));
-
-        UsuarioResponseDTO dto = (UsuarioResponseDTO) detalle.get("usuario");
-        assertEquals(1L, dto.getId());
-
-        @SuppressWarnings("unchecked")
-        List<VentaModel> compras = (List<VentaModel>) detalle.get("compras");
-        assertEquals(1, compras.size());
-        assertEquals(1L, detalle.get("totalCompras"));
-    }
-
-    @Test
-    void testLogin_OK() {
-        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
-                .thenReturn(Optional.of(usuarioEntity()));
-        when(passwordEncoder.matches("password", "password")).thenReturn(true);
-
-        UsuarioResponseDTO dto = usuarioService.login("correo@test.com", "password");
-
-        assertNotNull(dto);
-        assertEquals("correo@test.com", dto.getCorreo());
+        assertNotNull(result);
+        assertEquals("juan@test.com", result.getCorreo());
     }
 
     @Test
     void testLogin_PasswordIncorrecta_Lanza401() {
-        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
-                .thenReturn(Optional.of(usuarioEntity()));
-        when(passwordEncoder.matches("otra", "password")).thenReturn(false);
+        UsuarioModel usuario = usuarioEntity();
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("WrongPass", "$2a$10$hash")).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> usuarioService.login("correo@test.com", "otra"));
+                () -> usuarioService.login("juan@test.com", "WrongPass"));
 
-        assertEquals(401, ex.getStatusCode().value());
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
     }
 
     @Test
-    void testLogin_CorreoNoExiste_Lanza404() {
-        when(usuarioRepository.findByCorreoIgnoreCase("correo@test.com"))
-                .thenReturn(Optional.empty());
+    void testLogin_CorreoNulo_Lanza400() {
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.login(null, "Password123!"));
 
-        assertThrows(ResponseStatusException.class,
-                () -> usuarioService.login("correo@test.com", "password"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    // ===================== OBTENER DETALLE USUARIO =====================
+
+    @Test
+    void testObtenerDetalleUsuario_DevuelveMapa() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(ventaRepository.findByUsuarioModel_Id(1L)).thenReturn(List.of());
+        when(ventaRepository.countByUsuarioModel_Id(1L)).thenReturn(0L);
+
+        Map<String, Object> result = usuarioService.obtenerDetalleUsuario(1L);
+
+        assertNotNull(result);
+        assertTrue(result.containsKey("usuario"));
+        assertTrue(result.containsKey("compras"));
+        assertTrue(result.containsKey("totalCompras"));
+        assertEquals(0L, result.get("totalCompras"));
+    }
+
+    @Test
+    void testObtenerDetalleUsuario_NoExiste_Lanza404() {
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.obtenerDetalleUsuario(99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 }

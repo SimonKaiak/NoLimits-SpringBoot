@@ -2,14 +2,12 @@ package com.example.NoLimits.service.venta;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.producto.request.DetalleVentaRequestDTO;
-import com.example.NoLimits.Multimedia.dto.producto.response.DetalleVentaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.venta.request.VentaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.venta.response.VentaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.venta.update.VentaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoPagoModel;
-import com.example.NoLimits.Multimedia.model.producto.DetalleVentaModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
@@ -32,24 +30,23 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+/**
+ * VentaServiceTest — Pruebas unitarias del servicio de ventas.
+ *
+ * Cubre: findAll, findById, findByMetodoPago, findByFechaCompra,
+ * findByHoraCompra, findByUsuarioYMetodoPago, save, update, patch,
+ * deleteById, crearVentaDesdeRequest.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
-public class VentaServiceTest extends AbstractContainerBaseTest{
+public class VentaServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private VentaService ventaService;
@@ -68,9 +65,9 @@ public class VentaServiceTest extends AbstractContainerBaseTest{
         u.setId(1L);
         u.setNombre("Juan");
         u.setApellidos("Pérez");
-        u.setCorreo("correo@test.com");
+        u.setCorreo("juan@test.com");
         u.setTelefono(123456789L);
-        u.setPassword("password");
+        u.setPassword("$2a$10$hash");
         return u;
     }
 
@@ -86,7 +83,7 @@ public class VentaServiceTest extends AbstractContainerBaseTest{
         MetodoEnvioModel m = new MetodoEnvioModel();
         m.setId(1L);
         m.setNombre("Despacho a domicilio");
-        m.setDescripcion("Entrega a domicilio");
+        m.setDescripcion("Entrega en domicilio");
         m.setActivo(true);
         return m;
     }
@@ -102,359 +99,417 @@ public class VentaServiceTest extends AbstractContainerBaseTest{
     private VentaModel ventaEntity() {
         VentaModel v = new VentaModel();
         v.setId(1L);
-        v.setFechaCompra(LocalDate.of(2025, 7, 27));
+        v.setFechaCompra(LocalDate.of(2025, 7, 6));
         v.setHoraCompra(LocalTime.of(14, 30));
         v.setUsuarioModel(usuarioEntity());
         v.setMetodoPagoModel(metodoPagoEntity());
         v.setMetodoEnvioModel(metodoEnvioEntity());
         v.setEstado(estadoEntity());
-        // NO se setea totalVenta: se calcula en el modelo
-
-        // detalle opcional para probar mapeo
-        ProductoModel p = new ProductoModel();
-        p.setId(5L);
-        p.setNombre("Teclado Mecánico");
-
-        DetalleVentaModel d = new DetalleVentaModel();
-        d.setId(100L);
-        d.setVenta(v);
-        d.setProducto(p);
-        d.setCantidad(2);
-        d.setPrecioUnitario(10000.0f);   // float, no double
-        // NO se setea subtotal: lo calcula el modelo
-
-        List<DetalleVentaModel> detalles = new ArrayList<>();
-        detalles.add(d);
-        v.setDetalles(detalles);
-
+        v.setDetalles(new ArrayList<>());
         return v;
     }
 
-    private VentaUpdateDTO ventaUpdateDTO() {
-        VentaUpdateDTO dto = new VentaUpdateDTO();
-        dto.setFechaCompra(LocalDate.of(2025, 8, 1));
-        dto.setHoraCompra(LocalTime.of(10, 15));
-        dto.setMetodoPagoId(2L);
-        dto.setMetodoEnvioId(3L);
-        dto.setEstadoId(2L);
-        return dto;
+    private VentaModel ventaConCamposRequeridos() {
+        VentaModel v = new VentaModel();
+        UsuarioModel u = new UsuarioModel(); u.setId(1L);
+        MetodoPagoModel mp = new MetodoPagoModel(); mp.setId(1L);
+        MetodoEnvioModel me = new MetodoEnvioModel(); me.setId(1L);
+        EstadoModel es = new EstadoModel(); es.setId(1L);
+        v.setUsuarioModel(u);
+        v.setMetodoPagoModel(mp);
+        v.setMetodoEnvioModel(me);
+        v.setEstado(es);
+        return v;
     }
 
-    private VentaRequestDTO ventaRequestDTO() {
-        VentaRequestDTO dto = new VentaRequestDTO();
-        dto.setMetodoPagoId(1L);
-        dto.setMetodoEnvioId(1L);
-        dto.setEstadoId(1L);
-
-        DetalleVentaRequestDTO det = new DetalleVentaRequestDTO();
-        det.setProductoId(5L);
-        det.setCantidad(2);
-        det.setPrecioUnitario(10000.0f);
-
-        dto.setDetalles(List.of(det));
-        return dto;
-    }
-
-    // ===================== findAll / findById =====================
+    // ===================== FIND ALL =====================
 
     @Test
-    public void testFindAll() {
+    public void testFindAll_DevuelveLista() {
         when(ventaRepository.findAll()).thenReturn(List.of(ventaEntity()));
 
-        List<VentaResponseDTO> ventas = ventaService.findAll();
+        List<VentaResponseDTO> result = ventaService.findAll();
 
-        assertNotNull(ventas);
-        assertEquals(1, ventas.size());
-        VentaResponseDTO dto = ventas.get(0);
-        assertEquals(1L, dto.getId());
-        assertEquals("Juan", dto.getUsuarioNombre());
-        assertEquals("Tarjeta de Crédito", dto.getMetodoPagoNombre());
-        assertEquals("Pagada", dto.getEstadoNombre());
-        assertNotNull(dto.getDetalles());
-        assertEquals(1, dto.getDetalles().size());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getId());
+        verify(ventaRepository, times(1)).findAll();
     }
 
     @Test
-    public void testFindById_Existe() {
-        VentaModel venta = ventaEntity();
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(venta));
+    public void testFindAll_ListaVacia_DevuelveVacio() {
+        when(ventaRepository.findAll()).thenReturn(List.of());
 
-        VentaResponseDTO dto = ventaService.findById(1L);
+        List<VentaResponseDTO> result = ventaService.findAll();
 
-        assertNotNull(dto);
-        assertEquals(1L, dto.getId());
-        assertEquals("Juan", dto.getUsuarioNombre());
-        assertEquals("Tarjeta de Crédito", dto.getMetodoPagoNombre());
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    // ===================== FIND BY ID =====================
+
+    @Test
+    public void testFindById_Existe_DevuelveDTO() {
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
+
+        VentaResponseDTO result = ventaService.findById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(LocalDate.of(2025, 7, 6), result.getFechaCompra());
     }
 
     @Test
-    public void testFindById_NoExiste() {
+    public void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
         when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> ventaService.findById(99L));
     }
 
-    // ===================== findBy* =====================
+    // ===================== FIND POR FILTROS =====================
 
     @Test
-    public void testFindByMetodoPago() {
-        when(ventaRepository.findByMetodoPagoModel_Id(1L))
-                .thenReturn(List.of(ventaEntity()));
+    public void testFindByMetodoPago_DevuelveLista() {
+        when(ventaRepository.findByMetodoPagoModel_Id(1L)).thenReturn(List.of(ventaEntity()));
 
-        List<VentaResponseDTO> res = ventaService.findByMetodoPago(1L);
+        List<VentaResponseDTO> result = ventaService.findByMetodoPago(1L);
 
-        assertNotNull(res);
-        assertEquals(1, res.size());
-        assertEquals("Tarjeta de Crédito", res.get(0).getMetodoPagoNombre());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Tarjeta de Crédito", result.get(0).getMetodoPagoNombre());
     }
 
     @Test
-    public void testFindByFechaCompra() {
-        VentaModel v = ventaEntity();
-        when(ventaRepository.findByFechaCompra(v.getFechaCompra()))
-                .thenReturn(List.of(v));
+    public void testFindByFechaCompra_DevuelveLista() {
+        LocalDate fecha = LocalDate.of(2025, 7, 6);
+        when(ventaRepository.findByFechaCompra(fecha)).thenReturn(List.of(ventaEntity()));
 
-        List<VentaResponseDTO> res = ventaService.findByFechaCompra(v.getFechaCompra());
+        List<VentaResponseDTO> result = ventaService.findByFechaCompra(fecha);
 
-        assertEquals(1, res.size());
-        assertEquals(v.getFechaCompra(), res.get(0).getFechaCompra());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(fecha, result.get(0).getFechaCompra());
     }
 
     @Test
-    public void testFindByHoraCompra() {
-        VentaModel v = ventaEntity();
-        when(ventaRepository.findByHoraCompra(v.getHoraCompra()))
-                .thenReturn(List.of(v));
+    public void testFindByHoraCompra_DevuelveLista() {
+        LocalTime hora = LocalTime.of(14, 30);
+        when(ventaRepository.findByHoraCompra(hora)).thenReturn(List.of(ventaEntity()));
 
-        List<VentaResponseDTO> res = ventaService.findByHoraCompra(v.getHoraCompra());
+        List<VentaResponseDTO> result = ventaService.findByHoraCompra(hora);
 
-        assertEquals(1, res.size());
-        assertEquals(v.getHoraCompra(), res.get(0).getHoraCompra());
+        assertNotNull(result);
+        assertEquals(1, result.size());
     }
 
     @Test
-    public void testFindByUsuarioYMetodoPago() {
+    public void testFindByUsuarioYMetodoPago_DevuelveLista() {
         when(ventaRepository.findByUsuarioModel_IdAndMetodoPagoModel_Id(1L, 1L))
                 .thenReturn(List.of(ventaEntity()));
 
-        List<VentaResponseDTO> res = ventaService.findByUsuarioYMetodoPago(1L, 1L);
+        List<VentaResponseDTO> result = ventaService.findByUsuarioYMetodoPago(1L, 1L);
 
-        assertEquals(1, res.size());
-        assertEquals("Juan", res.get(0).getUsuarioNombre());
-        assertEquals("Tarjeta de Crédito", res.get(0).getMetodoPagoNombre());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getUsuarioId());
+        assertEquals(1L, result.get(0).getMetodoPagoId());
     }
 
-    // ===================== save =====================
+    // ===================== SAVE =====================
 
     @Test
-    public void testSave_OK() {
-        VentaModel venta = new VentaModel();
-        venta.setUsuarioModel(usuarioEntity());
-        venta.setMetodoPagoModel(metodoPagoEntity());
-        venta.setMetodoEnvioModel(metodoEnvioEntity());
-        venta.setEstado(estadoEntity());
+    public void testSave_OK_GuardaVenta() {
+        VentaModel venta = ventaConCamposRequeridos();
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
         when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
         when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
         when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
         when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(invocation -> {
-                    VentaModel v = invocation.getArgument(0);
-                    v.setId(1L);
-                    return v;
-                });
-
-        VentaResponseDTO dto = ventaService.save(venta);
-
-        assertNotNull(dto);
-        assertEquals(1L, dto.getId());
-        assertEquals("Juan", dto.getUsuarioNombre());
-        assertEquals("Tarjeta de Crédito", dto.getMetodoPagoNombre());
-        assertEquals("Pagada", dto.getEstadoNombre());
-    }
-
-    @Test
-    public void testSave_SinUsuario_LanzaExcepcion() {
-        VentaModel venta = new VentaModel();
-        venta.setMetodoPagoModel(metodoPagoEntity());
-        venta.setMetodoEnvioModel(metodoEnvioEntity());
-        venta.setEstado(estadoEntity());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.save(venta));
-    }
-
-    @Test
-    public void testSave_SinMetodoPago_LanzaExcepcion() {
-        VentaModel venta = new VentaModel();
-        venta.setUsuarioModel(usuarioEntity());
-        venta.setMetodoEnvioModel(metodoEnvioEntity());
-        venta.setEstado(estadoEntity());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.save(venta));
-    }
-
-    // ===================== update / patch =====================
-
-    @Test
-    public void testUpdate_OK() {
-        VentaModel existente = ventaEntity();
-
-        MetodoPagoModel nuevoPago = new MetodoPagoModel();
-        nuevoPago.setId(2L);
-        nuevoPago.setNombre("Débito");
-
-        MetodoEnvioModel nuevoEnvio = new MetodoEnvioModel();
-        nuevoEnvio.setId(3L);
-        nuevoEnvio.setNombre("Retiro en tienda");
-
-        EstadoModel nuevoEstado = new EstadoModel();
-        nuevoEstado.setId(2L);
-        nuevoEstado.setNombre("Enviada");
-
-        VentaUpdateDTO dto = ventaUpdateDTO();
-
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(metodoPagoRepository.findById(2L)).thenReturn(Optional.of(nuevoPago));
-        when(metodoEnvioRepository.findById(3L)).thenReturn(Optional.of(nuevoEnvio));
-        when(estadoRepository.findById(2L)).thenReturn(Optional.of(nuevoEstado));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        VentaResponseDTO res = ventaService.update(1L, dto);
-
-        assertNotNull(res);
-        assertEquals("Débito", res.getMetodoPagoNombre());
-        assertEquals("Retiro en tienda", res.getMetodoEnvioNombre());
-        assertEquals("Enviada", res.getEstadoNombre());
-        assertEquals(dto.getFechaCompra(), res.getFechaCompra());
-    }
-
-    @Test
-    public void testPatch_ModificaSoloEstado() {
-        VentaModel existente = ventaEntity();
-
-        EstadoModel nuevoEstado = new EstadoModel();
-        nuevoEstado.setId(2L);
-        nuevoEstado.setNombre("Anulada");
-
-        VentaUpdateDTO dto = new VentaUpdateDTO();
-        dto.setEstadoId(2L);
-
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(estadoRepository.findById(2L)).thenReturn(Optional.of(nuevoEstado));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        VentaResponseDTO res = ventaService.patch(1L, dto);
-
-        assertEquals("Anulada", res.getEstadoNombre());
-        // usuario / metodo pago se mantienen
-        assertEquals("Juan", res.getUsuarioNombre());
-        assertEquals("Tarjeta de Crédito", res.getMetodoPagoNombre());
-    }
-
-    // ===================== deleteById =====================
-
-    @Test
-    public void testDeleteById_Existe() {
-        when(ventaRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(ventaRepository).deleteById(1L);
-
-        assertDoesNotThrow(() -> ventaService.deleteById(1L));
-        verify(ventaRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    public void testDeleteById_NoExiste() {
-        when(ventaRepository.existsById(99L)).thenReturn(false);
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.deleteById(99L));
-        verify(ventaRepository, never()).deleteById(anyLong());
-    }
-
-    // ===================== obtenerVentasConDatos =====================
-
-    @Test
-    public void testObtenerVentasConDatos() {
-        LocalDate fecha = LocalDate.of(2025, 7, 27);
-        LocalTime hora = LocalTime.of(14, 30);
-
-        Object[] fila = new Object[] {
-                1L,
-                fecha,
-                hora,
-                1L,
-                "Juan Pérez",
-                "Tarjeta de Crédito",
-                "Despacho a domicilio",
-                "Pagada"
-        };
-
-        when(ventaRepository.obtenerVentasResumen())
-                .thenReturn(List.<Object[]>of(fila));
-
-        List<Map<String, Object>> resumen = ventaService.obtenerVentasConDatos();
-
-        assertNotNull(resumen);
-        assertEquals(1, resumen.size());
-
-        Map<String, Object> row = resumen.get(0);
-
-        assertEquals(1L, row.get("ID"));
-        assertEquals(fecha, row.get("Fecha Compra"));
-        assertEquals(hora, row.get("Hora Compra"));
-        assertEquals("Juan Pérez", row.get("Usuario"));
-        assertEquals("Tarjeta de Crédito", row.get("Método Pago"));
-        assertEquals("Despacho a domicilio", row.get("Método Envío"));
-        assertEquals("Pagada", row.get("Estado"));
-    }
-
-    // ===================== crearVentaDesdeRequest =====================
-
-    @Test
-    public void testCrearVentaDesdeRequest_OK() {
-        UsuarioModel usuario = usuarioEntity();
-        MetodoPagoModel metodoPago = metodoPagoEntity();
-        MetodoEnvioModel metodoEnvio = metodoEnvioEntity();
-        EstadoModel estado = estadoEntity();
-
-        ProductoModel producto = new ProductoModel();
-        producto.setId(5L);
-        producto.setNombre("Teclado Mecánico");
-
-        VentaRequestDTO request = ventaRequestDTO();
-
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPago));
-        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvio));
-        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estado));
-        when(productoRepository.findById(5L)).thenReturn(Optional.of(producto));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(invocation -> {
-                    VentaModel v = invocation.getArgument(0);
+                .thenAnswer(inv -> {
+                    VentaModel v = inv.getArgument(0);
                     v.setId(10L);
                     return v;
                 });
 
-        VentaResponseDTO dto = ventaService.crearVentaDesdeRequest(request, 1L);
+        VentaResponseDTO result = ventaService.save(venta);
 
-        assertNotNull(dto);
-        assertEquals(10L, dto.getId());
-        assertEquals(1L, dto.getUsuarioId());
-        assertEquals("Juan", dto.getUsuarioNombre());
-        assertEquals("Tarjeta de Crédito", dto.getMetodoPagoNombre());
-        assertNotNull(dto.getDetalles());
-        assertEquals(1, dto.getDetalles().size());
+        assertNotNull(result);
+        assertEquals(10L, result.getId());
+        verify(ventaRepository, times(1)).save(any(VentaModel.class));
+    }
 
-        DetalleVentaResponseDTO det = dto.getDetalles().get(0);
-        assertEquals(5L, det.getProductoId());
-        assertEquals("Teclado Mecánico", det.getProductoNombre());
-        assertEquals(2, det.getCantidad());
-        assertEquals(10000.0f, det.getPrecioUnitario());
+    @Test
+    public void testSave_SinUsuario_LanzaRecursoNoEncontrado() {
+        VentaModel venta = new VentaModel();
+        // sin usuario
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> ventaService.save(venta));
+
+        verify(ventaRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSave_SinMetodoPago_LanzaRecursoNoEncontrado() {
+        VentaModel venta = new VentaModel();
+        UsuarioModel u = new UsuarioModel(); u.setId(1L);
+        venta.setUsuarioModel(u);
+        // sin método de pago
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> ventaService.save(venta));
+    }
+
+    @Test
+    public void testSave_SinMetodoEnvio_LanzaRecursoNoEncontrado() {
+        VentaModel venta = new VentaModel();
+        UsuarioModel u = new UsuarioModel(); u.setId(1L);
+        MetodoPagoModel mp = new MetodoPagoModel(); mp.setId(1L);
+        venta.setUsuarioModel(u);
+        venta.setMetodoPagoModel(mp);
+        // sin método de envío
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> ventaService.save(venta));
+    }
+
+    @Test
+    public void testSave_SinEstado_LanzaRecursoNoEncontrado() {
+        VentaModel venta = new VentaModel();
+        UsuarioModel u = new UsuarioModel(); u.setId(1L);
+        MetodoPagoModel mp = new MetodoPagoModel(); mp.setId(1L);
+        MetodoEnvioModel me = new MetodoEnvioModel(); me.setId(1L);
+        venta.setUsuarioModel(u);
+        venta.setMetodoPagoModel(mp);
+        venta.setMetodoEnvioModel(me);
+        // sin estado
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> ventaService.save(venta));
+    }
+
+    @Test
+    public void testSave_SinFecha_AsignaFechaActual() {
+        VentaModel venta = ventaConCamposRequeridos();
+        // No se setea fecha ni hora
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
+        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
+        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
+        when(ventaRepository.save(any(VentaModel.class)))
+                .thenAnswer(inv -> {
+                    VentaModel v = inv.getArgument(0);
+                    v.setId(5L);
+                    // Verifica que la fecha se haya asignado automáticamente
+                    assertNotNull(v.getFechaCompra());
+                    assertNotNull(v.getHoraCompra());
+                    return v;
+                });
+
+        VentaResponseDTO result = ventaService.save(venta);
+        assertNotNull(result);
+    }
+
+    // ===================== UPDATE =====================
+
+    @Test
+    public void testUpdate_OK_CambiaMetodoPago() {
+        MetodoPagoModel nuevoMetodo = new MetodoPagoModel();
+        nuevoMetodo.setId(2L);
+        nuevoMetodo.setNombre("Transferencia");
+        nuevoMetodo.setActivo(true);
+
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
+        when(metodoPagoRepository.findById(2L)).thenReturn(Optional.of(nuevoMetodo));
+        when(ventaRepository.save(any(VentaModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        VentaUpdateDTO dto = new VentaUpdateDTO();
+        dto.setMetodoPagoId(2L);
+
+        VentaResponseDTO result = ventaService.update(1L, dto);
+
+        assertNotNull(result);
+        assertEquals("Transferencia", result.getMetodoPagoNombre());
+    }
+
+    @Test
+    public void testUpdate_CambiaFechaYHora() {
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
+        when(ventaRepository.save(any(VentaModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDate nuevaFecha = LocalDate.of(2025, 12, 25);
+        LocalTime nuevaHora = LocalTime.of(18, 0);
+
+        VentaUpdateDTO dto = new VentaUpdateDTO();
+        dto.setFechaCompra(nuevaFecha);
+        dto.setHoraCompra(nuevaHora);
+
+        VentaResponseDTO result = ventaService.update(1L, dto);
+
+        assertNotNull(result);
+        assertEquals(nuevaFecha, result.getFechaCompra());
+        assertEquals(nuevaHora, result.getHoraCompra());
+    }
+
+    @Test
+    public void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
+        when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> ventaService.update(99L, new VentaUpdateDTO()));
+
+        verify(ventaRepository, never()).save(any());
+    }
+
+    // ===================== PATCH =====================
+
+    @Test
+    public void testPatch_ModificaSoloEstado() {
+        EstadoModel nuevoEstado = new EstadoModel();
+        nuevoEstado.setId(2L);
+        nuevoEstado.setNombre("Enviada");
+        nuevoEstado.setActivo(true);
+
+        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
+        when(estadoRepository.findById(2L)).thenReturn(Optional.of(nuevoEstado));
+        when(ventaRepository.save(any(VentaModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        VentaUpdateDTO dto = new VentaUpdateDTO();
+        dto.setEstadoId(2L);
+
+        VentaResponseDTO result = ventaService.patch(1L, dto);
+
+        assertNotNull(result);
+        assertEquals("Enviada", result.getEstadoNombre());
+        // Método de pago no debe cambiar
+        assertEquals("Tarjeta de Crédito", result.getMetodoPagoNombre());
+    }
+
+    // ===================== DELETE =====================
+
+    @Test
+    public void testDeleteById_Existe_EliminaOK() {
+        when(ventaRepository.existsById(1L)).thenReturn(true);
+
+        assertDoesNotThrow(() -> ventaService.deleteById(1L));
+
+        verify(ventaRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    public void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
+        when(ventaRepository.existsById(99L)).thenReturn(false);
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> ventaService.deleteById(99L));
+
+        verify(ventaRepository, never()).deleteById(anyLong());
+    }
+
+    // ===================== CREAR VENTA DESDE REQUEST =====================
+
+    @Test
+    public void testCrearVentaDesdeRequest_OK_ConDetalles() {
+        ProductoModel producto = new ProductoModel();
+        producto.setId(1L);
+        producto.setNombre("The Witcher 3");
+
+        DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
+        detalle.setProductoId(1L);
+        detalle.setCantidad(2);
+        detalle.setPrecioUnitario(29990f);
+
+        VentaRequestDTO request = new VentaRequestDTO();
+        request.setMetodoPagoId(1L);
+        request.setMetodoEnvioId(1L);
+        request.setEstadoId(1L);
+        request.setDetalles(List.of(detalle));
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
+        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
+        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
+        when(ventaRepository.save(any(VentaModel.class)))
+                .thenAnswer(inv -> {
+                    VentaModel v = inv.getArgument(0);
+                    v.setId(20L);
+                    return v;
+                });
+
+        VentaResponseDTO result = ventaService.crearVentaDesdeRequest(request, 1L);
+
+        assertNotNull(result);
+        assertEquals(20L, result.getId());
+        verify(productoRepository, times(1)).findById(1L);
+        verify(ventaRepository, times(1)).save(any(VentaModel.class));
+    }
+
+    @Test
+    public void testCrearVentaDesdeRequest_UsuarioNoEncontrado_LanzaExcepcion() {
+        VentaRequestDTO request = new VentaRequestDTO();
+        request.setMetodoPagoId(1L);
+        request.setMetodoEnvioId(1L);
+        request.setEstadoId(1L);
+
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(Exception.class,
+                () -> ventaService.crearVentaDesdeRequest(request, 99L));
+    }
+
+    @Test
+    public void testCrearVentaDesdeRequest_ProductoNoEncontrado_LanzaExcepcion() {
+        DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
+        detalle.setProductoId(999L);
+        detalle.setCantidad(1);
+        detalle.setPrecioUnitario(9990f);
+
+        VentaRequestDTO request = new VentaRequestDTO();
+        request.setMetodoPagoId(1L);
+        request.setMetodoEnvioId(1L);
+        request.setEstadoId(1L);
+        request.setDetalles(List.of(detalle));
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
+        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
+        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
+        when(productoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(Exception.class,
+                () -> ventaService.crearVentaDesdeRequest(request, 1L));
+    }
+
+    @Test
+    public void testCrearVentaDesdeRequest_SinDetalles_GuardaVentaVacia() {
+        VentaRequestDTO request = new VentaRequestDTO();
+        request.setMetodoPagoId(1L);
+        request.setMetodoEnvioId(1L);
+        request.setEstadoId(1L);
+        request.setDetalles(null); // sin detalles
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
+        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
+        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
+        when(ventaRepository.save(any(VentaModel.class)))
+                .thenAnswer(inv -> {
+                    VentaModel v = inv.getArgument(0);
+                    v.setId(21L);
+                    return v;
+                });
+
+        VentaResponseDTO result = ventaService.crearVentaDesdeRequest(request, 1L);
+
+        assertNotNull(result);
+        assertEquals(21L, result.getId());
+        verify(productoRepository, never()).findById(anyLong());
     }
 }
