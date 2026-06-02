@@ -18,20 +18,19 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+/**
+ * RolServiceTest — Pruebas unitarias del servicio de roles.
+ *
+ * Cubre: findAll, findById, save, update, patch, deleteById.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
-public class RolServiceTest extends AbstractContainerBaseTest{
+public class RolServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private RolService rolService;
@@ -39,7 +38,7 @@ public class RolServiceTest extends AbstractContainerBaseTest{
     @MockBean
     private RolRepository rolRepository;
 
-    // ================== HELPERS ==================
+    // ===================== HELPERS =====================
 
     private RolModel crearRolModel() {
         RolModel r = new RolModel();
@@ -66,10 +65,10 @@ public class RolServiceTest extends AbstractContainerBaseTest{
         return dto;
     }
 
-    // ================== FIND ==================
+    // ===================== FIND ALL =====================
 
     @Test
-    public void testFindAll() {
+    public void testFindAll_DevuelveLista() {
         when(rolRepository.findAll()).thenReturn(List.of(crearRolModel()));
 
         List<RolResponseDTO> result = rolService.findAll();
@@ -86,7 +85,36 @@ public class RolServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
-    public void testFindById_Existe() {
+    public void testFindAll_ListaVacia_DevuelveVacio() {
+        when(rolRepository.findAll()).thenReturn(List.of());
+
+        List<RolResponseDTO> result = rolService.findAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testFindAll_MultipleRoles_DevuelveTodos() {
+        RolModel r2 = new RolModel();
+        r2.setId(2L);
+        r2.setNombre("CLIENTE");
+        r2.setDescripcion("Rol cliente");
+        r2.setActivo(true);
+
+        when(rolRepository.findAll()).thenReturn(List.of(crearRolModel(), r2));
+
+        List<RolResponseDTO> result = rolService.findAll();
+
+        assertEquals(2, result.size());
+        assertEquals("ADMIN", result.get(0).getNombre());
+        assertEquals("CLIENTE", result.get(1).getNombre());
+    }
+
+    // ===================== FIND BY ID =====================
+
+    @Test
+    public void testFindById_Existe_DevuelveDTO() {
         when(rolRepository.findById(1L)).thenReturn(Optional.of(crearRolModel()));
 
         RolResponseDTO result = rolService.findById(1L);
@@ -98,17 +126,17 @@ public class RolServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
-    public void testFindById_NoExiste() {
+    public void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
         when(rolRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> rolService.findById(99L));
     }
 
-    // ================== SAVE (CREATE) ==================
+    // ===================== SAVE (CREATE) =====================
 
     @Test
-    public void testSave_OK() {
+    public void testSave_OK_CreaRol() {
         RolRequestDTO dto = new RolRequestDTO();
         dto.setNombre("  CLIENTE  ");
         dto.setDescripcion("Rol de cliente final");
@@ -125,7 +153,7 @@ public class RolServiceTest extends AbstractContainerBaseTest{
 
         assertNotNull(result);
         assertEquals(2L, result.getId());
-        assertEquals("CLIENTE", result.getNombre()); // normalizado
+        assertEquals("CLIENTE", result.getNombre()); // nombre normalizado sin espacios
         assertEquals("Rol de cliente final", result.getDescripcion());
         assertTrue(result.getActivo());
         verify(rolRepository, times(1)).save(any(RolModel.class));
@@ -145,6 +173,18 @@ public class RolServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
+    public void testSave_NombreNull_LanzaIllegalArgumentException() {
+        RolRequestDTO dto = new RolRequestDTO();
+        dto.setNombre(null);
+        dto.setActivo(true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> rolService.save(dto));
+
+        verify(rolRepository, never()).save(any(RolModel.class));
+    }
+
+    @Test
     public void testSave_ActivoNull_LanzaIllegalArgumentException() {
         RolRequestDTO dto = new RolRequestDTO();
         dto.setNombre("CLIENTE");
@@ -157,25 +197,44 @@ public class RolServiceTest extends AbstractContainerBaseTest{
         verify(rolRepository, never()).save(any(RolModel.class));
     }
 
-    // ================== UPDATE (PUT) ==================
+    @Test
+    public void testSave_SinDescripcion_GuardaOK() {
+        RolRequestDTO dto = new RolRequestDTO();
+        dto.setNombre("SOPORTE");
+        dto.setDescripcion(null); // sin descripción
+        dto.setActivo(true);
+
+        when(rolRepository.save(any(RolModel.class)))
+                .thenAnswer(inv -> {
+                    RolModel r = inv.getArgument(0);
+                    r.setId(3L);
+                    return r;
+                });
+
+        RolResponseDTO result = rolService.save(dto);
+
+        assertNotNull(result);
+        assertEquals("SOPORTE", result.getNombre());
+        assertNull(result.getDescripcion());
+    }
+
+    // ===================== UPDATE (PUT) =====================
 
     @Test
     public void testUpdate_CambiaTodosLosCampos() {
-        RolModel existente = crearRolModel(); // ADMIN, true
-
-        RolUpdateDTO in = crearUpdateDTO();   // VENDEDOR, "Rol vendedor", false
+        RolModel existente = crearRolModel(); // ADMIN, activo=true
 
         when(rolRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(rolRepository.save(any(RolModel.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        RolResponseDTO result = rolService.update(1L, in);
+        RolResponseDTO result = rolService.update(1L, crearUpdateDTO()); // VENDEDOR, activo=false
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("VENDEDOR", result.getNombre());
         assertEquals("Rol vendedor", result.getDescripcion());
-        assertEquals(false, result.getActivo());
+        assertFalse(result.getActivo());
     }
 
     @Test
@@ -196,16 +255,33 @@ public class RolServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
-        RolUpdateDTO in = crearUpdateDTO();
-
         when(rolRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-                () -> rolService.update(99L, in));
+                () -> rolService.update(99L, crearUpdateDTO()));
+
         verify(rolRepository, never()).save(any(RolModel.class));
     }
 
-    // ================== PATCH (delegado a update) ==================
+    @Test
+    public void testUpdate_SoloDescripcion_CambiaDescripcion() {
+        RolModel existente = crearRolModel();
+
+        when(rolRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(rolRepository.save(any(RolModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        RolUpdateDTO in = new RolUpdateDTO();
+        in.setDescripcion("Nueva descripción");
+
+        RolResponseDTO result = rolService.update(1L, in);
+
+        assertNotNull(result);
+        assertEquals("ADMIN", result.getNombre()); // nombre no cambia
+        assertEquals("Nueva descripción", result.getDescripcion());
+    }
+
+    // ===================== PATCH =====================
 
     @Test
     public void testPatch_CambiaSoloActivo() {
@@ -222,11 +298,34 @@ public class RolServiceTest extends AbstractContainerBaseTest{
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals("ADMIN", result.getNombre()); // nombre se mantiene
-        assertEquals(false, result.getActivo());
+        assertEquals("ADMIN", result.getNombre()); // nombre no cambia
+        assertFalse(result.getActivo());
     }
 
-    // ================== DELETE ==================
+    @Test
+    public void testPatch_SinCambios_MantieneEstadoActual() {
+        RolModel existente = crearRolModel();
+
+        when(rolRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(rolRepository.save(any(RolModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        RolResponseDTO result = rolService.patch(1L, new RolUpdateDTO()); // DTO vacío
+
+        assertNotNull(result);
+        assertEquals("ADMIN", result.getNombre());
+        assertTrue(result.getActivo());
+    }
+
+    @Test
+    public void testPatch_IdNoExiste_LanzaRecursoNoEncontrado() {
+        when(rolRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> rolService.patch(99L, new RolUpdateDTO()));
+    }
+
+    // ===================== DELETE =====================
 
     @Test
     public void testDeleteById_ConUsuarios_LanzaIllegalStateException() {
@@ -252,10 +351,10 @@ public class RolServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
-        when(rolRepository.findById(1L)).thenReturn(Optional.empty());
+        when(rolRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
-                () -> rolService.deleteById(1L));
+                () -> rolService.deleteById(99L));
 
         verify(rolRepository, never()).deleteById(anyLong());
     }
