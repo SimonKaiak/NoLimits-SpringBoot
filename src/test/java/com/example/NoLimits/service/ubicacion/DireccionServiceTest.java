@@ -292,6 +292,35 @@ public class DireccionServiceTest extends AbstractContainerBaseTest{
         verify(direccionRepository, never()).save(any(DireccionModel.class));
     }
 
+    @Test
+    public void testUpdate_NumeroObligatorio() {
+        DireccionModel existente = crearDireccionEntity();
+        DireccionUpdateDTO update = crearUpdateBasico();
+        update.setNumero(" ");
+
+        when(direccionRepository.findById(100L)).thenReturn(Optional.of(existente));
+
+        assertThrows(IllegalArgumentException.class, ()
+                -> direccionService.update(100L, update));
+        
+        verify(direccionRepository, never()).save(any(DireccionModel.class));
+    }
+
+    @Test
+    public void testUpdate_ComunaNoEncontrada() {
+        DireccionModel existente = crearDireccionEntity();
+        DireccionUpdateDTO update = crearUpdateBasico();
+        update.setComunaId(99L);
+
+        when(direccionRepository.findById(100L)).thenReturn(Optional.of(existente));
+        when(comunaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> direccionService.update(100L, update));
+
+        verify(direccionRepository, never()).save(any(DireccionModel.class));
+    }
+
     /* ========== patch ========== */
 
     @Test
@@ -329,6 +358,22 @@ public class DireccionServiceTest extends AbstractContainerBaseTest{
                 () -> direccionService.patch(100L, patch));
 
         verify(direccionRepository, never()).save(any(DireccionModel.class));
+    }
+
+    @Test
+    public void testPatch_UsuarioNoEncontrado() {
+        DireccionModel existente = crearDireccionEntity();
+
+        DireccionUpdateDTO patch = new DireccionUpdateDTO();
+        patch.setUsuarioId(999L);
+
+        when(direccionRepository.findById(100L)).thenReturn(Optional.of(existente));
+
+        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class,
+            () -> direccionService.patch(100L, patch));
+        verify(direccionRepository, never()).save(any(DireccionModel.class));
+
     }
 
     /* ========== deleteById ========== */

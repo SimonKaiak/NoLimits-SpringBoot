@@ -4,17 +4,22 @@ import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.dto.catalogos.request.EmpresaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO;
 import com.example.NoLimits.Multimedia.dto.catalogos.update.EmpresaUpdateDTO;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.EmpresaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.EmpresaService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
+
 
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -298,5 +303,26 @@ public class EmpresaServiceTest extends AbstractContainerBaseTest{
                 () -> empresaService.deleteById(1L));
 
         verify(empresaRepository, never()).deleteById(1L);
+    }
+    //=================== TESTS PAGINACIÓN ==================
+    @Test
+    public void testFindAllPaged() {
+
+        EmpresaModel empresa = createEmpresa();
+
+        Page<EmpresaModel> page = new PageImpl<>(List.of(empresa));
+
+        when(empresaRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+        PagedResponse<EmpresaResponseDTO> resultado = empresaService.findAllPaged(1, 10);
+
+        assertNotNull(resultado);
+
+        assertEquals(1, resultado.getPagina());
+        assertEquals(1, resultado.getTotalPaginas());
+        assertEquals(1, resultado.getTotalElementos());
+
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals("Sony Pictures", resultado.getContenido().get(0).getNombre());
     }
 }
