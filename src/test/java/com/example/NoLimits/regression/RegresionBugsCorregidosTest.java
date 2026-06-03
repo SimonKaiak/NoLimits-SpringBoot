@@ -1,6 +1,7 @@
 package com.example.NoLimits.regression;
 
 import com.example.NoLimits.Multimedia.dto.usuario.request.UsuarioRegistroDTO;
+import com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO;
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.ubicacion.ComunaRepository;
@@ -111,7 +112,7 @@ public class RegresionBugsCorregidosTest extends AbstractContainerBaseTest {
         verify(usuarioRepository).save(argThat(u ->
                 u.getCorreo() != null && u.getCorreo().equals(u.getCorreo().toLowerCase())
         ));
-    }
+    }   
 
     @Test
     @DisplayName("REG-02 — Registro con correo duplicado lanza 409, no crea usuario duplicado")
@@ -141,7 +142,7 @@ public class RegresionBugsCorregidosTest extends AbstractContainerBaseTest {
         );
 
         verify(usuarioRepository, never()).save(any(UsuarioModel.class));
-}
+    }   
 
     @Test
     @DisplayName("REG-03 — Login con correo con espacios es aceptado (trim aplicado)")
@@ -207,5 +208,84 @@ public class RegresionBugsCorregidosTest extends AbstractContainerBaseTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertNotEquals(500,
                         result.getResponse().getStatus()));
+    }
+
+    @Test
+    @DisplayName("REG-07 — Favorito duplicado retorna 409 y no guarda duplicado")
+    void reg07_favoritoDuplicado_retorna409_noGuardaDuplicado() {
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setId(1L);
+
+        FavoritoRequestDTO dto = new FavoritoRequestDTO();
+        dto.setObraId("tmdb:movie:123");
+        dto.setTitulo("Interestelar");
+        dto.setTipo("movie");
+        dto.setPoster("poster.jpg");
+        dto.setSource("tmdb");
+
+        when(usuarioRepository.findById(1L))
+                .thenReturn(Optional.of(usuario));
+
+        when(favoritoRepository.existsByUsuario_IdAndObraId(1L, "tmdb:movie:123"))
+                .thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> usuarioService.agregarFavorito(1L, dto)
+        );
+
+        assertEquals(409, ex.getStatusCode().value());
+        verify(favoritoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("REG-08 — Eliminar favorito inexistente retorna 404, no 500")
+    void reg08_eliminarFavoritoInexistente_retorna404_no500() {
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setId(1L);
+
+        when(usuarioRepository.findById(1L))
+                .thenReturn(Optional.of(usuario));
+
+        when(favoritoRepository.findByUsuario_IdAndObraId(1L, "tmdb:movie:999"))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> usuarioService.eliminarFavorito(1L, "tmdb:movie:999")
+        );
+
+        assertEquals(404, ex.getStatusCode().value());
+        verify(favoritoRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("REG-09 — Cambiar correo a uno ya registrado retorna 409")
+    void reg09_cambiarCorreoDuplicado_retorna409_noActualizaUsuario() {
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setId(1L);
+        usuario.setCorreo("actual@test.com");
+        usuario.setPassword("$2a$hash");
+
+        when(usuarioRepository.findByCorreoIgnoreCase("actual@test.com"))
+                .thenReturn(Optional.of(usuario));
+
+        when(passwordEncoder.matches("Password123!", "$2a$hash"))
+                .thenReturn(true);
+
+        when(usuarioRepository.existsByCorreo("nuevo@test.com"))
+                .thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> usuarioService.cambiarCorreo(
+                        "actual@test.com",
+                        "nuevo@test.com",
+                        "Password123!"
+                )
+        );
+
+        assertEquals(409, ex.getStatusCode().value());
+        verify(usuarioRepository, never()).save(any());
     }
 }
