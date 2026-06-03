@@ -116,12 +116,9 @@ public class RegresionBugsCorregidosTest extends AbstractContainerBaseTest {
     @Test
     @DisplayName("REG-02 — Registro con correo duplicado lanza 409, no crea usuario duplicado")
     void reg02_correoDuplicado_lanza409_noGuardaUsuario() {
-        UsuarioModel existente = new UsuarioModel();
-        existente.setId(1L);
-        existente.setCorreo("duplicado@test.com");
 
-        when(usuarioRepository.findByCorreoIgnoreCase("duplicado@test.com"))
-                .thenReturn(Optional.of(existente));
+        when(usuarioRepository.existsByCorreo("duplicado@test.com"))
+                .thenReturn(true);
 
         UsuarioRegistroDTO dto = new UsuarioRegistroDTO();
         dto.setNombre("Otro");
@@ -133,14 +130,18 @@ public class RegresionBugsCorregidosTest extends AbstractContainerBaseTest {
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
                 () -> usuarioService.save(dto),
-                "REG-02 REGRESIÓN: no lanzó excepción con correo duplicado"
+        "REG-02 REGRESIÓN: no lanzó excepción con correo duplicado"
         );
 
-        assertEquals(409, ex.getStatusCode().value(),
-                "REG-02 REGRESIÓN: debería lanzar 409, lanzó " + ex.getStatusCode().value());
+        assertEquals(
+            409,
+                ex.getStatusCode().value(),
+                "REG-02 REGRESIÓN: debería lanzar 409, lanzó "
+                        + ex.getStatusCode().value()
+        );
 
         verify(usuarioRepository, never()).save(any(UsuarioModel.class));
-    }
+}
 
     @Test
     @DisplayName("REG-03 — Login con correo con espacios es aceptado (trim aplicado)")

@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -92,13 +93,40 @@ public class SeguridadTest extends AbstractContainerBaseTest {
     @Test
     @DisplayName("SEC-04 — Payload XSS en nombre no causa error 500 (Google sync)")
     void sec04_xss_enNombre_googleSync_noProvoca500() throws Exception {
+
+        when(usuarioRepository.findByCorreoIgnoreCase(anyString()))
+                .thenReturn(Optional.empty());
+
+        RolModel rol = new RolModel();
+        rol.setId(1L);
+        rol.setNombre("ROLE_USER");
+
+        when(rolRepository.findByNombreIgnoreCase("ROLE_USER"))
+                .thenReturn(Optional.of(rol));
+
+        when(passwordEncoder.encode(anyString()))
+                .thenReturn("password-encriptada");
+
+        when(jwtUtil.generateToken(anyString(), anyString()))
+                .thenReturn("fake-token");
+        
+        when(usuarioRepository.save(any(UsuarioModel.class)))
+                .thenAnswer(invocation ->  {
+                        UsuarioModel u = invocation.getArgument(0);
+                        u.setId(1L);
+                        return u;
+                });
+
         mockMvc.perform(post("/api/v1/auth/google/sync")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"correo\":\"test@test.com\",\"nombre\":\"<img src=x onerror=alert(1)>\"}"))
-                .andExpect(result -> assertNotEquals(500,
-                        result.getResponse().getStatus(), "SEC-04: XSS en nombre provocó 500"));
+                .andExpect(result -> assertNotEquals(
+                        500,
+                        result.getResponse().getStatus(),
+                        "SEC-04: XSS en nombre provocó 500"
+                ));
     }
-
+    
     @Test
     @DisplayName("SEC-05 — Correo extremadamente largo no causa 500")
     void sec05_correoExtremamdamenteLargo_noProvoca500() throws Exception {
