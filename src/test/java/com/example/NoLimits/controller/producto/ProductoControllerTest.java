@@ -1,4 +1,4 @@
-package com.example.NoLimits.controller;
+package com.example.NoLimits.controller.producto;
 
 import com.example.NoLimits.Multimedia.controller.producto.ProductoController;
 import com.example.NoLimits.Multimedia.dto.producto.response.ProductoResumenDTO;
