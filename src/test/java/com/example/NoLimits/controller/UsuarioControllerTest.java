@@ -356,5 +356,85 @@ class UsuarioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nombre").value("Eduardo Actualizado"));
     }
+    // ================== Casos de error ==================
+    @Test
+    @DisplayName("Debe retornar 204 cuando no existen usuarios por nombre")
+    void debeRetornarNoContentNombre() throws Exception {
+
+        when(usuarioService.findByNombre("Pedro"))
+                .thenReturn(List.of());
+        
+        mockMvc.perform(get("/api/v1/usuarios/nombre/Pedro"))
+                .andExpect(status().isNoContent());
+    }
+    // ================== Actualizar perfil sin autenticación ==================
+    @Test
+    @DisplayName("Debe reornar 401 al actualizar mi perfil sin autenticación")
+    void debeRetornarUnauthorizedActualizarMiPerfil() throws Exception {
+
+        SecurityContextHolder.clearContext();
+
+        mockMvc.perform(patch("/api/v1/usuarios/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                        "nombre": "Nuevo Nombre"
+                        }
+                                
+                        """))
+                .andExpect(status().isUnauthorized());
+    }
+    //=================== Cambiar contraseña ==================
+    @Test
+    @DisplayName("Debe cambiar contraseña")
+    void debecambiarPassword() throws Exception {
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(
+                    "eduardo@test.com",
+                    null,
+                    "ROLE_USER")
+        );
+
+        doNothing().when(usuarioService)
+                .cambiarPassword(anyString(), anyString(), anyString());
+
+        mockMvc.perform(patch("/api/v1/usuarios/me/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "passwordActual":"123",
+                          "nuevaPassword":"456"
+                        }
+                        """))
+                .andExpect(status().isOk());
+     }
+
+     @Test
+     @DisplayName("Debe retornar 401 al cambiar contraseña sin autenticación")
+     void debeRetornarUnauthorizedCambiarPassword() throws Exception {
+        SecurityContextHolder.clearContext();
+
+        mockMvc.perform(patch("/api/v1/usuarios/me/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "passwordActual":"123",
+                          "nuevaPassword":"456"
+                        }
+                        """))
+                .andExpect(status().isUnauthorized());  
+     }
+
+     @Test
+     @DisplayName("Debe eliminar favorito")
+     void debeEliminarFavorito() throws Exception {
+
+        doNothing().when(usuarioService)
+                .eliminarFavorito(1L, "tmdb:123");
+
+        mockMvc.perform(delete("/api/v1/usuarios/1/favoritos/tmdb:123"))
+                .andExpect(status().isNoContent());
+     }
 
 }
