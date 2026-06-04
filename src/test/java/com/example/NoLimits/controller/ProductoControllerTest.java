@@ -136,7 +136,7 @@ class ProductoControllerTest {
         mockMvc.perform(delete("/api/v1/productos/1"))
                 .andExpect(status().isNoContent());
     }
-
+ 
     @Test
     @DisplayName("Debe listar sagas")
     void debeListarSagas() throws Exception {
@@ -169,4 +169,148 @@ class ProductoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
     }
+
+    @Test
+    @DisplayName("Debe buscar productos por nombre")
+    void debeBuscarProductosPorNombre() throws Exception {
+
+        ProductoResumenDTO producto = new ProductoResumenDTO();
+
+        PagedResponse<ProductoResumenDTO> respuesta =
+                new PagedResponse<>(List.of(producto), 1, 1, 1);
+
+        when(productoService.findByNombreContainingIgnoreCase(
+                eq("spider"), eq(1), eq(20)))
+                .thenReturn(respuesta);
+
+        mockMvc.perform(get("/api/v1/productos/buscar")
+                .param("nombre", "spider"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe retornar 204 cuando no encuentra productos por nombre")
+    void debeRetornarNoContentCuandoNoEncuentraPorNombre() throws Exception {
+
+        PagedResponse<ProductoResumenDTO> respuesta =
+                new PagedResponse<>(List.of(), 1, 0, 0);
+
+        when(productoService.findByNombreContainingIgnoreCase(
+                eq("inexistente"), eq(1), eq(20)))
+                .thenReturn(respuesta);
+
+        mockMvc.perform(get("/api/v1/productos/buscar")
+                .param("nombre", "inexistente"))
+                .andExpect(status().isNoContent());
+    
+    }
+
+    @Test
+    @DisplayName("Debe buscar productos por tipo")
+    void debeBuscarProductosPorTipo() throws Exception {
+
+        ProductoResumenDTO producto = new ProductoResumenDTO();
+
+        PagedResponse<ProductoResumenDTO> respuesta =
+                new PagedResponse<>(List.of(producto), 1, 1, 1);
+
+        when(productoService.findByTipoProducto(1L, 1, 20))
+                .thenReturn(respuesta);
+
+        mockMvc.perform(get("/api/v1/productos/tipo/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe buscar producto por estado")
+    void  debeBuscarProductosPorEstado() throws Exception {
+
+        ProductoResumenDTO producto = new ProductoResumenDTO();
+
+        PagedResponse<ProductoResumenDTO> respuesta =
+                new PagedResponse<>(List.of(producto), 1, 1, 1);
+
+        when(productoService.findByEstado(1L, 1, 20))
+                .thenReturn(respuesta);
+
+        mockMvc.perform(get("/api/v1/productos/estado/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe buscar productos por saga")
+    void debeBuscarProductosPorSaga() throws Exception {
+        ProductoResumenDTO producto = new ProductoResumenDTO();
+
+        PagedResponse<ProductoResumenDTO> respuesta =
+                new PagedResponse<>(List.of(producto), 1, 1, 1);
+
+        when(productoService.findBySagaIgnoreCase("Spider-Man", 1, 20))
+                .thenReturn(respuesta);
+
+        mockMvc.perform(get("/api/v1/productos/sagas/Spider-Man"))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    @DisplayName("Debe actualizar precio desde Steam")
+    void debeActualizarPrecioDesdeSteam() throws Exception {
+        ProductoResponseDTO producto = new ProductoResponseDTO();
+
+        when(productoService.actualizarPrecioDesdeSteam(1L))
+                .thenReturn(producto);
+
+        mockMvc.perform(patch("/api/v1/productos/1/actualizar-precio-steam"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe listar sagas con portada")
+    void debeListarSagasConPortada() throws Exception {
+
+        when(productoService.obtenerSagasConPortada())
+                .thenReturn(List.of(Map.of("saga", "Spider-Man")));
+
+        mockMvc.perform(get("/api/v1/productos/sagas/resumen"))
+                .andExpect(status().isOk());
+        
+    }
+
+    @Test
+    @DisplayName("Debe listar sagas por tipo de producto")
+    void debeListarSagasPorTipoProducto() throws Exception {
+
+        when(productoService.obtenerSagasDistinctPorTipoProducto(1L))
+                .thenReturn(List.of("Spider-Man"));
+
+        mockMvc.perform(get("/api/v1/productos/sagas/tipo/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe obtener productos completos de una saga")
+    void debeObtenerProductosCompletosDeSaga() throws Exception {
+
+        ProductoResponseDTO producto = new ProductoResponseDTO();
+
+        when(productoService.findBySagaCompleto("Spider-Man"))
+                .thenReturn(List.of(producto));
+
+        mockMvc.perform(get("/api/v1/productos/sagas/Spider-Man/completo"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Debe obtener resumen de productos")
+    void debeObtenerResumenProductos() throws Exception {
+
+        when(productoService.obtenerProductosConDatos())
+                .thenReturn(List.of(Map.of("id", 1)));
+
+        mockMvc.perform(get("/api/v1/productos/resumen"))
+                .andExpect(status().isOk());
+    }
+
+
 }
