@@ -1,4 +1,4 @@
-package com.example.NoLimits.controller;
+package com.example.NoLimits.controller.usuario;
 
 import com.example.NoLimits.Multimedia.config.AdminInitializer;
 import com.example.NoLimits.Multimedia.controller.usuario.UsuarioController;
