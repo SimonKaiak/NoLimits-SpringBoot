@@ -591,4 +591,242 @@ public class UsuarioServiceTest extends AbstractContainerBaseTest {
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
+
+    @Test
+    void testFindAllPaged_OK() {
+        var page = new org.springframework.data.domain.PageImpl<>(List.of(usuarioEntity()));
+
+        when(usuarioRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        var result = usuarioService.findAllPaged(1, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContenido().size());
+        assertEquals("Juan", result.getContenido().get(0).getNombre());
+    }
+
+    @Test
+    void testObtenerUsuariosConDatos_OK() {
+        Object[] fila = new Object[] {
+                1L,
+                "Juan",
+                "Pérez",
+                "juan@test.com",
+                123456789L
+        };
+
+        when(usuarioRepository.obtenerUsuariosResumen())
+                .thenReturn(List.<Object[]>of(fila));
+
+        var result = usuarioService.obtenerUsuariosConDatos();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).get("ID"));
+        assertEquals("Juan", result.get(0).get("Nombre"));
+        assertEquals("Pérez", result.get(0).get("Apellidos"));
+        assertEquals("juan@test.com", result.get(0).get("Correo"));
+    }
+
+    @Test
+    void testObtenerFavoritosPorUsuario_OK() {
+        var favorito = new com.example.NoLimits.Multimedia.model.usuario.FavoritoModel();
+        favorito.setId(1L);
+        favorito.setUsuario(usuarioEntity());
+        favorito.setObraId("movie-1");
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(favoritoRepository.findByUsuario_Id(1L)).thenReturn(List.of(favorito));
+
+        var result = usuarioService.obtenerFavoritosPorUsuario(1L);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("movie-1", result.get(0).getObraId());
+    }
+
+    @Test
+    void testAgregarFavorito_OK() {
+        var dto = new com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO();
+        dto.setObraId("movie-1");
+        dto.setTitulo("Spiderman");
+        dto.setTipo("movie");
+        dto.setPoster("poster.jpg");
+        dto.setSource("tmdb");
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(favoritoRepository.existsByUsuario_IdAndObraId(1L, "movie-1")).thenReturn(false);
+        when(favoritoRepository.save(any()))
+                .thenAnswer(inv -> {
+                    var fav = (com.example.NoLimits.Multimedia.model.usuario.FavoritoModel) inv.getArgument(0);
+                    fav.setId(1L);
+                    return fav;
+                });
+
+        var result = usuarioService.agregarFavorito(1L, dto);
+
+        assertNotNull(result);
+        assertEquals("movie-1", result.getObraId());
+        assertEquals("Spiderman", result.getTitulo());
+    }
+
+    @Test
+    void testAgregarFavorito_ObraIdVacio_Lanza400() {
+        var dto = new com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO();
+        dto.setObraId(" ");
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.agregarFavorito(1L, dto));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(favoritoRepository, never()).save(any());
+    }
+
+    @Test
+    void testAgregarFavorito_Duplicado_Lanza409() {
+        var dto = new com.example.NoLimits.Multimedia.dto.usuario.request.FavoritoRequestDTO();
+        dto.setObraId("movie-1");
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(favoritoRepository.existsByUsuario_IdAndObraId(1L, "movie-1")).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.agregarFavorito(1L, dto));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void testEliminarFavorito_OK() {
+        var favorito = new com.example.NoLimits.Multimedia.model.usuario.FavoritoModel();
+        favorito.setId(1L);
+        favorito.setObraId("movie-1");
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(favoritoRepository.findByUsuario_IdAndObraId(1L, "movie-1"))
+                .thenReturn(Optional.of(favorito));
+
+        usuarioService.eliminarFavorito(1L, "movie-1");
+
+        verify(favoritoRepository).delete(favorito);
+    }
+
+    @Test
+    void testEliminarFavorito_NoExiste_Lanza404() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+        when(favoritoRepository.findByUsuario_IdAndObraId(1L, "movie-1"))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.eliminarFavorito(1L, "movie-1"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void testCambiarPassword_OK() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("Password123!", "$2a$10$hash")).thenReturn(true);
+        when(passwordEncoder.encode("NuevaPassword123!")).thenReturn("$2a$10$newhash");
+
+        usuarioService.cambiarPassword("juan@test.com", "Password123!", "NuevaPassword123!");
+
+        verify(usuarioRepository).save(usuario);
+        assertEquals("$2a$10$newhash", usuario.getPassword());
+    }
+
+    @Test
+    void testCambiarPassword_ActualIncorrecta_Lanza400() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("MalaClave", "$2a$10$hash")).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.cambiarPassword("juan@test.com", "MalaClave", "NuevaPassword123!"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    void testCambiarPassword_NuevaPasswordCorta_Lanza400() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("Password123!", "$2a$10$hash")).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.cambiarPassword("juan@test.com", "Password123!", "corta"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testEliminarCuenta_OK() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(reviewRepository.findByUsuario_Id(1L)).thenReturn(List.of());
+
+        usuarioService.eliminarCuenta("juan@test.com");
+
+        verify(reviewReactionRepository).deleteByUsuario_Id(1L);
+        verify(favoritoRepository).deleteByUsuario_Id(1L);
+        verify(reviewRepository).deleteAll(List.of());
+        verify(usuarioRepository).delete(usuario);
+    }
+
+    @Test
+    void testCambiarCorreo_OK() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("Password123!", "$2a$10$hash")).thenReturn(true);
+        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
+
+        usuarioService.cambiarCorreo("juan@test.com", "NUEVO@TEST.COM", "Password123!");
+
+        assertEquals("nuevo@test.com", usuario.getCorreo());
+        verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void testCambiarCorreo_PasswordIncorrecta_Lanza400() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("mala", "$2a$10$hash")).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.cambiarCorreo("juan@test.com", "nuevo@test.com", "mala"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testCambiarCorreo_Duplicado_Lanza409() {
+        UsuarioModel usuario = usuarioEntity();
+
+        when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                .thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("Password123!", "$2a$10$hash")).thenReturn(true);
+        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> usuarioService.cambiarCorreo("juan@test.com", "nuevo@test.com", "Password123!"));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
 }

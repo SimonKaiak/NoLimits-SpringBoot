@@ -11,12 +11,24 @@ import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.model.producto.DetalleVentaModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladorRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.EmpresaRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.EstadoRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.GeneroRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.TipoDeDesarrolladorRepository;
+import com.example.NoLimits.Multimedia.repository.catalogos.TipoEmpresaRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.TipoProductoRepository;
 import com.example.NoLimits.Multimedia.repository.producto.DetalleVentaRepository;
 import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
+import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 import com.example.NoLimits.Multimedia.service.producto.ProductoService;
+import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
+import com.example.NoLimits.Multimedia.repository.catalogos.*;
+import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
+import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
+import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +75,30 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
     @MockBean
     private EstadoRepository estadoRepository;
+
+    @MockBean 
+    private PlataformaRepository plataformaRepository;
+
+    @MockBean
+    private GeneroRepository generoRepository;
+
+    @MockBean 
+    private EmpresaRepository empresaRepository;
+
+    @MockBean 
+    private DesarrolladorRepository desarrolladorRepository;
+
+    @MockBean 
+    private TipoEmpresaRepository tipoEmpresaRepository;
+
+    @MockBean 
+    private TipoDeDesarrolladorRepository tipoDeDesarrolladorRepository;
+
+    @MockBean 
+    private ScrapingClientService scrapingClientService;
+
+    @MockBean 
+    private ProductoEmbeddingService productoEmbeddingService;
 
     // ==========================
     // Helpers
@@ -488,5 +524,115 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         assertEquals("Activo", item.get("Estado"));
         assertEquals("Spiderman", item.get("Saga"));
         assertEquals("/assets/img/sagas/spidermanSaga.webp", item.get("Portada Saga"));
+    }
+
+    @Test
+    public void testFindAllPaged_OK() {
+        List<Object[]> filas = Collections.singletonList(filaResumen());
+        var page = new PageImpl<>(filas);
+
+        when(productoRepository.obtenerResumenPaginado(any()))
+                .thenReturn(page);
+
+        var resultado = productoService.findAllPaged(1, 20);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals("Teclado Mecánico", resultado.getContenido().get(0).getNombre());
+    }
+
+    @Test
+    public void testFindBySaga_OK() {
+        List<Object[]> filas = Collections.singletonList(filaResumen());
+        var page = new PageImpl<>(filas);
+
+        when(productoRepository.obtenerResumenPorSaga(eq("Spiderman"), any()))
+                .thenReturn(page);
+
+        var resultado = productoService.findBySaga("Spiderman", 1, 20);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals("Spiderman", resultado.getContenido().get(0).getSaga());
+    }
+
+    @Test
+    public void testFindBySagaCompleto_OK() {
+        when(productoRepository.findIdsBySagaIgnoreCase("Spiderman"))
+                .thenReturn(List.of(1L));
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(productoEntity()));
+
+        var resultado = productoService.findBySagaCompleto("Spiderman");
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("Teclado Mecánico", resultado.get(0).getNombre());
+    }
+
+    @Test
+    public void testObtenerSagasDistinct() {
+        when(productoRepository.findDistinctSagas())
+                .thenReturn(List.of("Spiderman", "Batman"));
+
+        var resultado = productoService.obtenerSagasDistinct();
+
+        assertEquals(2, resultado.size());
+        assertEquals("Spiderman", resultado.get(0));
+    }
+
+    @Test
+    public void testObtenerSagasDistinctPorTipoProducto() {
+        when(productoRepository.findDistinctSagasByTipoProductoId(1L))
+                .thenReturn(List.of("Spiderman"));
+
+        var resultado = productoService.obtenerSagasDistinctPorTipoProducto(1L);
+
+        assertEquals(1, resultado.size());
+        assertEquals("Spiderman", resultado.get(0));
+    }
+
+    @Test
+    public void testObtenerSagasConPortada() {
+        Object[] fila = new Object[] {
+                "Spiderman",
+                "/assets/img/sagas/spidermanSaga.webp"
+        };
+
+        List<Object[]> filas = Collections.singletonList(fila);
+
+        when(productoRepository.findDistinctSagasWithPortada())
+                .thenReturn(filas);
+
+        var resultado = productoService.obtenerSagasConPortada();
+
+        assertEquals(1, resultado.size());
+        assertEquals("Spiderman", resultado.get(0).get("nombre"));
+        assertEquals("/assets/img/sagas/spidermanSaga.webp", resultado.get(0).get("portadaSaga"));
+    }
+
+    @Test
+    public void testExisteProductoPorLinkCompra_LimpiaHash() {
+        when(productoRepository.existsByLinksCompraUrl("https://mercadolibre.cl/producto"))
+                .thenReturn(true);
+
+        boolean existe = productoService.existeProductoPorLinkCompra(
+                "https://mercadolibre.cl/producto#reviews"
+        );
+
+        assertEquals(true, existe);
+        verify(productoRepository).existsByLinksCompraUrl("https://mercadolibre.cl/producto");
+    }
+
+    @Test
+    public void testObtenerIdsProductosConAppId() {
+        when(productoRepository.findIdsConAppId())
+                .thenReturn(List.of(1L, 2L, 3L));
+
+        var resultado = productoService.obtenerIdsProductosConAppId();
+
+        assertEquals(3, resultado.size());
+        assertEquals(1L, resultado.get(0));
     }
 }
