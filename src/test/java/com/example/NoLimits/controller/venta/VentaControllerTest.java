@@ -1,4 +1,4 @@
-package com.example.NoLimits.controller;
+package com.example.NoLimits.controller.venta;
 
 import com.example.NoLimits.Multimedia.controller.venta.VentaController;
 import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
