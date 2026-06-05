@@ -29,6 +29,20 @@ import com.example.NoLimits.Multimedia.repository.catalogos.*;
 import com.example.NoLimits.Multimedia.service.scraping.ScrapingClientService;
 import com.example.NoLimits.Multimedia.service.ai.ProductoEmbeddingService;
 import com.example.NoLimits.Multimedia.dto.producto.request.LinkCompraDTO;
+import com.example.NoLimits.Multimedia.model.catalogos.EmpresaModel;
+import com.example.NoLimits.Multimedia.model.catalogos.EmpresasModel;
+import com.example.NoLimits.Multimedia.model.catalogos.GeneroModel;
+import com.example.NoLimits.Multimedia.model.catalogos.GenerosModel;
+import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
+import com.example.NoLimits.Multimedia.model.catalogos.PlataformasModel;
+import com.example.NoLimits.Multimedia.model.catalogos.TipoDeDesarrolladorModel;
+import com.example.NoLimits.Multimedia.model.catalogos.TipoEmpresaModel;
+import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladorModel;
+import com.example.NoLimits.Multimedia.model.catalogos.DesarrolladoresModel;
+import com.example.NoLimits.Multimedia.model.producto.ProductoLinkCompraModel;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import java.util.HashSet;
 
 import java.util.Collections;
 import java.util.List;
@@ -634,5 +648,520 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
         assertEquals(3, resultado.size());
         assertEquals(1L, resultado.get(0));
+    }
+    
+    @Nested
+    @DisplayName("Unitario - actualizarPrecioDesdeSteam")
+    class ActualizarPrecioDesdeSteam {
+
+        @Test
+        @DisplayName("actualiza precio desde Steam correctamente")
+        void testActualizarPrecioDesdeSteam_OK() {
+            ProductoModel producto = productoEntity();
+
+            ProductoLinkCompraModel linkSteam = new ProductoLinkCompraModel();
+
+            PlataformaModel plataforma = new PlataformaModel();
+            plataforma.setId(1L);
+            plataforma.setNombre("Steam");
+
+            linkSteam.setPlataforma(plataforma);
+            linkSteam.setAppId("730");
+            linkSteam.setUrl("https://store.steampowered.com/app/730");
+            linkSteam.setProducto(producto);
+
+            producto.setLinksCompra(new HashSet<>(List.of(linkSteam)));
+
+            Map<String, Object> datosSteam = Map.of(
+                    "nombre", "Counter-Strike 2",
+                    "precio", 0,
+                    "precioFormato", "Free To Play",
+                    "moneda", "CLP",
+                    "urlPlataforma", "https://store.steampowered.com/app/730"
+            );
+
+            when(productoRepository.findByIdFull(1L))
+                    .thenReturn(Optional.of(producto))
+                    .thenReturn(Optional.of(producto));
+
+            when(scrapingClientService.obtenerPrecioSteam("730"))
+                    .thenReturn(datosSteam);
+
+            when(productoRepository.save(any(ProductoModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            doNothing().when(productoEmbeddingService)
+                    .guardarEmbeddingProducto(eq(1L), any(String.class));
+
+            ProductoResponseDTO resultado =
+                    productoService.actualizarPrecioDesdeSteam(1L);
+
+            assertNotNull(resultado);
+            assertEquals(1L, resultado.getId());
+            assertEquals(0.0, producto.getPrecio());
+            assertEquals("Counter-Strike 2", linkSteam.getNombrePlataforma());
+            assertEquals("Free To Play", linkSteam.getPrecioFormato());
+            assertEquals("CLP", linkSteam.getMoneda());
+
+            verify(scrapingClientService).obtenerPrecioSteam("730");
+            verify(productoRepository).save(producto);
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando el producto no existe")
+        void testActualizarPrecioDesdeSteam_ProductoNoExiste() {
+            when(productoRepository.findByIdFull(99L))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> productoService.actualizarPrecioDesdeSteam(99L));
+
+            verify(scrapingClientService, never()).obtenerPrecioSteam(any());
+            verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando el producto no tiene appId")
+        void testActualizarPrecioDesdeSteam_SinAppId() {
+            ProductoModel producto = productoEntity();
+            producto.setLinksCompra(new HashSet<>());
+
+            when(productoRepository.findByIdFull(1L))
+                    .thenReturn(Optional.of(producto));
+
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> productoService.actualizarPrecioDesdeSteam(1L));
+
+            verify(scrapingClientService, never()).obtenerPrecioSteam(any());
+            verify(productoRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - limpiarUrlMercadoLibre")
+    class LimpiarUrlMercadoLibre {
+
+        @Test
+        @DisplayName("retorna string vacío cuando la URL es null")
+        void testExisteProductoPorLinkCompra_Null() {
+            when(productoRepository.existsByLinksCompraUrl(""))
+                    .thenReturn(false);
+
+            boolean resultado = productoService.existeProductoPorLinkCompra(null);
+
+            assertEquals(false, resultado);
+            verify(productoRepository).existsByLinksCompraUrl("");
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - syncLinksCompra mediante patch")
+    class SyncLinksCompra {
+        
+        @Test
+        @DisplayName("agrega un nuevo link de compra al producto")
+        void testPatch_AgregaNuevoLinkCompra() {
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(new HashSet<>());
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+                plataforma.setNombre("Steam");
+
+                LinkCompraDTO linkDTO = new LinkCompraDTO();
+                linkDTO.setPlataformaId(1L);
+                linkDTO.setUrl(" https://store.steampowered.com/app/730 ");
+                linkDTO.setLabel(" Steam ");
+                linkDTO.setAppId(" 730 ");
+                linkDTO.setPrecioActual(0.0);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(linkDTO));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(1L))
+                        .thenReturn(Optional.of(plataforma));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                ProductoResponseDTO resultado = productoService.patch(1L, dto);
+
+                assertNotNull(resultado);
+                assertEquals(1, producto.getLinksCompra().size());
+
+                ProductoLinkCompraModel link = producto.getLinksCompra().iterator().next();
+
+                assertEquals("https://store.steampowered.com/app/730", link.getUrl());
+                assertEquals("Steam", link.getLabel());
+                assertEquals("730", link.getAppId());
+                assertEquals(0.0, link.getPrecioActual());
+
+                verify(plataformaRepository).findById(1L);
+                verify(productoRepository).save(producto);
+        }
+
+        @Test
+        @DisplayName("actualiza un link de compra existente")
+        void testPatch_ActualizaLinkCompraExistente() {
+                ProductoModel producto = productoEntity();
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+                plataforma.setNombre("Steam");
+
+                ProductoLinkCompraModel linkExistente = new ProductoLinkCompraModel();
+                linkExistente.setProducto(producto);
+                linkExistente.setPlataforma(plataforma);
+                linkExistente.setUrl("https://url-antigua.cl");
+                linkExistente.setLabel("Steam");
+                linkExistente.setAppId("111");
+
+                producto.setLinksCompra(new HashSet<>(List.of(linkExistente)));
+
+                LinkCompraDTO linkDTO = new LinkCompraDTO();
+                linkDTO.setPlataformaId(1L);
+                linkDTO.setUrl("https://store.steampowered.com/app/730");
+                linkDTO.setLabel("Steam Oficial");
+                linkDTO.setAppId("730");
+                linkDTO.setPrecioActual(9990.0);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(linkDTO));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                ProductoResponseDTO resultado = productoService.patch(1L, dto);
+
+                assertNotNull(resultado);
+                assertEquals(1, producto.getLinksCompra().size());
+
+                assertEquals("https://store.steampowered.com/app/730", linkExistente.getUrl());
+                assertEquals("Steam Oficial", linkExistente.getLabel());
+                assertEquals("730", linkExistente.getAppId());
+                assertEquals(9990.0, linkExistente.getPrecioActual());
+                assertNotNull(linkExistente.getFechaUltimaActualizacion());
+
+                verify(plataformaRepository, never()).findById(any());
+                verify(productoRepository).save(producto);
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando plataformaId es null")
+        void testPatch_LinkCompraSinPlataformaId_LanzaExcepcion() {
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(new HashSet<>());
+
+                LinkCompraDTO linkDTO = new LinkCompraDTO();
+                linkDTO.setPlataformaId(null);
+                linkDTO.setUrl("https://store.steampowered.com/app/730");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(linkDTO));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                assertThrows(IllegalArgumentException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - relaciones del producto mediante patch")
+    class RelacionesProductoPatch {
+
+        @Test
+        @DisplayName("agrega empresas, géneros, plataformas y desarrolladores al producto")
+        void testPatch_AgregaRelacionesProducto() {
+                ProductoModel producto = productoEntity();
+
+                producto.setEmpresas(new HashSet<>());
+                producto.setGeneros(new HashSet<>());
+                producto.setPlataformas(new HashSet<>());
+                producto.setDesarrolladores(new HashSet<>());
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+                empresa.setNombre("Valve");
+
+                GeneroModel genero = new GeneroModel();
+                genero.setId(2L);
+                genero.setNombre("Acción");
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(3L);
+                plataforma.setNombre("PC");
+
+                DesarrolladorModel desarrollador = new DesarrolladorModel();
+                desarrollador.setId(4L);
+                desarrollador.setNombre("Valve Studio");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(List.of(1L));
+                dto.setGenerosIds(List.of(2L));
+                dto.setPlataformasIds(List.of(3L));
+                dto.setDesarrolladoresIds(List.of(4L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+                when(generoRepository.findById(2L)).thenReturn(Optional.of(genero));
+                when(plataformaRepository.findById(3L)).thenReturn(Optional.of(plataforma));
+                when(desarrolladorRepository.findById(4L)).thenReturn(Optional.of(desarrollador));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                ProductoResponseDTO resultado = productoService.patch(1L, dto);
+
+                assertNotNull(resultado);
+                assertEquals(1, producto.getEmpresas().size());
+                assertEquals(1, producto.getGeneros().size());
+                assertEquals(1, producto.getPlataformas().size());
+                assertEquals(1, producto.getDesarrolladores().size());
+
+                verify(empresaRepository).findById(1L);
+                verify(generoRepository).findById(2L);
+                verify(plataformaRepository).findById(3L);
+                verify(desarrolladorRepository).findById(4L);
+                verify(productoRepository).save(producto);
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando una empresa no existe")
+        void testPatch_EmpresaNoExiste_Lanza404() {
+                ProductoModel producto = productoEntity();
+                producto.setEmpresas(new HashSet<>());
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(List.of(99L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(empresaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - patch campos adicionales")
+    class PatchCamposAdicionales {
+
+        @Test
+        @DisplayName("actualiza sinopsis, trailer, año, saga y portada")
+        void testPatch_ActualizaCamposExtra() {
+                ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setSinopsis("Nueva sinopsis");
+                dto.setUrlTrailer("https://youtube.com/trailer");
+                dto.setAnio(2025);
+                dto.setSaga("Batman");
+                dto.setPortadaSaga("/img/batman.webp");
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                ProductoResponseDTO res = productoService.patch(1L, dto);
+
+                assertNotNull(res);
+                assertEquals("Nueva sinopsis", producto.getSinopsis());
+                assertEquals("https://youtube.com/trailer", producto.getUrlTrailer());
+                assertEquals(2025, producto.getAnio());
+                assertEquals("Batman", producto.getSaga());
+                assertEquals("/img/batman.webp", producto.getPortadaSaga());
+        }
+
+        @Test
+        @DisplayName("actualiza tipo empresa y tipo desarrollador")
+        void testPatch_TipoEmpresaYTipoDesarrollador_OK() {
+                ProductoModel producto = productoEntity();
+
+                TipoEmpresaModel tipoEmpresa = new TipoEmpresaModel();
+                tipoEmpresa.setId(1L);
+                tipoEmpresa.setNombre("Publisher");
+
+                TipoDeDesarrolladorModel tipoDesarrollador = new TipoDeDesarrolladorModel();
+                tipoDesarrollador.setId(1L);
+                tipoDesarrollador.setNombre("Estudio");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setTipoEmpresaId(1L);
+                dto.setTipoDesarrolladorId(1L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(tipoEmpresaRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoEmpresa));
+
+                when(tipoDeDesarrolladorRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoDesarrollador));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                ProductoResponseDTO res = productoService.patch(1L, dto);
+
+                assertNotNull(res);
+                assertEquals("Publisher", producto.getTipoEmpresa().getNombre());
+                assertEquals("Estudio", producto.getTipoDesarrollador().getNombre());
+        }
+
+        @Test
+        @DisplayName("actualiza imágenes del producto")
+        void testPatch_Imagenes_OK() {
+                ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setImagenesRutas(List.of("/img/uno.webp", "/img/dos.webp"));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                ProductoResponseDTO res = productoService.patch(1L, dto);
+
+                assertNotNull(res);
+                assertEquals(2, producto.getImagenes().size());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando tipo empresa no existe")
+        void testPatch_TipoEmpresaNoExiste_Lanza404() {
+                ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setTipoEmpresaId(99L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(tipoEmpresaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - save completo con relaciones")
+    class SaveCompletoConRelaciones {
+
+        @Test
+        @DisplayName("guarda producto con tipo empresa, tipo desarrollador, imágenes y relaciones")
+        void testSave_CompletoConRelaciones_OK() {
+                ProductoRequestDTO dto = requestBase();
+
+                dto.setSinopsis("Sinopsis demo");
+                dto.setUrlTrailer("https://youtube.com/trailer");
+                dto.setAnio(2025);
+                dto.setSaga("Batman");
+                dto.setPortadaSaga("/img/batman.webp");
+                dto.setTipoEmpresaId(1L);
+                dto.setTipoDesarrolladorId(1L);
+                dto.setImagenesRutas(List.of("/img/uno.webp", "/img/dos.webp"));
+                dto.setEmpresasIds(List.of(1L));
+                dto.setGenerosIds(List.of(2L));
+                dto.setPlataformasIds(List.of(3L));
+                dto.setDesarrolladoresIds(List.of(4L));
+
+                TipoEmpresaModel tipoEmpresa = new TipoEmpresaModel();
+                tipoEmpresa.setId(1L);
+                tipoEmpresa.setNombre("Publisher");
+
+                TipoDeDesarrolladorModel tipoDesarrollador = new TipoDeDesarrolladorModel();
+                tipoDesarrollador.setId(1L);
+                tipoDesarrollador.setNombre("Estudio");
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+                empresa.setNombre("Valve");
+
+                GeneroModel genero = new GeneroModel();
+                genero.setId(2L);
+                genero.setNombre("Acción");
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(3L);
+                plataforma.setNombre("PC");
+
+                DesarrolladorModel desarrollador = new DesarrolladorModel();
+                desarrollador.setId(4L);
+                desarrollador.setNombre("Valve Studio");
+
+                when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(tipoProducto()));
+                when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(clasificacion()));
+                when(estadoRepository.findById(1L)).thenReturn(Optional.of(estado()));
+                when(tipoEmpresaRepository.findById(1L)).thenReturn(Optional.of(tipoEmpresa));
+                when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(tipoDesarrollador));
+                when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+                when(generoRepository.findById(2L)).thenReturn(Optional.of(genero));
+                when(plataformaRepository.findById(3L)).thenReturn(Optional.of(plataforma));
+                when(desarrolladorRepository.findById(4L)).thenReturn(Optional.of(desarrollador));
+
+                when(productoRepository.save(any(ProductoModel.class)))
+                        .thenAnswer(inv -> {
+                        ProductoModel p = inv.getArgument(0);
+                        p.setId(1L);
+                        return p;
+                        });
+
+                ProductoModel recargado = productoEntity();
+                recargado.setSinopsis("Sinopsis demo");
+                recargado.setUrlTrailer("https://youtube.com/trailer");
+                recargado.setAnio(2025);
+                recargado.setSaga("Batman");
+                recargado.setPortadaSaga("/img/batman.webp");
+                recargado.setTipoEmpresa(tipoEmpresa);
+                recargado.setTipoDesarrollador(tipoDesarrollador);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(recargado));
+
+                ProductoResponseDTO res = productoService.save(dto);
+
+                assertNotNull(res);
+                assertEquals(1L, res.getId());
+                assertEquals("Batman", res.getSaga());
+
+                verify(tipoEmpresaRepository).findById(1L);
+                verify(tipoDeDesarrolladorRepository).findById(1L);
+                verify(empresaRepository).findById(1L);
+                verify(generoRepository).findById(2L);
+                verify(plataformaRepository).findById(3L);
+                verify(desarrolladorRepository).findById(4L);
+                verify(productoRepository).save(any(ProductoModel.class));
+        }
     }
 }
