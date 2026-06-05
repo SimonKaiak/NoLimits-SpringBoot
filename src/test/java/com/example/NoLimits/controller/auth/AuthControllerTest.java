@@ -1,4 +1,4 @@
-package com.example.NoLimits.controller;
+package com.example.NoLimits.controller.auth;
 
 import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
