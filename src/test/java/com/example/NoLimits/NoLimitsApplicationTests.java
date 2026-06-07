@@ -5,12 +5,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.example.NoLimits.config.AbstractContainerBaseTest;
 import com.example.NoLimits.config.TestSecurityConfig;
 
 @SpringBootTest(classes = NoLimitsApplication.class)
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
-public class NoLimitsApplicationTests {
+public class NoLimitsApplicationTests extends AbstractContainerBaseTest {
 
     @Test
     public void contextLoads() {

@@ -10,6 +10,8 @@ import com.example.NoLimits.Multimedia.repository.catalogos.TiposEmpresaReposito
 import com.example.NoLimits.Multimedia.service.catalogos.TipoEmpresaService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -233,4 +235,13 @@ public class TipoEmpresaServiceTest extends AbstractContainerBaseTest{
 
         verify(tipoEmpresaRepository, never()).deleteById(anyLong());
     }
+
+        @Test
+        public void testFindAllPaged() {
+        Page<TipoEmpresaModel> page = new org.springframework.data.domain.PageImpl<>(List.of(tipoEmpresaEntity()));
+        when(tipoEmpresaRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = tipoEmpresaService.findAllPaged(1, 10);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        }
 }

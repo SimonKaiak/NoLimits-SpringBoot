@@ -96,4 +96,26 @@ class EstadoControllerV2Test {
         doThrow(new RecursoNoEncontradoException("No encontrado")).when(estadoService).deleteById(99L);
         mockMvc.perform(delete("/api/v2/estados/99")).andExpect(status().isNotFound());
     }
+
+    @Test
+    void create_DatosValidos_Retorna201() throws Exception {
+        when(estadoService.save(any())).thenReturn(dto());
+        when(assembler.toModel(any())).thenReturn(entityModel());
+        mockMvc.perform(post("/api/v2/estados")
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding("UTF-8")
+                .content("{\"nombre\":\"PAGADA\",\"descripcion\":\"desc\",\"activo\":true}"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void update_Existe_Retorna200() throws Exception {
+        when(estadoService.update(eq(1L), any())).thenReturn(dto());
+        when(assembler.toModel(any())).thenReturn(entityModel());
+        mockMvc.perform(put("/api/v2/estados/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding("UTF-8")
+                .content("{\"nombre\":\"PAGADA\",\"descripcion\":\"desc\",\"activo\":true}"))
+                .andExpect(status().is4xxClientError());
+    }
 }

@@ -11,6 +11,8 @@ import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoPagoService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.springframework.data.domain.Page;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -406,4 +408,13 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
         assertEquals("Tarjeta de Crédito", row.get("Nombre"));
         assertEquals(true, row.get("Activo"));
     }
+
+        @Test
+        public void testFindAllPaged_SinFiltro() {
+        Page<MetodoPagoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createMetodoPagoEntity()));
+        when(metodoPagoRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = metodoPagoService.findAllPaged(1, 10);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        }
 }

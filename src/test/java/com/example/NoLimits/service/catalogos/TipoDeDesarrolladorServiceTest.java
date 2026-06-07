@@ -17,6 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -258,5 +260,23 @@ public class TipoDeDesarrolladorServiceTest extends AbstractContainerBaseTest{
                 () -> service.deleteById(99L));
 
         verify(tipoRepo, never()).deleteById(any(Long.class));
+    }
+
+    @Test
+    void testFindAllPaged() {
+        Page<TipoDeDesarrolladorModel> page = new org.springframework.data.domain.PageImpl<>(List.of(tipo()));
+        when(tipoRepo.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = service.findAllPaged(1, 10);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+    }
+
+    @Test
+    void testFindByNombrePaged() {
+        Page<TipoDeDesarrolladorModel> page = new org.springframework.data.domain.PageImpl<>(List.of(tipo()));
+        when(tipoRepo.findByNombreContainingIgnoreCase(any(), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = service.findByNombrePaged("Estudio", 1, 10);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
     }
 }

@@ -12,24 +12,22 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public abstract class AbstractContainerBaseTest {
     @Container
     static PostgreSQLContainer<?> postgres =
-        new PostgreSQLContainer<>("postgres:16")
+        new PostgreSQLContainer<>("pgvector/pgvector:pg16")
             .withDatabaseName("nolimits")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withInitScript("init-vector.sql");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-
         registry.add(
             "spring.datasource.url",
             () -> postgres.getJdbcUrl() + "?sslmode=disable"
         );
-
         registry.add(
             "spring.datasource.username",
             postgres::getUsername
         );
-
         registry.add(
             "spring.datasource.password",
             postgres::getPassword

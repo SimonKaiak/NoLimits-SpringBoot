@@ -10,6 +10,8 @@ import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.TipoProductoService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -322,5 +324,23 @@ public class TipoProductoServiceTest extends AbstractContainerBaseTest{
         assertEquals("Videojuegos", row.get("Nombre"));
         assertEquals("Categoría para videojuegos", row.get("Descripcion"));
         assertEquals(true, row.get("Activo"));
+    }
+
+    @Test
+    public void testListarPaginado_SinFiltro() {
+        Page<TipoProductoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createTipoProducto()));
+        when(tipoProductoRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = tipoProductoService.listarPaginado(1, 10, null);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+    }
+
+    @Test
+    public void testListarPaginado_ConFiltro() {
+        Page<TipoProductoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createTipoProducto()));
+        when(tipoProductoRepository.findByNombreContainingIgnoreCase(any(), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = tipoProductoService.listarPaginado(1, 10, "Video");
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
     }
 }

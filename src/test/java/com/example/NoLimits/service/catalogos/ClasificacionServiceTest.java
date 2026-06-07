@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
+import org.springframework.data.domain.Page;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -386,5 +387,36 @@ public class ClasificacionServiceTest extends AbstractContainerBaseTest {
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> clasificacionService.patch(99L, cambios));
+    }
+
+    @Test
+    public void testListarPaginado_SinFiltro() {
+        ClasificacionModel c = createClasificacion();
+        Page<ClasificacionModel> page = new org.springframework.data.domain.PageImpl<>(List.of(c));
+
+        when(clasificacionRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
+            .thenReturn(page);
+
+        var resultado = clasificacionService.listarPaginado(1, 10, null);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+    }
+
+    @Test
+    public void testListarPaginado_ConFiltro() {
+        ClasificacionModel c = createClasificacion();
+        Page<ClasificacionModel> page = new org.springframework.data.domain.PageImpl<>(List.of(c));
+
+        when(clasificacionRepository.findByNombreContainingIgnoreCase(
+            org.mockito.ArgumentMatchers.eq("T"),
+            any(org.springframework.data.domain.Pageable.class)))
+            .thenReturn(page);
+
+        var resultado = clasificacionService.listarPaginado(1, 10, "T");
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        assertEquals("T", resultado.getContenido().get(0).getNombre());
     }
 }

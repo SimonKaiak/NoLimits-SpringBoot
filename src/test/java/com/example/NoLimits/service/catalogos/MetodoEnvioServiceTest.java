@@ -9,6 +9,8 @@ import com.example.NoLimits.Multimedia.repository.catalogos.MetodoEnvioRepositor
 import com.example.NoLimits.Multimedia.service.catalogos.MetodoEnvioService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -293,5 +295,23 @@ public class MetodoEnvioServiceTest extends AbstractContainerBaseTest{
                 () -> metodoEnvioService.deleteById(99L));
 
         verify(metodoEnvioRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    public void testFindAllPaged_SinFiltro() {
+        Page<MetodoEnvioModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createMetodoEnvioEntity()));
+        when(metodoEnvioRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = metodoEnvioService.findAllPaged(1, 10, null);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+    }
+
+    @Test
+    public void testFindAllPaged_ConFiltro() {
+        Page<MetodoEnvioModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createMetodoEnvioEntity()));
+        when(metodoEnvioRepository.findByNombreContainingIgnoreCase(any(), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = metodoEnvioService.findAllPaged(1, 10, "domicilio");
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
     }
 }

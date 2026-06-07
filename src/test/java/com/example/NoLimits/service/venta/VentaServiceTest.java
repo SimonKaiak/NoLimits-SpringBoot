@@ -20,6 +20,10 @@ import com.example.NoLimits.Multimedia.repository.venta.VentaRepository;
 import com.example.NoLimits.Multimedia.service.venta.VentaService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +39,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -511,5 +516,54 @@ public class VentaServiceTest extends AbstractContainerBaseTest {
         assertNotNull(result);
         assertEquals(21L, result.getId());
         verify(productoRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    public void testObtenerVentasConDatos_OK() {
+        Object[] fila = new Object[] {
+            1L,
+            LocalDate.of(2025, 7, 6),
+            LocalTime.of(14, 30),
+            1L,                      // UsuarioID
+            "Juan",                  // Usuario
+            "Tarjeta de Crédito",    // Método Pago
+            "Despacho a domicilio",  // Método Envío
+            "Pagada"                 // Estado
+        };
+        List<Object[]> filas = new ArrayList<>();
+        filas.add(fila);
+        when(ventaRepository.obtenerVentasResumen()).thenReturn(filas);
+
+        List<Map<String, Object>> result = ventaService.obtenerVentasConDatos();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).get("ID"));
+    }
+
+    @Test
+    public void testFindAllPaged_OK() {
+        Page<VentaModel> page = new PageImpl<>(List.of(ventaEntity()));
+        when(ventaRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        var result = ventaService.findAllPaged(1, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContenido().size());
+        assertEquals(1L, result.getContenido().get(0).getId());
+    }
+
+    @Test
+    public void testFindMisComprasPaged_OK() {
+        Page<VentaModel> page = new PageImpl<>(List.of(ventaEntity()));
+        when(ventaRepository.findByUsuarioModel_Id(eq(1L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        var result = ventaService.findMisComprasPaged(1L, 1, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContenido().size());
+        assertEquals(1L, result.getContenido().get(0).getId());
     }
 }

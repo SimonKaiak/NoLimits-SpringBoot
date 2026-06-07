@@ -9,6 +9,8 @@ import com.example.NoLimits.Multimedia.repository.catalogos.EstadoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.EstadoService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -498,4 +500,22 @@ public class EstadoServiceTest extends AbstractContainerBaseTest{
         assertEquals("Pago confirmado", row.get("Descripcion"));
         assertEquals(true, row.get("Activo"));
     }
+
+        @Test
+        public void testListarPaginado_SinFiltro() {
+        Page<EstadoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createEstadoModel()));
+        when(estadoRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = estadoService.listarPaginado(1, 10, null);
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        }
+
+        @Test
+        public void testListarPaginado_ConFiltro() {
+        Page<EstadoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createEstadoModel()));
+        when(estadoRepository.findByNombreContainingIgnoreCase(any(), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        var resultado = estadoService.listarPaginado(1, 10, "test");
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        }
 }

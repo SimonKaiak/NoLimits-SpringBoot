@@ -1164,4 +1164,26 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
                 verify(productoRepository).save(any(ProductoModel.class));
         }
     }
+
+        @Test
+        public void testActualizarEmbeddingProducto_OK() {
+        ProductoModel producto = productoEntity();
+        doNothing().when(productoEmbeddingService)
+                .guardarEmbeddingProducto(eq(1L), any(String.class));
+
+        productoService.actualizarEmbeddingProducto(producto);
+
+        verify(productoEmbeddingService).guardarEmbeddingProducto(eq(1L), any(String.class));
+        }
+
+        @Test
+        public void testActualizarEmbeddingProducto_ErrorNoRompe() {
+        ProductoModel producto = productoEntity();
+        org.mockito.Mockito.doThrow(new RuntimeException("fallo"))
+                .when(productoEmbeddingService)
+                .guardarEmbeddingProducto(any(), any());
+
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                () -> productoService.actualizarEmbeddingProducto(producto));
+        }
 }
