@@ -76,6 +76,21 @@ class DesarrolladorControllerV2Test {
     }
 
     @Test
+    void searchByNombre_ConDatos_Retorna200() throws Exception {
+        when(desarrolladorService.findByNombre("Test")).thenReturn(List.of(dto()));
+        when(desarrolladorAssembler.toModel(any())).thenReturn(entityModel());
+        mockMvc.perform(get("/api/v2/desarrolladores/search").param("nombre", "Test"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void searchByNombre_SinDatos_Retorna204() throws Exception {
+        when(desarrolladorService.findByNombre("Inexistente")).thenReturn(List.of());
+        mockMvc.perform(get("/api/v2/desarrolladores/search").param("nombre", "Inexistente"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void create_DatosValidos_Retorna201() throws Exception {
         when(desarrolladorService.save(any())).thenReturn(dto());
         when(desarrolladorAssembler.toModel(any())).thenReturn(entityModel());
@@ -96,6 +111,16 @@ class DesarrolladorControllerV2Test {
     }
 
     @Test
+    void update_NoExiste_Retorna404() throws Exception {
+        when(desarrolladorService.update(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(put("/api/v2/desarrolladores/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Nuevo\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void patch_Existe_Retorna200() throws Exception {
         when(desarrolladorService.patch(eq(1L), any())).thenReturn(dto());
         when(desarrolladorAssembler.toModel(any())).thenReturn(entityModel());
@@ -103,6 +128,26 @@ class DesarrolladorControllerV2Test {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nombre\":\"Parcial\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_NoExiste_Retorna404() throws Exception {
+        when(desarrolladorService.patch(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(patch("/api/v2/desarrolladores/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Parcial\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void patch_NombreInvalido_Retorna400() throws Exception {
+        when(desarrolladorService.patch(eq(1L), any()))
+                .thenThrow(new IllegalArgumentException("Nombre inválido"));
+        mockMvc.perform(patch("/api/v2/desarrolladores/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

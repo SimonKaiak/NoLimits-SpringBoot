@@ -41,6 +41,8 @@ class TipoProductoControllerV2Test {
         TipoProductoResponseDTO dto = new TipoProductoResponseDTO();
         dto.setId(1L);
         dto.setNombre("Test");
+        dto.setDescripcion("Desc");
+        dto.setActivo(true);
         return dto;
     }
 
@@ -86,13 +88,32 @@ class TipoProductoControllerV2Test {
     }
 
     @Test
-    void update_Existe_Retorna200() throws Exception {
+    void update_DatosCompletos_Retorna200() throws Exception {
         when(tipoProductoService.update(eq(1L), any())).thenReturn(dto());
         when(tipoProductoAssembler.toModel(any())).thenReturn(entityModel());
         mockMvc.perform(put("/api/v2/tipos-producto/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nombre\":\"Nuevo\",\"descripcion\":\"Desc\",\"activo\":true}"))
+                .content("{\"nombre\":\"Nuevo\",\"descripcion\":\"Desc nueva\",\"activo\":true}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void update_DatosIncompletos_Retorna400() throws Exception {
+        // PUT without descripcion and activo should fail the guard
+        mockMvc.perform(put("/api/v2/tipos-producto/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Incompleto\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void update_NoExiste_Retorna404() throws Exception {
+        when(tipoProductoService.update(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(put("/api/v2/tipos-producto/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Nuevo\",\"descripcion\":\"Desc\",\"activo\":true}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -103,6 +124,16 @@ class TipoProductoControllerV2Test {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nombre\":\"Parcial\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_NoExiste_Retorna404() throws Exception {
+        when(tipoProductoService.patch(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(patch("/api/v2/tipos-producto/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Parcial\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

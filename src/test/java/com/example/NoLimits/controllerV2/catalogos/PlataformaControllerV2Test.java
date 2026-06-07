@@ -40,7 +40,7 @@ class PlataformaControllerV2Test {
     private PlataformaResponseDTO dto() {
         PlataformaResponseDTO dto = new PlataformaResponseDTO();
         dto.setId(1L);
-        dto.setNombre("Test");
+        dto.setNombre("PC");
         return dto;
     }
 
@@ -81,7 +81,7 @@ class PlataformaControllerV2Test {
         when(plataformaAssembler.toModel(any())).thenReturn(entityModel());
         mockMvc.perform(post("/api/v2/plataformas")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nombre\":\"Test\"}"))
+                .content("{\"nombre\":\"PC\"}"))
                 .andExpect(status().isCreated());
     }
 
@@ -91,8 +91,18 @@ class PlataformaControllerV2Test {
         when(plataformaAssembler.toModel(any())).thenReturn(entityModel());
         mockMvc.perform(put("/api/v2/plataformas/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nombre\":\"Nuevo\"}"))
+                .content("{\"nombre\":\"Xbox\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void update_NoExiste_Retorna404() throws Exception {
+        when(plataformaService.update(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(put("/api/v2/plataformas/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Xbox\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -101,8 +111,18 @@ class PlataformaControllerV2Test {
         when(plataformaAssembler.toModel(any())).thenReturn(entityModel());
         mockMvc.perform(patch("/api/v2/plataformas/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nombre\":\"Parcial\"}"))
+                .content("{\"nombre\":\"PlayStation\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_NoExiste_Retorna404() throws Exception {
+        when(plataformaService.patch(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(patch("/api/v2/plataformas/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"PlayStation\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -96,6 +96,26 @@ class TipoDeDesarrolladorControllerV2Test {
     }
 
     @Test
+    void update_NoExiste_Retorna404() throws Exception {
+        when(tipoDeDesarrolladorService.update(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(put("/api/v2/tipos-desarrollador/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Nuevo\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void update_NombreInvalido_Retorna400() throws Exception {
+        when(tipoDeDesarrolladorService.update(eq(1L), any()))
+                .thenThrow(new IllegalArgumentException("Nombre duplicado"));
+        mockMvc.perform(put("/api/v2/tipos-desarrollador/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Duplicado\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void patch_Existe_Retorna200() throws Exception {
         when(tipoDeDesarrolladorService.patch(eq(1L), any())).thenReturn(dto());
         when(tipoDeDesarrolladorAssembler.toModel(any())).thenReturn(entityModel());
@@ -103,6 +123,26 @@ class TipoDeDesarrolladorControllerV2Test {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nombre\":\"Parcial\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_NoExiste_Retorna404() throws Exception {
+        when(tipoDeDesarrolladorService.patch(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(patch("/api/v2/tipos-desarrollador/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Parcial\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void patch_NombreInvalido_Retorna400() throws Exception {
+        when(tipoDeDesarrolladorService.patch(eq(1L), any()))
+                .thenThrow(new IllegalArgumentException("Nombre inválido"));
+        mockMvc.perform(patch("/api/v2/tipos-desarrollador/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -115,5 +155,11 @@ class TipoDeDesarrolladorControllerV2Test {
     void delete_NoExiste_Retorna404() throws Exception {
         doThrow(new RecursoNoEncontradoException("No encontrado")).when(tipoDeDesarrolladorService).deleteById(99L);
         mockMvc.perform(delete("/api/v2/tipos-desarrollador/99")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void delete_ConRelaciones_Retorna400() throws Exception {
+        doThrow(new IllegalStateException("Tiene relaciones")).when(tipoDeDesarrolladorService).deleteById(1L);
+        mockMvc.perform(delete("/api/v2/tipos-desarrollador/1")).andExpect(status().isBadRequest());
     }
 }

@@ -1,5 +1,6 @@
 package com.example.NoLimits.controllerV2.catalogos;
 
+import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
 import com.example.NoLimits.Multimedia.assemblers.catalogos.EmpresasModelAssembler;
 import com.example.NoLimits.Multimedia.controllerV2.catalogos.EmpresasControllerV2;
 import com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresasResponseDTO;
@@ -12,11 +13,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -39,7 +42,6 @@ class EmpresasControllerV2Test {
         dto.setId(1L);
         dto.setProductoId(10L);
         dto.setEmpresaId(1L);
-        dto.setEmpresaNombre("Sony Pictures");
         return dto;
     }
 
@@ -69,6 +71,16 @@ class EmpresasControllerV2Test {
         when(empresasAssembler.toModel(any())).thenReturn(entityModel());
         mockMvc.perform(post("/api/v2/productos/10/empresas/1"))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void patch_DatosValidos_Retorna200() throws Exception {
+        when(empresasService.patch(eq(1L), any())).thenReturn(dto());
+        when(empresasAssembler.toModel(any())).thenReturn(entityModel());
+        mockMvc.perform(patch("/api/v2/productos/10/empresas/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"productoId\":20}"))
+                .andExpect(status().isOk());
     }
 
     @Test

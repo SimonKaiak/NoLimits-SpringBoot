@@ -85,13 +85,31 @@ class GeneroControllerV2Test {
     }
 
     @Test
-    void update_Existe_Retorna200() throws Exception {
+    void update_ConNombre_Retorna200() throws Exception {
         when(generoService.update(eq(1L), any())).thenReturn(dto());
         when(generoAssembler.toModel(any())).thenReturn(entityModel());
         mockMvc.perform(put("/api/v2/generos/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nombre\":\"Terror\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void update_SinNombre_Retorna400() throws Exception {
+        mockMvc.perform(put("/api/v2/generos/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void update_NoExiste_Retorna404() throws Exception {
+        when(generoService.update(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(put("/api/v2/generos/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Terror\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -102,6 +120,16 @@ class GeneroControllerV2Test {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nombre\":\"Terror\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_NoExiste_Retorna404() throws Exception {
+        when(generoService.patch(eq(99L), any()))
+                .thenThrow(new RecursoNoEncontradoException("No encontrado"));
+        mockMvc.perform(patch("/api/v2/generos/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombre\":\"Terror\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
