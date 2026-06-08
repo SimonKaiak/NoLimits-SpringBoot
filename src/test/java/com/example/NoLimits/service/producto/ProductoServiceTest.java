@@ -9,6 +9,7 @@ import com.example.NoLimits.Multimedia.model.catalogos.ClasificacionModel;
 import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
 import com.example.NoLimits.Multimedia.model.catalogos.TipoProductoModel;
 import com.example.NoLimits.Multimedia.model.producto.DetalleVentaModel;
+import com.example.NoLimits.Multimedia.model.producto.ImagenesModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.ClasificacionRepository;
 import com.example.NoLimits.Multimedia.repository.catalogos.DesarrolladorRepository;
@@ -43,10 +44,11 @@ import com.example.NoLimits.Multimedia.model.producto.ProductoLinkCompraModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import java.util.HashSet;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -56,13 +58,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.ActiveProfiles;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -199,6 +203,30 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         assertEquals("Activo", dto.getEstadoNombre());
         }
 
+        @Test
+        public void testFindBySagaIgnoreCase() {
+
+                List<Object[]> filas = Collections.singletonList(filaResumen());
+                PageImpl<Object[]> page = new PageImpl<>(filas);
+
+                when(productoRepository.obtenerResumenPorSaga(
+                        eq("Spiderman"),
+                        any()))
+                        .thenReturn(page);
+
+                var resultado =
+                        productoService.findBySagaIgnoreCase(
+                                "Spiderman",
+                                1,
+                                20);
+
+                assertNotNull(resultado);
+                assertEquals(1, resultado.getContenido().size());
+                assertEquals(
+                        "Spiderman",
+                        resultado.getContenido().get(0).getSaga()
+                );
+        }
     @Test
     public void testFindById_Existe() {
         when(productoRepository.findByIdFull(1L)).thenReturn(Optional.of(productoEntity()));
@@ -251,6 +279,38 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
+    @DisplayName("save continúa cuando Steam falla")
+    void testSave_ContinuaCuandoSteamFalla() {
+
+        ProductoRequestDTO dto = requestBase();
+
+        when(tipoProductoRepository.findById(1L))
+                .thenReturn(Optional.of(tipoProducto()));
+
+        when(clasificacionRepository.findById(1L))
+                .thenReturn(Optional.of(clasificacion()));
+
+        when(estadoRepository.findById(1L))
+                .thenReturn(Optional.of(estado()));
+
+        when(productoRepository.save(any()))
+                .thenAnswer(inv -> {
+                        ProductoModel p = inv.getArgument(0);
+                        p.setId(1L);
+                        return p;
+                });
+
+        ProductoModel productoSinLinks = productoEntity();
+        productoSinLinks.setLinksCompra(new HashSet<>());
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(productoSinLinks))
+                .thenReturn(Optional.of(productoEntity()));
+
+        assertDoesNotThrow(() -> productoService.save(dto));
+    }
+
+    @Test
     public void testSave_SinTipoProducto_Lanza404() {
         ProductoRequestDTO dto = requestBase();
         dto.setTipoProductoId(null);
@@ -282,6 +342,53 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
         verify(productoRepository, never()).save(any(ProductoModel.class));
     }
+
+    @Test
+    @DisplayName("guarda producto aunque falle Steam")
+    void testSave_SteamFalla_NoRompeGuardado() {
+
+        ProductoRequestDTO dto = requestBase();
+
+        when(tipoProductoRepository.findById(1L))
+                .thenReturn(Optional.of(tipoProducto()));
+
+        when(clasificacionRepository.findById(1L))
+                .thenReturn(Optional.of(clasificacion()));
+
+        when(estadoRepository.findById(1L))
+                .thenReturn(Optional.of(estado()));
+
+        when(productoRepository.save(any()))
+                .thenAnswer(inv -> {
+                        ProductoModel p = inv.getArgument(0);
+                        p.setId(1L);
+                        return p;
+                });
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(productoEntity()));
+
+        doThrow(new RuntimeException("steam error"))
+                .when(scrapingClientService)
+                .obtenerPrecioSteam(any());
+
+        assertDoesNotThrow(() -> productoService.save(dto));
+        }
+
+        @Test
+        @DisplayName("save con tipo producto inexistente")
+        void testSave_TipoProductoNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+        }
+
+     
 
     // ==========================
     // update (PUT)
@@ -323,6 +430,45 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         ProductoRequestDTO dto = requestBase();
 
         when(productoRepository.findByIdFull(1L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> productoService.update(1L, dto));
+    }
+
+    @Test
+    public void testUpdate_ClasificacionNoExiste() {
+
+        ProductoRequestDTO dto = requestBase();
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(productoEntity()));
+
+        when(tipoProductoRepository.findById(1L))
+                .thenReturn(Optional.of(tipoProducto()));
+
+        when(clasificacionRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> productoService.update(1L, dto));
+    }
+
+    @Test
+    public void testUpdate_EstadoNoExiste() {
+
+        ProductoRequestDTO dto = requestBase();
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(productoEntity()));
+
+        when(tipoProductoRepository.findById(1L))
+                .thenReturn(Optional.of(tipoProducto()));
+
+        when(clasificacionRepository.findById(1L))
+                .thenReturn(Optional.of(clasificacion()));
+
+        when(estadoRepository.findById(1L))
+                .thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> productoService.update(1L, dto));
@@ -376,6 +522,19 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         assertThrows(RecursoNoEncontradoException.class,
                 () -> productoService.patch(1L, dto));
     }
+
+    @Test
+    void testPatch_ProductoNoExiste_Lanza404() {
+
+        ProductoUpdateDTO dto = new ProductoUpdateDTO();
+        dto.setPrecio(1000.0);
+
+        when(productoRepository.findByIdFull(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> productoService.patch(99L, dto));
+        }
 
     // ==========================
     // deleteById
@@ -585,6 +744,23 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         assertEquals("Teclado Mecánico", resultado.get(0).getNombre());
     }
 
+  
+
+    @Test
+    public void testFindBySagaCompleto_IgnoraIdsNoEncontrados() {
+
+        when(productoRepository.findIdsBySagaIgnoreCase("Spiderman"))
+                .thenReturn(List.of(1L));
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.empty());
+
+        var resultado =
+                productoService.findBySagaCompleto("Spiderman");
+
+        assertEquals(0, resultado.size());
+    }
+
     @Test
     public void testObtenerSagasDistinct() {
         when(productoRepository.findDistinctSagas())
@@ -637,6 +813,26 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
         assertEquals(true, existe);
         verify(productoRepository).existsByLinksCompraUrl("https://mercadolibre.cl/producto");
+    }
+
+    @Test
+    public void testExisteProductoPorLinkCompra_SinHash() {
+
+        when(productoRepository.existsByLinksCompraUrl(
+                "https://mercadolibre.cl/producto"))
+                .thenReturn(true);
+
+        boolean existe =
+                productoService.existeProductoPorLinkCompra(
+                        "https://mercadolibre.cl/producto"
+                );
+
+        assertTrue(existe);
+
+        verify(productoRepository)
+                .existsByLinksCompraUrl(
+                        "https://mercadolibre.cl/producto"
+                );
     }
 
     @Test
@@ -735,6 +931,73 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
             verify(scrapingClientService, never()).obtenerPrecioSteam(any());
             verify(productoRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("lanza excepción cuando appId está vacío")
+        void testActualizarPrecioDesdeSteam_AppIdVacio() {
+
+                ProductoModel producto = productoEntity();
+
+                ProductoLinkCompraModel linkSteam = new ProductoLinkCompraModel();
+                linkSteam.setAppId("");
+
+                producto.setLinksCompra(new HashSet<>(List.of(linkSteam)));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.actualizarPrecioDesdeSteam(1L));
+
+                verify(scrapingClientService, never())
+                        .obtenerPrecioSteam(any());
+
+                verify(productoRepository, never())
+                        .save(any());
+        }
+
+        @Test
+        @DisplayName("continua cuando embedding falla")
+        void testActualizarPrecioDesdeSteam_EmbeddingFalla() {
+
+                ProductoModel producto = productoEntity();
+
+                ProductoLinkCompraModel link = new ProductoLinkCompraModel();
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+
+                link.setPlataforma(plataforma);
+                link.setAppId("730");
+
+                producto.setLinksCompra(new HashSet<>(List.of(link)));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(scrapingClientService.obtenerPrecioSteam("730"))
+                        .thenReturn(Map.of(
+                                "nombre", "CS2",
+                                "precio", 0,
+                                "precioFormato", "Free",
+                                "moneda", "CLP",
+                                "urlPlataforma", "url"
+                        ));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                doThrow(new RuntimeException("error"))
+                        .when(productoEmbeddingService)
+                        .guardarEmbeddingProducto(any(), any());
+
+                assertDoesNotThrow(
+                        () -> productoService.actualizarPrecioDesdeSteam(1L)
+                );
+        }
+
+     
     }
 
     @Nested
@@ -875,6 +1138,261 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
                 verify(productoRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("lanza excepción cuando url está vacía")
+        void testPatch_LinkCompraSinUrl_LanzaExcepcion() {
+
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(new HashSet<>());
+
+                LinkCompraDTO linkDTO = new LinkCompraDTO();
+                linkDTO.setPlataformaId(1L);
+                linkDTO.setUrl("");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(linkDTO));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                assertThrows(IllegalArgumentException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando la plataforma no existe")
+        void testPatch_LinkCompra_PlataformaNoExiste() {
+
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(new HashSet<>());
+
+                LinkCompraDTO linkDTO = new LinkCompraDTO();
+                linkDTO.setPlataformaId(99L);
+                linkDTO.setUrl("https://store.steampowered.com/app/730");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(linkDTO));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("usa nombre de plataforma cuando label es null")
+        void testPatch_LinkCompraSinLabel_UsaNombrePlataforma() {
+
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(new HashSet<>());
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+                plataforma.setNombre("Steam");
+
+                LinkCompraDTO link = new LinkCompraDTO();
+                link.setPlataformaId(1L);
+                link.setUrl("https://steam.com/app/730");
+                link.setLabel(null);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(link));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(1L))
+                        .thenReturn(Optional.of(plataforma));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                ProductoLinkCompraModel creado =
+                producto.getLinksCompra().iterator().next();
+
+                assertEquals("Steam", creado.getLabel());
+        }
+
+        @Test
+        @DisplayName("inicializa colección linksCompra cuando es null")
+        void testPatch_LinksCompraCollectionNull() {
+
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(null);
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+                plataforma.setNombre("Steam");
+
+                LinkCompraDTO link = new LinkCompraDTO();
+                link.setPlataformaId(1L);
+                link.setUrl("https://steam.com/app/730");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(link));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(1L))
+                        .thenReturn(Optional.of(plataforma));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertNotNull(producto.getLinksCompra());
+        }
+
+        @Test
+        @DisplayName("mantiene appId existente cuando appId viene null")
+        void testPatch_LinkCompraMantieneAppId() {
+
+                ProductoModel producto = productoEntity();
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+
+                ProductoLinkCompraModel link = new ProductoLinkCompraModel();
+                link.setProducto(producto);
+                link.setPlataforma(plataforma);
+                link.setAppId("730");
+
+                producto.setLinksCompra(new HashSet<>(List.of(link)));
+
+                LinkCompraDTO dtoLink = new LinkCompraDTO();
+                dtoLink.setPlataformaId(1L);
+                dtoLink.setUrl("https://steam.com/app/730");
+                dtoLink.setAppId(null);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(dtoLink));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals("730", link.getAppId());
+        }
+
+        @Test
+        @DisplayName("ignora links duplicados de misma plataforma")
+        void testPatch_LinkCompraDuplicadoMismaPlataforma() {
+
+                ProductoModel producto = productoEntity();
+
+                producto.setLinksCompra(new HashSet<>());
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+                plataforma.setNombre("Steam");
+
+                LinkCompraDTO l1 = new LinkCompraDTO();
+                l1.setPlataformaId(1L);
+                l1.setUrl("url1");
+
+                LinkCompraDTO l2 = new LinkCompraDTO();
+                l2.setPlataformaId(1L);
+                l2.setUrl("url2");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(l1, l2));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(1L))
+                        .thenReturn(Optional.of(plataforma));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+        }
+
+        @Test
+        @DisplayName("cubre merge function cuando existen plataformas duplicadas")
+        void testPatch_CubreMergeFunctionToMap() {
+
+        ProductoModel producto = productoEntity();
+
+        PlataformaModel plataforma = new PlataformaModel();
+        plataforma.setId(1L);
+        plataforma.setNombre("Steam");
+
+        ProductoLinkCompraModel link1 = new ProductoLinkCompraModel();
+        link1.setProducto(producto);
+        link1.setPlataforma(plataforma);
+        link1.setUrl("url1");
+
+        ProductoLinkCompraModel link2 = new ProductoLinkCompraModel();
+        link2.setProducto(producto);
+        link2.setPlataforma(plataforma);
+        link2.setUrl("url2");
+
+        Set<ProductoLinkCompraModel> links = new HashSet<>();
+        links.add(link1);
+        links.add(link2);
+
+        producto.setLinksCompra(links);
+
+        ProductoUpdateDTO dto = new ProductoUpdateDTO();
+        dto.setLinksCompra(List.of());
+
+        when(productoRepository.findByIdFull(1L))
+                .thenReturn(Optional.of(producto))
+                .thenReturn(Optional.of(producto));
+
+        when(productoRepository.save(any()))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        productoService.patch(1L, dto);
+
+        verify(productoRepository).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando linkCompra tiene plataformaId null y url válida")
+        void testPatch_LinkCompra_PlataformaIdNull_RamaDirecta() {
+
+                ProductoModel producto = productoEntity();
+                producto.setLinksCompra(null);
+
+                LinkCompraDTO link = new LinkCompraDTO();
+                link.setPlataformaId(null);
+                link.setUrl("https://steam.com/app/730");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setLinksCompra(List.of(link));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                assertThrows(
+           IllegalArgumentException.class,
+                        () -> productoService.patch(1L, dto)
+                );
+        }
     }
 
     @Nested
@@ -941,6 +1459,36 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         }
 
         @Test
+        @DisplayName("elimina empresas no incluidas en patch")
+        void testPatch_RemueveEmpresaExistente() {
+
+                ProductoModel producto = productoEntity();
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+
+                EmpresasModel rel = new EmpresasModel();
+                rel.setProducto(producto);
+                rel.setEmpresa(empresa);
+
+                producto.setEmpresas(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(List.of());
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getEmpresas().size());
+        }
+
+        @Test
         @DisplayName("lanza excepción cuando una empresa no existe")
         void testPatch_EmpresaNoExiste_Lanza404() {
                 ProductoModel producto = productoEntity();
@@ -960,7 +1508,620 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
                 verify(productoRepository, never()).save(any());
         }
-    }
+
+        @Test
+        @DisplayName("lanza excepción cuando un género no existe")
+        void testPatch_GeneroNoExiste_Lanza404() {
+                ProductoModel producto = productoEntity();
+                 producto.setGeneros(new HashSet<>());
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setGenerosIds(List.of(99L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(generoRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+
+    
+        }
+
+
+        @Test
+        @DisplayName("lanza excepción cuando un desarrollador no existe")
+        void testPatch_DesarrolladorNoExiste_Lanza404() {
+                ProductoModel producto = productoEntity();
+                producto.setDesarrolladores(new HashSet<>());
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setDesarrolladoresIds(List.of(99L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(desarrolladorRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando una plataforma no existe")
+        void testPatch_PlataformaNoExiste_Lanza404() {
+                ProductoModel producto = productoEntity();
+                producto.setPlataformas(new HashSet<>());
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setPlataformasIds(List.of(99L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+
+        }
+
+        @Test
+        @DisplayName("elimina relaciones que ya no vienen en el DTO")
+        void testPatch_EliminaRelacionesExistentes() {
+
+                ProductoModel producto = productoEntity();
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+
+                EmpresasModel relacion = new EmpresasModel();
+                relacion.setProducto(producto);
+                relacion.setEmpresa(empresa);
+
+                producto.setEmpresas(new HashSet<>(List.of(relacion)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(List.of()); // vacío
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getEmpresas().size());
+        }
+
+        @Test
+        @DisplayName("limpia imágenes cuando recibe lista vacía")
+        void testPatch_ImagenesVacias() {
+
+                ProductoModel producto = productoEntity();
+
+                ImagenesModel img = new ImagenesModel();
+                img.setRuta("/img/test.webp");
+
+                producto.setImagenes(new ArrayList<>(List.of(img)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setImagenesRutas(List.of());
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getImagenes().size());
+        }
+
+        @Test
+        @DisplayName("mantiene empresas cuando empresasIds es null")
+        void testPatch_EmpresasNull_NoModifica() {
+
+                ProductoModel producto = productoEntity();
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+
+                EmpresasModel rel = new EmpresasModel();
+                rel.setProducto(producto);
+                rel.setEmpresa(empresa);
+
+                producto.setEmpresas(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(null);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getEmpresas().size());
+        }
+
+        @Test
+        @DisplayName("mantiene géneros cuando generosIds es null")
+        void testPatch_GenerosNull_NoModifica() {
+
+                ProductoModel producto = productoEntity();
+
+                GeneroModel genero = new GeneroModel();
+                genero.setId(1L);
+
+                GenerosModel rel = new GenerosModel();
+                rel.setProducto(producto);
+                rel.setGenero(genero);
+
+                producto.setGeneros(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setGenerosIds(null);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getGeneros().size());
+        }
+
+        @Test
+        @DisplayName("mantiene plataformas cuando plataformasIds es null")
+        void testPatch_PlataformasNull_NoModifica() {
+
+                ProductoModel producto = productoEntity();
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+
+                PlataformasModel rel = new PlataformasModel();
+                rel.setProducto(producto);
+                rel.setPlataforma(plataforma);
+
+                producto.setPlataformas(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setPlataformasIds(null);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getPlataformas().size());
+        }
+
+        @Test
+        @DisplayName("mantiene desarrolladores cuando desarrolladoresIds es null")
+        void testPatch_DesarrolladoresNull_NoModifica() {
+
+                ProductoModel producto = productoEntity();
+
+                DesarrolladorModel dev = new DesarrolladorModel();
+                dev.setId(1L);
+
+                DesarrolladoresModel rel = new DesarrolladoresModel();
+                rel.setProducto(producto);
+                rel.setDesarrollador(dev);
+
+                producto.setDesarrolladores(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setDesarrolladoresIds(null);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getDesarrolladores().size());
+        }
+
+        @Test
+        @DisplayName("inicializa colección empresas cuando es null")
+        void testPatch_EmpresasCollectionNull() {
+
+                ProductoModel producto = productoEntity();
+                producto.setEmpresas(null);
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(empresaRepository.findById(1L))
+                        .thenReturn(Optional.of(empresa));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertNotNull(producto.getEmpresas());
+        }
+
+        @Test
+        @DisplayName("no agrega empresa duplicada")
+        void testPatch_EmpresaDuplicada_NoAgrega() {
+
+                ProductoModel producto = productoEntity();
+
+                EmpresaModel empresa = new EmpresaModel();
+                empresa.setId(1L);
+
+                EmpresasModel rel = new EmpresasModel();
+                rel.setProducto(producto);
+                rel.setEmpresa(empresa);
+
+                producto.setEmpresas(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEmpresasIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getEmpresas().size());
+
+                verify(empresaRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("no agrega género duplicado")
+        void testPatch_GeneroDuplicado_NoAgrega() {
+
+                ProductoModel producto = productoEntity();
+
+                GeneroModel genero = new GeneroModel();
+                genero.setId(1L);
+
+                GenerosModel rel = new GenerosModel();
+                rel.setProducto(producto);
+                rel.setGenero(genero);
+
+                producto.setGeneros(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setGenerosIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getGeneros().size());
+
+                verify(generoRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("no agrega plataforma duplicada")
+        void testPatch_PlataformaDuplicada_NoAgrega() {
+
+                ProductoModel producto = productoEntity();
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+
+                PlataformasModel rel = new PlataformasModel();
+                rel.setProducto(producto);
+                rel.setPlataforma(plataforma);
+
+                producto.setPlataformas(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setPlataformasIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getPlataformas().size());
+
+                verify(plataformaRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("no agrega desarrollador duplicado")
+        void testPatch_DesarrolladorDuplicado_NoAgrega() {
+
+                ProductoModel producto = productoEntity();
+
+                DesarrolladorModel dev = new DesarrolladorModel();
+                dev.setId(1L);
+
+                DesarrolladoresModel rel = new DesarrolladoresModel();
+                rel.setProducto(producto);
+                rel.setDesarrollador(dev);
+
+                producto.setDesarrolladores(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setDesarrolladoresIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(1, producto.getDesarrolladores().size());
+
+                verify(desarrolladorRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("inicializa colección de géneros cuando es null")
+        void testPatch_GenerosCollectionNull() {
+
+                ProductoModel producto = productoEntity();
+                producto.setGeneros(null);
+
+                GeneroModel genero = new GeneroModel();
+                genero.setId(1L);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setGenerosIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(generoRepository.findById(1L))
+                        .thenReturn(Optional.of(genero));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertNotNull(producto.getGeneros());
+        }
+
+        @Test
+        @DisplayName("inicializa colección de plataformas cuando es null")
+        void testPatch_PlataformasCollectionNull() {
+
+                ProductoModel producto = productoEntity();
+                producto.setPlataformas(null);
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+                plataforma.setNombre("PC");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setPlataformasIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(plataformaRepository.findById(1L))
+                        .thenReturn(Optional.of(plataforma));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertNotNull(producto.getPlataformas());
+                assertEquals(1, producto.getPlataformas().size());
+        }
+
+        @Test
+        @DisplayName("inicializa colección de desarrolladores cuando es null")
+        void testPatch_DesarrolladoresCollectionNull() {
+
+                ProductoModel producto = productoEntity();
+                producto.setDesarrolladores(null);
+
+                DesarrolladorModel desarrollador = new DesarrolladorModel();
+                desarrollador.setId(1L);
+                desarrollador.setNombre("Valve Studio");
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setDesarrolladoresIds(List.of(1L));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(desarrolladorRepository.findById(1L))
+                        .thenReturn(Optional.of(desarrollador));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertNotNull(producto.getDesarrolladores());
+                assertEquals(1, producto.getDesarrolladores().size());
+        }
+
+        @Test
+        @DisplayName("elimina géneros no incluidos en patch")
+        void testPatch_RemueveGeneroExistente() {
+
+                ProductoModel producto = productoEntity();
+
+                GeneroModel genero = new GeneroModel();
+                genero.setId(1L);
+
+                GenerosModel rel = new GenerosModel();
+                rel.setProducto(producto);
+                rel.setGenero(genero);
+
+                producto.setGeneros(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setGenerosIds(List.of());
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getGeneros().size());
+        }
+
+        @Test
+        @DisplayName("elimina plataformas no incluidas en patch")
+        void testPatch_RemuevePlataformaExistente() {
+
+                ProductoModel producto = productoEntity();
+
+                PlataformaModel plataforma = new PlataformaModel();
+                plataforma.setId(1L);
+
+                PlataformasModel rel = new PlataformasModel();
+                rel.setProducto(producto);
+                rel.setPlataforma(plataforma);
+
+                producto.setPlataformas(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setPlataformasIds(List.of());
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getPlataformas().size());
+        }
+
+        @Test
+        @DisplayName("elimina desarrolladores no incluidos en patch")
+        void testPatch_RemueveDesarrolladorExistente() {
+
+                ProductoModel producto = productoEntity();
+
+                DesarrolladorModel dev = new DesarrolladorModel();
+                dev.setId(1L);
+
+                DesarrolladoresModel rel = new DesarrolladoresModel();
+                rel.setProducto(producto);
+                rel.setDesarrollador(dev);
+
+                producto.setDesarrolladores(new HashSet<>(List.of(rel)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setDesarrolladoresIds(List.of());
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getDesarrolladores().size());
+        }
+
+        @Test
+        @DisplayName("tipo producto inexistente")
+        void testPatch_TipoProductoNoExiste() {
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setTipoProductoId(999L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(productoEntity()));
+
+                when(tipoProductoRepository.findById(999L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+        }
+
+        @Test
+        @DisplayName("clasificacion inexistente")
+        void testPatch_ClasificacionNoExiste() {
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setClasificacionId(999L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(productoEntity()));
+
+                when(clasificacionRepository.findById(999L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+        }
+    
+     }
 
     @Nested
     @DisplayName("Unitario - patch campos adicionales")
@@ -1054,6 +2215,55 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         }
 
         @Test
+        @DisplayName("limpia imágenes cuando lista viene vacía")
+        void testPatch_ImagenesListaVacia() {
+
+                ProductoModel producto = productoEntity();
+
+                ImagenesModel img = new ImagenesModel();
+                img.setRuta("/img/test.webp");
+
+                producto.setImagenes(new ArrayList<>(List.of(img)));
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setImagenesRutas(List.of());
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertEquals(0, producto.getImagenes().size());
+        }
+
+        @Test
+        @DisplayName("inicializa imágenes cuando colección es null")
+        void testPatch_ImagenesCollectionNull() {
+
+                ProductoModel producto = productoEntity();
+                producto.setImagenes(null);
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setImagenesRutas(List.of("/img/test.webp"));
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto))
+                        .thenReturn(Optional.of(producto));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> inv.getArgument(0));
+
+                productoService.patch(1L, dto);
+
+                assertNotNull(producto.getImagenes());
+                assertEquals(1, producto.getImagenes().size());
+        }
+
+        @Test
         @DisplayName("lanza excepción cuando tipo empresa no existe")
         void testPatch_TipoEmpresaNoExiste_Lanza404() {
                 ProductoModel producto = productoEntity();
@@ -1072,6 +2282,70 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
 
                 verify(productoRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("Lanza excepcion cuando tipo desarrollador no existe")
+        void testPatch_TipoDesarrolladorNoExiste_Lanza404(){
+                 ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setTipoDesarrolladorId(99L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(tipoDeDesarrolladorRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando clasificación no existe")
+        void testPatch_ClasificacionInvalida_Lanza404() {
+                ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setClasificacionId(99L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(clasificacionRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+    
+        @Test
+        @DisplayName("lanza excepción cuando estado no existe")
+        void testPatch_EstadoInvalido_Lanza404() {
+
+                ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setEstadoId(99L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(estadoRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+
     }
 
     @Nested
@@ -1163,7 +2437,272 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
                 verify(desarrolladorRepository).findById(4L);
                 verify(productoRepository).save(any(ProductoModel.class));
         }
-    }
+
+        @Test
+        @DisplayName("lanza excepción cuando tipo empresa no existe")
+        void testSave_TipoEmpresaNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+                dto.setTipoEmpresaId(99L);
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(tipoEmpresaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando tipo desarrollador no existe")
+        void testSave_TipoDesarrolladorNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+                dto.setTipoDesarrolladorId(99L);
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(tipoDeDesarrolladorRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando empresa no existe")
+        void testSave_EmpresaNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+                dto.setEmpresasIds(List.of(99L));
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(empresaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando género no existe")
+        void testSave_GeneroNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+                dto.setGenerosIds(List.of(99L));
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(generoRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando plataforma no existe")
+        void testSave_PlataformaNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+                dto.setPlataformasIds(List.of(99L));
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(plataformaRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando tipo producto no existe")
+        void testPatch_TipoProductoNoExiste_Lanza404() {
+
+                ProductoModel producto = productoEntity();
+
+                ProductoUpdateDTO dto = new ProductoUpdateDTO();
+                dto.setTipoProductoId(999L);
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(producto));
+
+                when(tipoProductoRepository.findById(999L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.patch(1L, dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("lanza excepción cuando desarrollador no existe")
+        void testSave_DesarrolladorNoExiste() {
+
+                ProductoRequestDTO dto = requestBase();
+                dto.setDesarrolladoresIds(List.of(99L));
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(desarrolladorRepository.findById(99L))
+                        .thenReturn(Optional.empty());
+
+                assertThrows(RecursoNoEncontradoException.class,
+                        () -> productoService.save(dto));
+
+                verify(productoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("save permite tipo empresa null")
+        void testSave_TipoEmpresaNull() {
+
+                ProductoRequestDTO dto = requestBase();
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> {
+                                ProductoModel p = inv.getArgument(0);
+                                p.setId(1L);
+                                return p;
+                        });
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(productoEntity()));
+
+                assertNotNull(productoService.save(dto));
+        }
+
+        @Test
+        @DisplayName("save permite tipo desarrollador null")
+        void testSave_TipoDesarrolladorNull() {
+
+                ProductoRequestDTO dto = requestBase();
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> {
+                                ProductoModel p = inv.getArgument(0);
+                                p.setId(1L);
+                                return p;
+                        });
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(productoEntity()));
+
+                assertNotNull(productoService.save(dto));
+        }
+
+        @Test
+        @DisplayName("guarda producto con listas vacías")
+        void testSave_ListasVacias() {
+
+                ProductoRequestDTO dto = requestBase();
+
+                dto.setEmpresasIds(List.of());
+                dto.setGenerosIds(List.of());
+                dto.setPlataformasIds(List.of());
+                dto.setDesarrolladoresIds(List.of());
+
+                when(tipoProductoRepository.findById(1L))
+                        .thenReturn(Optional.of(tipoProducto()));
+
+                when(clasificacionRepository.findById(1L))
+                        .thenReturn(Optional.of(clasificacion()));
+
+                when(estadoRepository.findById(1L))
+                        .thenReturn(Optional.of(estado()));
+
+                when(productoRepository.save(any()))
+                        .thenAnswer(inv -> {
+                                ProductoModel p = inv.getArgument(0);
+                                p.setId(1L);
+                                return p;
+                        });
+
+                when(productoRepository.findByIdFull(1L))
+                        .thenReturn(Optional.of(productoEntity()));
+
+                ProductoResponseDTO resultado =
+                         productoService.save(dto);
+
+                assertNotNull(resultado);
+        }
+
+
+        }
 
         @Test
         public void testActualizarEmbeddingProducto_OK() {

@@ -205,6 +205,31 @@ public class ImagenesServiceTest extends AbstractContainerBaseTest{
         verify(imagenesRepository, never()).save(any(ImagenesModel.class));
     }
 
+    @Test
+    public void testSave_AltTextVacio_GuardaNull() {
+
+        ImagenesRequestDTO request = new ImagenesRequestDTO();
+        request.setProductoId(10L);
+        request.setRuta("/img/test.webp");
+        request.setAltText("   ");
+
+        when(productoRepository.findById(10L))
+                .thenReturn(Optional.of(createProducto(10L)));
+
+        when(imagenesRepository.save(any(ImagenesModel.class)))
+                .thenAnswer(inv -> {
+                        ImagenesModel img = inv.getArgument(0);
+                        img.setId(1L);
+                        return img;
+                });
+
+        ImagenesResponseDTO dto =
+                imagenesService.save(request);
+
+        assertNotNull(dto);
+        assertEquals(null, dto.getAltText());
+    }
+
     // ================== UPDATE / PATCH ==================
 
     @Test
@@ -249,6 +274,41 @@ public class ImagenesServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
+    public void testUpdate_ImagenNoExiste_Lanza404() {
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setRuta("/nueva.webp");
+
+        when(imagenesRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> imagenesService.update(99L, cambios));
+
+        verify(imagenesRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdate_ProductoNoExiste_Lanza404() {
+
+        ImagenesModel existente = createImagen(1L, 10L);
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setProductoId(999L);
+
+        when(imagenesRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(productoRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> imagenesService.update(1L, cambios));
+
+        verify(imagenesRepository, never()).save(any());
+    }
+
+    @Test
     public void testUpdate_RutaVacia_LanzaIllegalArgument() {
         ImagenesModel existente = createImagen(1L, 10L);
 
@@ -279,6 +339,85 @@ public class ImagenesServiceTest extends AbstractContainerBaseTest{
         assertNotNull(patched);
         assertEquals("Texto parche", patched.getAltText());
         assertEquals(10L, patched.getProductoId());
+    }
+
+    @Test
+    public void testPatch_CambiaProducto() {
+
+        ImagenesModel existente = createImagen(1L, 10L);
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setProductoId(20L);
+
+        when(imagenesRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(productoRepository.findById(20L))
+                .thenReturn(Optional.of(createProducto(20L)));
+
+        when(imagenesRepository.save(any(ImagenesModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ImagenesResponseDTO dto =
+                imagenesService.patch(1L, cambios);
+
+        assertEquals(20L, dto.getProductoId());
+    }
+
+    @Test
+    public void testPatch_ProductoNoExiste_Lanza404() {
+
+        ImagenesModel existente = createImagen(1L, 10L);
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setProductoId(999L);
+
+        when(imagenesRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(productoRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> imagenesService.patch(1L, cambios));
+
+        verify(imagenesRepository, never()).save(any());
+    }
+
+    @Test
+    public void testPatch_ImagenNoExiste_Lanza404() {
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setAltText("nuevo");
+
+        when(imagenesRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> imagenesService.patch(99L, cambios));
+
+        verify(imagenesRepository, never()).save(any());
+    }
+
+    @Test
+    public void testPatch_AltTextVacio_QuedaNull() {
+
+        ImagenesModel existente = createImagen(1L, 10L);
+
+        ImagenesUpdateDTO cambios = new ImagenesUpdateDTO();
+        cambios.setAltText("   ");
+
+        when(imagenesRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(imagenesRepository.save(any(ImagenesModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ImagenesResponseDTO dto =
+                imagenesService.patch(1L, cambios);
+
+        assertNotNull(dto);
+        assertEquals(null, dto.getAltText());
     }
 
     // ================== DELETE ==================
@@ -358,4 +497,17 @@ public class ImagenesServiceTest extends AbstractContainerBaseTest{
         assertEquals("Imagen 10", row.get("AltText"));
         assertEquals(10L, row.get("ProductoId"));
         }
+
+    @Test
+        public void testObtenerImagenesResumen_Vacio() {
+
+        when(imagenesRepository.obtenerImagenesResumen())
+                .thenReturn(new ArrayList<>());
+
+        List<Map<String, Object>> resultado =
+                imagenesService.obtenerImagenesResumen();
+
+        assertNotNull(resultado);
+        assertEquals(0, resultado.size());
+    }
 }
