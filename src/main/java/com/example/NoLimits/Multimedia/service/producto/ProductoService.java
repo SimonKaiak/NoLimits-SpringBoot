@@ -55,8 +55,6 @@ public class ProductoService {
 
     /* ================= CRUD BÁSICO ================= */
 
-    
-
     public List<ProductoResumenDTO> findAll() {
         return productoRepository.obtenerProductosResumen()
                 .stream()

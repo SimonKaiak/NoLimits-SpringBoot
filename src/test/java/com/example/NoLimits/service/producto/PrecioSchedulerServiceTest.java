@@ -12,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class PrecioSchedulerServiceTest {
@@ -64,6 +65,21 @@ class PrecioSchedulerServiceTest {
             verify(productoService).actualizarPrecioDesdeSteam(1L);
             verify(productoService).actualizarPrecioDesdeSteam(2L);
             verify(productoService).actualizarPrecioDesdeSteam(3L);
+        }
+
+        @Test
+        @DisplayName("no procesa productos cuando no existen appId")
+        void noHaceNadaCuandoNoHayProductos() {
+
+            when(productoService.obtenerIdsProductosConAppId())
+                    .thenReturn(List.of());
+
+            precioSchedulerService.actualizarPreciosSteamDiariamente();
+
+            verify(productoService).obtenerIdsProductosConAppId();
+
+            verify(productoService, never())
+                    .actualizarPrecioDesdeSteam(anyLong());
         }
     }
 }

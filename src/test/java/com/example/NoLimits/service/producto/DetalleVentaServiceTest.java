@@ -295,6 +295,72 @@ public class DetalleVentaServiceTest extends AbstractContainerBaseTest{
                 () -> detalleVentaService.update(1L, update));
     }
 
+    @Test
+    public void testUpdate_IdNoExiste_Lanza404() {
+
+        DetalleVentaUpdateDTO update = new DetalleVentaUpdateDTO();
+        update.setProductoId(10L);
+        update.setCantidad(1);
+        update.setPrecioUnitario(1000f);
+
+        when(detalleVentaRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> detalleVentaService.update(99L, update));
+    }
+
+    @Test
+    public void testUpdate_VentaNoExiste_Lanza404() {
+
+        DetalleVentaModel existente = createDetalle();
+
+        DetalleVentaUpdateDTO update = new DetalleVentaUpdateDTO();
+        update.setProductoId(10L);
+        update.setCantidad(1);
+        update.setPrecioUnitario(1000f);
+        update.setVentaId(999L);
+
+        when(detalleVentaRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(productoRepository.findById(10L))
+                .thenReturn(Optional.of(createProducto(10L, "Producto", 1000)));
+
+        when(ventaRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> detalleVentaService.update(1L, update));
+    }
+
+    @Test
+    public void testUpdate_SinVentaId() {
+
+        DetalleVentaModel existente = createDetalle();
+
+        DetalleVentaUpdateDTO update = new DetalleVentaUpdateDTO();
+        update.setProductoId(10L);
+        update.setCantidad(3);
+        update.setPrecioUnitario(1500f);
+
+        when(detalleVentaRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(productoRepository.findById(10L))
+                .thenReturn(Optional.of(createProducto(10L, "Producto", 1000)));
+
+        when(detalleVentaRepository.save(any()))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        DetalleVentaResponseDTO dto =
+                detalleVentaService.update(1L, update);
+
+        assertNotNull(dto);
+
+        verify(ventaRepository, never()).findById(any());
+    }
+
     // ================== PATCH ==================
 
     @Test
@@ -360,6 +426,63 @@ public class DetalleVentaServiceTest extends AbstractContainerBaseTest{
                 () -> detalleVentaService.patch(1L, patch));
     }
 
+    @Test
+    public void testPatch_VentaNoExiste_Lanza404() {
+
+        DetalleVentaModel existente = createDetalle();
+
+        DetalleVentaUpdateDTO patch = new DetalleVentaUpdateDTO();
+        patch.setVentaId(999L);
+
+        when(detalleVentaRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(ventaRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+            () -> detalleVentaService.patch(1L, patch));
+    }
+
+    @Test
+    public void testPatch_ProductoNoExiste_Lanza404() {
+
+        DetalleVentaModel existente = createDetalle();
+
+        DetalleVentaUpdateDTO patch = new DetalleVentaUpdateDTO();
+        patch.setProductoId(999L);
+
+        when(detalleVentaRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(productoRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> detalleVentaService.patch(1L, patch));
+    }
+
+    @Test
+    public void testPatch_SinCambios() {
+
+        DetalleVentaModel existente = createDetalle();
+
+        DetalleVentaUpdateDTO patch = new DetalleVentaUpdateDTO();
+
+        when(detalleVentaRepository.findById(1L))
+                .thenReturn(Optional.of(existente));
+
+        when(detalleVentaRepository.save(any(DetalleVentaModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        DetalleVentaResponseDTO dto =
+                detalleVentaService.patch(1L, patch);
+
+        assertNotNull(dto);
+        assertEquals(2, dto.getCantidad());
+        assertEquals(1000f, dto.getPrecioUnitario());
+    }
+
     // ================== DELETE ==================
 
     @Test
@@ -394,5 +517,35 @@ public class DetalleVentaServiceTest extends AbstractContainerBaseTest{
         assertNotNull(lista);
         assertEquals(1, lista.size());
         assertEquals(1L, lista.get(0).getId());
+    }
+
+    @Test
+    public void testFindByVenta_Vacio() {
+
+        when(detalleVentaRepository.findByVenta_Id(99L))
+                .thenReturn(List.of());
+
+        List<DetalleVentaResponseDTO> resultado =
+                detalleVentaService.findByVenta(99L);
+
+        assertNotNull(resultado);
+        assertEquals(0, resultado.size());
+    }
+
+    @Test
+    public void testFindById_ProductoNull() {
+
+        DetalleVentaModel detalle = createDetalle();
+        detalle.setProducto(null);
+
+        when(detalleVentaRepository.findById(1L))
+                .thenReturn(Optional.of(detalle));
+
+        DetalleVentaResponseDTO dto =
+                detalleVentaService.findById(1L);
+
+        assertNotNull(dto);
+        assertEquals(null, dto.getProductoId());
+        assertEquals(null, dto.getProductoNombre());
     }
 }
