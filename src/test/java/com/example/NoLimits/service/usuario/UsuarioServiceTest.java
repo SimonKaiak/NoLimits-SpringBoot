@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import java.lang.reflect.Method;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -253,6 +255,51 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             assertEquals(13L, result.getRegionId());
             assertEquals("Región Metropolitana", result.getRegionNombre());
         }
+
+        @Test
+        @DisplayName("it: no debe crear nombreCompleto si nombre es null")
+        void itFindById_nombreNull_noMapeaNombreCompleto() {
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setNombre(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+            UsuarioResponseDTO result = usuarioService.findById(1L);
+
+            assertNotNull(result);
+            assertNull(result.getNombreCompleto());
+        }
+
+        @Test
+        @DisplayName("it: debe mapear usuario sin rol")
+        void itFindById_usuarioSinRol() {
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setRol(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+            UsuarioResponseDTO result = usuarioService.findById(1L);
+
+            assertNotNull(result);
+            assertNull(result.getRolId());
+            assertNull(result.getRolNombre());
+        }
+
+        @Test
+        @DisplayName("it: debe mapear usuario sin dirección")
+        void itFindById_usuarioSinDireccion() {
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setDireccion(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+            UsuarioResponseDTO result = usuarioService.findById(1L);
+
+            assertNotNull(result);
+            assertNull(result.getDireccionId());
+            assertNull(result.getComunaId());
+            assertNull(result.getRegionId());
+        }
     }
 
     @Nested
@@ -461,6 +508,88 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             verify(direccionRepository, times(1)).save(any(DireccionModel.class));
             verify(usuarioRepository, times(2)).save(any(UsuarioModel.class));
         }
+
+        @Test
+        @DisplayName("it: debe lanzar 404 si comuna no existe al guardar con dirección")
+        void itSave_comunaNoExiste() {
+            UsuarioRegistroDTO dto = registroDTO();
+            dto.setDireccion(direccionRequestDTO());
+
+            when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+            when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rolEntity()));
+            when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> {
+                        UsuarioModel usuario = inv.getArgument(0);
+                        usuario.setId(1L);
+                        return usuario;
+                    });
+            when(comunaRepository.findById(1L)).thenReturn(Optional.empty());
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.save(dto)
+            );
+
+            assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+            verify(direccionRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe guardar dirección con activo true por defecto cuando activo es null")
+        void itSave_direccionActivoNull_guardaTruePorDefecto() {
+            UsuarioRegistroDTO dto = registroDTO();
+            DireccionRequestDTO direccion = direccionRequestDTO();
+            direccion.setActivo(null);
+            dto.setDireccion(direccion);
+
+            when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+            when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rolEntity()));
+            when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
+            when(comunaRepository.findById(1L)).thenReturn(Optional.of(comunaEntity()));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> {
+                        UsuarioModel usuario = inv.getArgument(0);
+                        usuario.setId(1L);
+                        return usuario;
+                    });
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.save(dto);
+
+            verify(direccionRepository).save(argThat(direccionGuardada ->
+                    Boolean.TRUE.equals(direccionGuardada.getActivo())
+            ));
+        }
+
+        @Test
+        @DisplayName("it: debe guardar dirección con activo false si viene false")
+        void itSave_direccionActivoFalse_guardaFalse() {
+            UsuarioRegistroDTO dto = registroDTO();
+            DireccionRequestDTO direccion = direccionRequestDTO();
+            direccion.setActivo(false);
+            dto.setDireccion(direccion);
+
+            when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+            when(rolRepository.findByNombreIgnoreCase("ROLE_USER")).thenReturn(Optional.of(rolEntity()));
+            when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
+            when(comunaRepository.findById(1L)).thenReturn(Optional.of(comunaEntity()));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> {
+                        UsuarioModel usuario = inv.getArgument(0);
+                        usuario.setId(1L);
+                        return usuario;
+                    });
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.save(dto);
+
+            verify(direccionRepository).save(argThat(direccionGuardada ->
+                    Boolean.FALSE.equals(direccionGuardada.getActivo())
+            ));
+        }
     }
 
     @Nested
@@ -657,6 +786,62 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
 
             verify(direccionRepository, times(1)).save(any(DireccionModel.class));
             verify(usuarioRepository, times(2)).save(any(UsuarioModel.class));
+        }
+
+        @Test
+        @DisplayName("it: debe guardar dirección con activo true por defecto desde admin")
+        void itSaveDesdeAdmin_direccionActivoNull_guardaTruePorDefecto() {
+            UsuarioRequestDTO dto = requestDTO();
+            DireccionRequestDTO direccion = direccionRequestDTO();
+            direccion.setActivo(null);
+            dto.setDireccion(direccion);
+
+            when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+            when(rolRepository.findById(2L)).thenReturn(Optional.of(rolEntity()));
+            when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
+            when(comunaRepository.findById(1L)).thenReturn(Optional.of(comunaEntity()));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> {
+                        UsuarioModel usuario = inv.getArgument(0);
+                        usuario.setId(1L);
+                        return usuario;
+                    });
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.saveDesdeAdmin(dto);
+
+            verify(direccionRepository).save(argThat(direccionGuardada ->
+                    Boolean.TRUE.equals(direccionGuardada.getActivo())
+            ));
+        }
+
+        @Test
+        @DisplayName("it: debe guardar dirección con activo false desde admin")
+        void itSaveDesdeAdmin_direccionActivoFalse_guardaFalse() {
+            UsuarioRequestDTO dto = requestDTO();
+            DireccionRequestDTO direccion = direccionRequestDTO();
+            direccion.setActivo(false);
+            dto.setDireccion(direccion);
+
+            when(usuarioRepository.existsByCorreo("juan@test.com")).thenReturn(false);
+            when(rolRepository.findById(2L)).thenReturn(Optional.of(rolEntity()));
+            when(passwordEncoder.encode("Password123!")).thenReturn("$2a$10$hash");
+            when(comunaRepository.findById(1L)).thenReturn(Optional.of(comunaEntity()));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> {
+                        UsuarioModel usuario = inv.getArgument(0);
+                        usuario.setId(1L);
+                        return usuario;
+                    });
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.saveDesdeAdmin(dto);
+
+            verify(direccionRepository).save(argThat(direccionGuardada ->
+                    Boolean.FALSE.equals(direccionGuardada.getActivo())
+            ));
         }
     }
 
@@ -897,6 +1082,43 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
             verify(usuarioRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si password supera 255 caracteres")
+        void itUpdate_passwordMuyLarga() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setPassword("A".repeat(256));
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+            when(usuarioRepository.existsByCorreo("carlos@test.com")).thenReturn(false);
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.update(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe actualizar usando el mismo correo sin validar duplicado")
+        void itUpdate_mismoCorreo_noValidaDuplicado() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setCorreo("juan@test.com");
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+            when(rolRepository.findById(2L)).thenReturn(Optional.of(rolEntity()));
+            when(passwordEncoder.encode("NuevaClave123!")).thenReturn("$2a$10$newhash");
+            when(usuarioRepository.save(any(UsuarioModel.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.update(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("juan@test.com", result.getCorreo());
+
+            verify(usuarioRepository, never()).existsByCorreo(anyString());
+        }
     }
 
     @Nested
@@ -1135,6 +1357,168 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             verify(direccionRepository, never()).save(any());
             verify(usuarioRepository, times(1)).save(any(UsuarioModel.class));
         }
+
+        @Test
+        @DisplayName("it: debe actualizar una dirección existente")
+        void itPatch_actualizaDireccionExistente() {
+            DireccionModel direccionExistente = new DireccionModel();
+            direccionExistente.setId(20L);
+            direccionExistente.setCalle("Antigua");
+            direccionExistente.setNumero("1");
+
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setDireccion(direccionExistente);
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            DireccionRequestDTO dir = new DireccionRequestDTO();
+            dir.setCalle("Nueva Calle");
+            dir.setNumero("123");
+            dto.setDireccion(dir);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals(20L, usuario.getDireccion().getId());
+            assertEquals("Nueva Calle", usuario.getDireccion().getCalle());
+            assertEquals("123", usuario.getDireccion().getNumero());
+
+            verify(direccionRepository, times(1)).save(direccionExistente);
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si password supera 255 caracteres")
+        void itPatch_passwordMuyLarga() {
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setPassword("A".repeat(256));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.patch(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: no debe modificar nombre, apellidos ni foto si vienen vacíos")
+        void itPatch_camposTextoVacios_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setNombre("   ");
+            dto.setApellidos("   ");
+            dto.setFotoPerfil("   ");
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("Juan", result.getNombre());
+            assertEquals("Pérez", result.getApellidos());
+            assertNull(result.getFotoPerfil());
+
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: debe ignorar correo vacío")
+        void itPatch_correoVacio_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setCorreo("   ");
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("juan@test.com", result.getCorreo());
+
+            verify(usuarioRepository, never()).existsByCorreo(anyString());
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: debe actualizar solo comuna en dirección")
+        void itPatch_actualizaSoloComunaDireccion() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            DireccionRequestDTO dir = new DireccionRequestDTO();
+            dir.setComunaId(1L);
+            dto.setDireccion(dir);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(comunaRepository.findById(1L)).thenReturn(Optional.of(comunaEntity()));
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertNotNull(usuario.getDireccion());
+            assertEquals(1L, usuario.getDireccion().getComuna().getId());
+
+            verify(direccionRepository, times(1)).save(any(DireccionModel.class));
+        }
+
+        @Test
+        @DisplayName("it: debe aceptar el mismo correo sin validar duplicado")
+        void itPatch_mismoCorreo_noValidaDuplicado() {
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setCorreo("juan@test.com");
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+            when(usuarioRepository.save(any(UsuarioModel.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("juan@test.com", result.getCorreo());
+
+            verify(usuarioRepository, never()).existsByCorreo(anyString());
+        }
+
+        @Test
+        @DisplayName("it: no debe tocar dirección si sus campos vienen vacíos")
+        void itPatch_direccionConCamposVacios_noTocaDireccion() {
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+
+            DireccionRequestDTO dir = new DireccionRequestDTO();
+            dir.setCalle("   ");
+            dir.setNumero("   ");
+            dir.setComplemento("   ");
+            dir.setCodigoPostal("   ");
+            dto.setDireccion(dir);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+            when(usuarioRepository.save(any(UsuarioModel.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+
+            verify(direccionRepository, never()).save(any());
+            verify(usuarioRepository, times(1)).save(any(UsuarioModel.class));
+        }
     }
 
     @Nested
@@ -1192,6 +1576,57 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             );
 
             assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 401 si login recibe password null")
+        void itLogin_passwordNull_lanza401() {
+            UsuarioModel usuario = usuarioEntity();
+
+            when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                    .thenReturn(Optional.of(usuario));
+            when(passwordEncoder.matches("", "$2a$10$hash")).thenReturn(false);
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.login("juan@test.com", null)
+            );
+
+            assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 401 si usuario tiene password null")
+        void itLogin_passwordGuardadaNull_lanza401() {
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setPassword(null);
+
+            when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                    .thenReturn(Optional.of(usuario));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.login("juan@test.com", "Password123!")
+            );
+
+            assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+            verify(passwordEncoder, never()).matches(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("it: debe validar login quitando espacios en password")
+        void itLogin_passwordConEspacios_ok() {
+            when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                    .thenReturn(Optional.of(usuarioEntity()));
+            when(passwordEncoder.matches("Password123!", "$2a$10$hash"))
+                    .thenReturn(true);
+
+            UsuarioResponseDTO result = usuarioService.login("juan@test.com", "   Password123!   ");
+
+            assertNotNull(result);
+            assertEquals("juan@test.com", result.getCorreo());
+
+            verify(passwordEncoder, times(1)).matches("Password123!", "$2a$10$hash");
         }
     }
 
@@ -1573,6 +2008,26 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
 
             assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
             verify(usuarioRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("describe toResponseDTO()")
+    class DescribeToResponseDTO {
+
+        @Test
+        @DisplayName("it: debe retornar null si el usuario es null")
+        void itToResponseDTO_usuarioNull_retornaNull() throws Exception {
+            Method method = UsuarioService.class.getDeclaredMethod(
+                    "toResponseDTO",
+                    UsuarioModel.class
+            );
+
+            method.setAccessible(true);
+
+            Object result = method.invoke(usuarioService, (Object) null);
+
+            assertNull(result);
         }
     }
 }
