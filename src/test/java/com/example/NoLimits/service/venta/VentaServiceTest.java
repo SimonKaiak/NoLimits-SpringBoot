@@ -1,6 +1,7 @@
 package com.example.NoLimits.service.venta;
 
 import com.example.NoLimits.Multimedia._exceptions.RecursoNoEncontradoException;
+import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 import com.example.NoLimits.Multimedia.dto.producto.request.DetalleVentaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.venta.request.VentaRequestDTO;
 import com.example.NoLimits.Multimedia.dto.venta.response.VentaResponseDTO;
@@ -8,6 +9,7 @@ import com.example.NoLimits.Multimedia.dto.venta.update.VentaUpdateDTO;
 import com.example.NoLimits.Multimedia.model.catalogos.EstadoModel;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoEnvioModel;
 import com.example.NoLimits.Multimedia.model.catalogos.MetodoPagoModel;
+import com.example.NoLimits.Multimedia.model.producto.DetalleVentaModel;
 import com.example.NoLimits.Multimedia.model.producto.ProductoModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.model.venta.VentaModel;
@@ -23,6 +25,8 @@ import com.example.NoLimits.config.AbstractContainerBaseTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,7 +131,6 @@ public class VentaServiceTest extends AbstractContainerBaseTest {
         return v;
     }
 
-    // ===================== FIND ALL =====================
 
     @Test
     public void testFindAll_DevuelveLista() {
@@ -152,418 +155,988 @@ public class VentaServiceTest extends AbstractContainerBaseTest {
     }
 
     // ===================== FIND BY ID =====================
+   
+    @Nested 
+    @DisplayName("Find Tests")
+    class FindTests {
 
-    @Test
-    public void testFindById_Existe_DevuelveDTO() {
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
+         @Test
+        @DisplayName("Debe devolver venta cuando existe")
+        void testFindById_Existe_DevuelveDTO() {
 
-        VentaResponseDTO result = ventaService.findById(1L);
+            // Arrange
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(ventaEntity()));
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals(LocalDate.of(2025, 7, 6), result.getFechaCompra());
+            // Act
+            VentaResponseDTO result =
+                    ventaService.findById(1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1L, result.getId());
+            assertEquals(LocalDate.of(2025, 7, 6),
+                    result.getFechaCompra());
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando venta no existe")
+        void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            when(ventaRepository.findById(99L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.findById(99L));
+        }
+
+        @Test
+        @DisplayName("Debe buscar ventas por método de pago")
+        void testFindByMetodoPago_DevuelveLista() {
+
+            // Arrange
+            when(ventaRepository.findByMetodoPagoModel_Id(1L))
+                    .thenReturn(List.of(ventaEntity()));
+
+            // Act
+            List<VentaResponseDTO> result =
+                    ventaService.findByMetodoPago(1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals("Tarjeta de Crédito",
+                    result.get(0).getMetodoPagoNombre());
+        }
+
+        @Test
+        @DisplayName("Debe devolver lista vacía al buscar por método de pago")
+        void testFindByMetodoPago_ListaVacia() {
+
+            // Arrange
+            when(ventaRepository.findByMetodoPagoModel_Id(1L))
+                    .thenReturn(List.of());
+
+            // Act
+            List<VentaResponseDTO> result =
+                    ventaService.findByMetodoPago(1L);
+
+            // Assert
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Debe buscar ventas por fecha")
+        void testFindByFechaCompra_DevuelveLista() {
+
+            // Arrange
+            LocalDate fecha = LocalDate.of(2025, 7, 6);
+
+            when(ventaRepository.findByFechaCompra(fecha))
+                    .thenReturn(List.of(ventaEntity()));
+
+            // Act
+            List<VentaResponseDTO> result =
+                    ventaService.findByFechaCompra(fecha);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals(fecha,
+                    result.get(0).getFechaCompra());
+        }
+
+        @Test
+        @DisplayName("Debe buscar ventas por hora")
+        void testFindByHoraCompra_DevuelveLista() {
+
+            // Arrange
+            LocalTime hora = LocalTime.of(14, 30);
+
+            when(ventaRepository.findByHoraCompra(hora))
+                    .thenReturn(List.of(ventaEntity()));
+
+            // Act
+            List<VentaResponseDTO> result =
+                    ventaService.findByHoraCompra(hora);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Debe buscar ventas por usuario y método de pago")
+        void testFindByUsuarioYMetodoPago_DevuelveLista() {
+
+            // Arrange
+            when(ventaRepository
+                    .findByUsuarioModel_IdAndMetodoPagoModel_Id(1L, 1L))
+                    .thenReturn(List.of(ventaEntity()));
+
+            // Act
+            List<VentaResponseDTO> result =
+                    ventaService.findByUsuarioYMetodoPago(1L, 1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals(1L, result.get(0).getUsuarioId());
+            assertEquals(1L, result.get(0).getMetodoPagoId());
+        }
     }
-
-    @Test
-    public void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
-        when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.findById(99L));
-    }
-
-    // ===================== FIND POR FILTROS =====================
-
-    @Test
-    public void testFindByMetodoPago_DevuelveLista() {
-        when(ventaRepository.findByMetodoPagoModel_Id(1L)).thenReturn(List.of(ventaEntity()));
-
-        List<VentaResponseDTO> result = ventaService.findByMetodoPago(1L);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("Tarjeta de Crédito", result.get(0).getMetodoPagoNombre());
-    }
-
-    @Test
-    public void testFindByFechaCompra_DevuelveLista() {
-        LocalDate fecha = LocalDate.of(2025, 7, 6);
-        when(ventaRepository.findByFechaCompra(fecha)).thenReturn(List.of(ventaEntity()));
-
-        List<VentaResponseDTO> result = ventaService.findByFechaCompra(fecha);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(fecha, result.get(0).getFechaCompra());
-    }
-
-    @Test
-    public void testFindByHoraCompra_DevuelveLista() {
-        LocalTime hora = LocalTime.of(14, 30);
-        when(ventaRepository.findByHoraCompra(hora)).thenReturn(List.of(ventaEntity()));
-
-        List<VentaResponseDTO> result = ventaService.findByHoraCompra(hora);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-    }
-
-    @Test
-    public void testFindByUsuarioYMetodoPago_DevuelveLista() {
-        when(ventaRepository.findByUsuarioModel_IdAndMetodoPagoModel_Id(1L, 1L))
-                .thenReturn(List.of(ventaEntity()));
-
-        List<VentaResponseDTO> result = ventaService.findByUsuarioYMetodoPago(1L, 1L);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).getUsuarioId());
-        assertEquals(1L, result.get(0).getMetodoPagoId());
-    }
+    
+       
 
     // ===================== SAVE =====================
+    @Nested 
+    @DisplayName("Save Tests")
+    class SaveTests {
 
-    @Test
-    public void testSave_OK_GuardaVenta() {
-        VentaModel venta = ventaConCamposRequeridos();
+         @Test
+        @DisplayName("Debe guardar venta correctamente")
+        void testSave_OK_GuardaVenta() {
 
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
-        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
-        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> {
-                    VentaModel v = inv.getArgument(0);
-                    v.setId(10L);
-                    return v;
-                });
+            // Arrange
+            VentaModel venta = ventaConCamposRequeridos();
 
-        VentaResponseDTO result = ventaService.save(venta);
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
 
-        assertNotNull(result);
-        assertEquals(10L, result.getId());
-        verify(ventaRepository, times(1)).save(any(VentaModel.class));
+            when(metodoPagoRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoPagoEntity()));
+
+            when(metodoEnvioRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoEnvioEntity()));
+
+            when(estadoRepository.findById(1L))
+                    .thenReturn(Optional.of(estadoEntity()));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> {
+                        VentaModel v = inv.getArgument(0);
+                        v.setId(10L);
+                        return v;
+                    });
+
+            // Act
+            VentaResponseDTO result = ventaService.save(venta);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(10L, result.getId());
+            verify(ventaRepository, times(1))
+                    .save(any(VentaModel.class));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando no existe usuario")
+        void testSave_SinUsuario_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+
+            verify(ventaRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando no existe método de pago")
+        void testSave_SinMetodoPago_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(1L);
+
+            venta.setUsuarioModel(usuario);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando no existe método de envío")
+        void testSave_SinMetodoEnvio_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(1L);
+
+            MetodoPagoModel metodoPago = new MetodoPagoModel();
+            metodoPago.setId(1L);
+
+            venta.setUsuarioModel(usuario);
+            venta.setMetodoPagoModel(metodoPago);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando no existe estado")
+        void testSave_SinEstado_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(1L);
+
+            MetodoPagoModel metodoPago = new MetodoPagoModel();
+            metodoPago.setId(1L);
+
+            MetodoEnvioModel metodoEnvio = new MetodoEnvioModel();
+            metodoEnvio.setId(1L);
+
+            venta.setUsuarioModel(usuario);
+            venta.setMetodoPagoModel(metodoPago);
+            venta.setMetodoEnvioModel(metodoEnvio);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando usuario tiene ID nulo")
+        void testSave_UsuarioConIdNull_LanzaExcepcion() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(null);
+
+            venta.setUsuarioModel(usuario);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando método de pago tiene ID nulo")
+        void testSave_MetodoPagoConIdNull_LanzaExcepcion() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(1L);
+
+            MetodoPagoModel metodoPago = new MetodoPagoModel();
+            metodoPago.setId(null);
+
+            venta.setUsuarioModel(usuario);
+            venta.setMetodoPagoModel(metodoPago);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando método de envío tiene ID nulo")
+        void testSave_MetodoEnvioConIdNull_LanzaExcepcion() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(1L);
+
+            MetodoPagoModel metodoPago = new MetodoPagoModel();
+            metodoPago.setId(1L);
+
+            MetodoEnvioModel metodoEnvio = new MetodoEnvioModel();
+            metodoEnvio.setId(null);
+
+            venta.setUsuarioModel(usuario);
+            venta.setMetodoPagoModel(metodoPago);
+            venta.setMetodoEnvioModel(metodoEnvio);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando estado tiene ID nulo")
+        void testSave_EstadoConIdNull_LanzaExcepcion() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+
+            UsuarioModel usuario = new UsuarioModel();
+            usuario.setId(1L);
+
+            MetodoPagoModel metodoPago = new MetodoPagoModel();
+            metodoPago.setId(1L);
+
+            MetodoEnvioModel metodoEnvio = new MetodoEnvioModel();
+            metodoEnvio.setId(1L);
+
+            EstadoModel estado = new EstadoModel();
+            estado.setId(null);
+
+            venta.setUsuarioModel(usuario);
+            venta.setMetodoPagoModel(metodoPago);
+            venta.setMetodoEnvioModel(metodoEnvio);
+            venta.setEstado(estado);
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.save(venta));
+        }
+
+        @Test
+        @DisplayName("Debe asignar fecha y hora automáticamente")
+        void testSave_SinFecha_AsignaFechaActual() {
+
+            // Arrange
+            VentaModel venta = ventaConCamposRequeridos();
+
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
+
+            when(metodoPagoRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoPagoEntity()));
+
+            when(metodoEnvioRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoEnvioEntity()));
+
+            when(estadoRepository.findById(1L))
+                    .thenReturn(Optional.of(estadoEntity()));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> {
+                        VentaModel v = inv.getArgument(0);
+
+                        assertNotNull(v.getFechaCompra());
+                        assertNotNull(v.getHoraCompra());
+
+                        v.setId(5L);
+                        return v;
+                    });
+
+            // Act
+            VentaResponseDTO result = ventaService.save(venta);
+
+            // Assert
+            assertNotNull(result);
+        }
+
+        @Test
+        @DisplayName("Debe conservar fecha y hora existentes")
+        void testSave_ConFechaYHoraExistentes_NoLasReemplaza() {
+
+            // Arrange
+            VentaModel venta = ventaConCamposRequeridos();
+
+            venta.setFechaCompra(LocalDate.of(2025, 12, 25));
+            venta.setHoraCompra(LocalTime.of(18, 30));
+
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
+
+            when(metodoPagoRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoPagoEntity()));
+
+            when(metodoEnvioRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoEnvioEntity()));
+
+            when(estadoRepository.findById(1L))
+                    .thenReturn(Optional.of(estadoEntity()));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            // Act
+            VentaResponseDTO result = ventaService.save(venta);
+
+            // Assert
+            assertEquals(LocalDate.of(2025, 12, 25),
+                    result.getFechaCompra());
+
+            assertEquals(LocalTime.of(18, 30),
+                    result.getHoraCompra());
+        }
     }
 
-    @Test
-    public void testSave_SinUsuario_LanzaRecursoNoEncontrado() {
-        VentaModel venta = new VentaModel();
-        // sin usuario
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.save(venta));
-
-        verify(ventaRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSave_SinMetodoPago_LanzaRecursoNoEncontrado() {
-        VentaModel venta = new VentaModel();
-        UsuarioModel u = new UsuarioModel(); u.setId(1L);
-        venta.setUsuarioModel(u);
-        // sin método de pago
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.save(venta));
-    }
-
-    @Test
-    public void testSave_SinMetodoEnvio_LanzaRecursoNoEncontrado() {
-        VentaModel venta = new VentaModel();
-        UsuarioModel u = new UsuarioModel(); u.setId(1L);
-        MetodoPagoModel mp = new MetodoPagoModel(); mp.setId(1L);
-        venta.setUsuarioModel(u);
-        venta.setMetodoPagoModel(mp);
-        // sin método de envío
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.save(venta));
-    }
-
-    @Test
-    public void testSave_SinEstado_LanzaRecursoNoEncontrado() {
-        VentaModel venta = new VentaModel();
-        UsuarioModel u = new UsuarioModel(); u.setId(1L);
-        MetodoPagoModel mp = new MetodoPagoModel(); mp.setId(1L);
-        MetodoEnvioModel me = new MetodoEnvioModel(); me.setId(1L);
-        venta.setUsuarioModel(u);
-        venta.setMetodoPagoModel(mp);
-        venta.setMetodoEnvioModel(me);
-        // sin estado
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.save(venta));
-    }
-
-    @Test
-    public void testSave_SinFecha_AsignaFechaActual() {
-        VentaModel venta = ventaConCamposRequeridos();
-        // No se setea fecha ni hora
-
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
-        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
-        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> {
-                    VentaModel v = inv.getArgument(0);
-                    v.setId(5L);
-                    // Verifica que la fecha se haya asignado automáticamente
-                    assertNotNull(v.getFechaCompra());
-                    assertNotNull(v.getHoraCompra());
-                    return v;
-                });
-
-        VentaResponseDTO result = ventaService.save(venta);
-        assertNotNull(result);
-    }
 
     // ===================== UPDATE =====================
+    @Nested
+    @DisplayName("Update Tests")
+    class UpdateTests {
 
-    @Test
-    public void testUpdate_OK_CambiaMetodoPago() {
-        MetodoPagoModel nuevoMetodo = new MetodoPagoModel();
-        nuevoMetodo.setId(2L);
-        nuevoMetodo.setNombre("Transferencia");
-        nuevoMetodo.setActivo(true);
+        @Test
+        @DisplayName("Debe actualizar método de pago")
+        void testUpdate_OK_CambiaMetodoPago() {
 
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
-        when(metodoPagoRepository.findById(2L)).thenReturn(Optional.of(nuevoMetodo));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+            // Arrange
+            MetodoPagoModel nuevoMetodo = new MetodoPagoModel();
+            nuevoMetodo.setId(2L);
+            nuevoMetodo.setNombre("Transferencia");
+            nuevoMetodo.setActivo(true);
 
-        VentaUpdateDTO dto = new VentaUpdateDTO();
-        dto.setMetodoPagoId(2L);
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(ventaEntity()));
 
-        VentaResponseDTO result = ventaService.update(1L, dto);
+            when(metodoPagoRepository.findById(2L))
+                    .thenReturn(Optional.of(nuevoMetodo));
 
-        assertNotNull(result);
-        assertEquals("Transferencia", result.getMetodoPagoNombre());
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+            dto.setMetodoPagoId(2L);
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.update(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals("Transferencia",
+                    result.getMetodoPagoNombre());
+        }
+
+        @Test
+        @DisplayName("Debe actualizar fecha y hora")
+        void testUpdate_CambiaFechaYHora() {
+
+            // Arrange
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(ventaEntity()));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            LocalDate nuevaFecha = LocalDate.of(2025, 12, 25);
+            LocalTime nuevaHora = LocalTime.of(18, 0);
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+            dto.setFechaCompra(nuevaFecha);
+            dto.setHoraCompra(nuevaHora);
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.update(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(nuevaFecha,
+                    result.getFechaCompra());
+
+            assertEquals(nuevaHora,
+                    result.getHoraCompra());
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando la venta no existe")
+        void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            when(ventaRepository.findById(99L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.update(99L,
+                            new VentaUpdateDTO()));
+
+            verify(ventaRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Debe actualizar método de envío")
+        void testUpdate_CambiaMetodoEnvio() {
+
+            // Arrange
+            MetodoEnvioModel nuevoEnvio = new MetodoEnvioModel();
+            nuevoEnvio.setId(2L);
+            nuevoEnvio.setNombre("Retiro en tienda");
+
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(ventaEntity()));
+
+            when(metodoEnvioRepository.findById(2L))
+                    .thenReturn(Optional.of(nuevoEnvio));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+            dto.setMetodoEnvioId(2L);
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.update(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals("Retiro en tienda",
+                    result.getMetodoEnvioNombre());
+        }
+
+        @Test
+        @DisplayName("Debe actualizar estado")
+        void testUpdate_CambiaEstado() {
+
+            // Arrange
+            EstadoModel nuevoEstado = new EstadoModel();
+            nuevoEstado.setId(2L);
+            nuevoEstado.setNombre("Enviada");
+
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(ventaEntity()));
+
+            when(estadoRepository.findById(2L))
+                    .thenReturn(Optional.of(nuevoEstado));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+            dto.setEstadoId(2L);
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.update(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals("Enviada",
+                    result.getEstadoNombre());
+        }
     }
-
-    @Test
-    public void testUpdate_CambiaFechaYHora() {
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        LocalDate nuevaFecha = LocalDate.of(2025, 12, 25);
-        LocalTime nuevaHora = LocalTime.of(18, 0);
-
-        VentaUpdateDTO dto = new VentaUpdateDTO();
-        dto.setFechaCompra(nuevaFecha);
-        dto.setHoraCompra(nuevaHora);
-
-        VentaResponseDTO result = ventaService.update(1L, dto);
-
-        assertNotNull(result);
-        assertEquals(nuevaFecha, result.getFechaCompra());
-        assertEquals(nuevaHora, result.getHoraCompra());
-    }
-
-    @Test
-    public void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
-        when(ventaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.update(99L, new VentaUpdateDTO()));
-
-        verify(ventaRepository, never()).save(any());
-    }
-
     // ===================== PATCH =====================
 
-    @Test
-    public void testPatch_ModificaSoloEstado() {
-        EstadoModel nuevoEstado = new EstadoModel();
-        nuevoEstado.setId(2L);
-        nuevoEstado.setNombre("Enviada");
-        nuevoEstado.setActivo(true);
+   @Nested
+    @DisplayName("Patch Tests")
+    class PatchTests {
 
-        when(ventaRepository.findById(1L)).thenReturn(Optional.of(ventaEntity()));
-        when(estadoRepository.findById(2L)).thenReturn(Optional.of(nuevoEstado));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        @Test
+        @DisplayName("Debe modificar únicamente el estado")
+        void testPatch_ModificaSoloEstado() {
 
-        VentaUpdateDTO dto = new VentaUpdateDTO();
-        dto.setEstadoId(2L);
+            // Arrange
+            EstadoModel nuevoEstado = new EstadoModel();
+            nuevoEstado.setId(2L);
+            nuevoEstado.setNombre("Enviada");
+            nuevoEstado.setActivo(true);
 
-        VentaResponseDTO result = ventaService.patch(1L, dto);
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(ventaEntity()));
 
-        assertNotNull(result);
-        assertEquals("Enviada", result.getEstadoNombre());
-        // Método de pago no debe cambiar
-        assertEquals("Tarjeta de Crédito", result.getMetodoPagoNombre());
+            when(estadoRepository.findById(2L))
+                    .thenReturn(Optional.of(nuevoEstado));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+            dto.setEstadoId(2L);
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.patch(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+
+            assertEquals("Enviada",
+                    result.getEstadoNombre());
+
+            // Verifica que los demás datos no cambian
+            assertEquals("Tarjeta de Crédito",
+                    result.getMetodoPagoNombre());
+        }
     }
 
     // ===================== DELETE =====================
+    @Nested
+    @DisplayName("Delete Tests")
+    class DeleteTests {
 
-    @Test
-    public void testDeleteById_Existe_EliminaOK() {
-        when(ventaRepository.existsById(1L)).thenReturn(true);
+        @Test
+        @DisplayName("Debe eliminar una venta existente")
+        void testDeleteById_Existe_EliminaOK() {
 
-        assertDoesNotThrow(() -> ventaService.deleteById(1L));
+            // Arrange
+            when(ventaRepository.existsById(1L))
+                    .thenReturn(true);
 
-        verify(ventaRepository, times(1)).deleteById(1L);
+            // Act & Assert
+            assertDoesNotThrow(() ->
+                    ventaService.deleteById(1L));
+
+            verify(ventaRepository, times(1))
+                    .deleteById(1L);
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando la venta no existe")
+        void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            when(ventaRepository.existsById(99L))
+                    .thenReturn(false);
+
+            // Act & Assert
+            assertThrows(RecursoNoEncontradoException.class,
+                    () -> ventaService.deleteById(99L));
+
+            verify(ventaRepository, never())
+                    .deleteById(anyLong());
+        }
     }
-
-    @Test
-    public void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
-        when(ventaRepository.existsById(99L)).thenReturn(false);
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> ventaService.deleteById(99L));
-
-        verify(ventaRepository, never()).deleteById(anyLong());
-    }
-
+    
     // ===================== CREAR VENTA DESDE REQUEST =====================
 
-    @Test
-    public void testCrearVentaDesdeRequest_OK_ConDetalles() {
-        ProductoModel producto = new ProductoModel();
-        producto.setId(1L);
-        producto.setNombre("The Witcher 3");
+    @Nested
+    @DisplayName("Crear Venta Tests")
+    class CrearVentaTests {
 
-        DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
-        detalle.setProductoId(1L);
-        detalle.setCantidad(2);
-        detalle.setPrecioUnitario(29990f);
+        @Test
+        @DisplayName("Debe crear una venta con detalles")
+        void testCrearVentaDesdeRequest_OK_ConDetalles() {
 
-        VentaRequestDTO request = new VentaRequestDTO();
-        request.setMetodoPagoId(1L);
-        request.setMetodoEnvioId(1L);
-        request.setEstadoId(1L);
-        request.setDetalles(List.of(detalle));
+            // Arrange
+            ProductoModel producto = new ProductoModel();
+            producto.setId(1L);
+            producto.setNombre("The Witcher 3");
 
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
-        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
-        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> {
-                    VentaModel v = inv.getArgument(0);
-                    v.setId(20L);
-                    return v;
-                });
+            DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
+            detalle.setProductoId(1L);
+            detalle.setCantidad(2);
+            detalle.setPrecioUnitario(29990f);
 
-        VentaResponseDTO result = ventaService.crearVentaDesdeRequest(request, 1L);
+            VentaRequestDTO request = new VentaRequestDTO();
+            request.setMetodoPagoId(1L);
+            request.setMetodoEnvioId(1L);
+            request.setEstadoId(1L);
+            request.setDetalles(List.of(detalle));
 
-        assertNotNull(result);
-        assertEquals(20L, result.getId());
-        verify(productoRepository, times(1)).findById(1L);
-        verify(ventaRepository, times(1)).save(any(VentaModel.class));
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
+
+            when(metodoPagoRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoPagoEntity()));
+
+            when(metodoEnvioRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoEnvioEntity()));
+
+            when(estadoRepository.findById(1L))
+                    .thenReturn(Optional.of(estadoEntity()));
+
+            when(productoRepository.findById(1L))
+                    .thenReturn(Optional.of(producto));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> {
+                        VentaModel v = inv.getArgument(0);
+                        v.setId(20L);
+                        return v;
+                    });
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.crearVentaDesdeRequest(request, 1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(20L, result.getId());
+
+            verify(productoRepository, times(1))
+                    .findById(1L);
+
+            verify(ventaRepository, times(1))
+                    .save(any(VentaModel.class));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando usuario no existe")
+        void testCrearVentaDesdeRequest_UsuarioNoEncontrado_LanzaExcepcion() {
+
+            // Arrange
+            VentaRequestDTO request = new VentaRequestDTO();
+            request.setMetodoPagoId(1L);
+            request.setMetodoEnvioId(1L);
+            request.setEstadoId(1L);
+
+            when(usuarioRepository.findById(99L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(Exception.class,
+                    () -> ventaService.crearVentaDesdeRequest(request, 99L));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando producto no existe")
+        void testCrearVentaDesdeRequest_ProductoNoEncontrado_LanzaExcepcion() {
+
+            // Arrange
+            DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
+            detalle.setProductoId(999L);
+            detalle.setCantidad(1);
+            detalle.setPrecioUnitario(9990f);
+
+            VentaRequestDTO request = new VentaRequestDTO();
+            request.setMetodoPagoId(1L);
+            request.setMetodoEnvioId(1L);
+            request.setEstadoId(1L);
+            request.setDetalles(List.of(detalle));
+
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
+
+            when(metodoPagoRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoPagoEntity()));
+
+            when(metodoEnvioRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoEnvioEntity()));
+
+            when(estadoRepository.findById(1L))
+                    .thenReturn(Optional.of(estadoEntity()));
+
+            when(productoRepository.findById(999L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(Exception.class,
+                    () -> ventaService.crearVentaDesdeRequest(request, 1L));
+        }
+
+        @Test
+        @DisplayName("Debe crear una venta sin detalles")
+        void testCrearVentaDesdeRequest_SinDetalles_GuardaVentaVacia() {
+
+            // Arrange
+            VentaRequestDTO request = new VentaRequestDTO();
+            request.setMetodoPagoId(1L);
+            request.setMetodoEnvioId(1L);
+            request.setEstadoId(1L);
+            request.setDetalles(null);
+
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
+
+            when(metodoPagoRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoPagoEntity()));
+
+            when(metodoEnvioRepository.findById(1L))
+                    .thenReturn(Optional.of(metodoEnvioEntity()));
+
+            when(estadoRepository.findById(1L))
+                    .thenReturn(Optional.of(estadoEntity()));
+
+            when(ventaRepository.save(any(VentaModel.class)))
+                    .thenAnswer(inv -> {
+                        VentaModel v = inv.getArgument(0);
+                        v.setId(21L);
+                        return v;
+                    });
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.crearVentaDesdeRequest(request, 1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(21L, result.getId());
+
+            verify(productoRepository, never())
+                    .findById(anyLong());
+        }
     }
 
-    @Test
-    public void testCrearVentaDesdeRequest_UsuarioNoEncontrado_LanzaExcepcion() {
-        VentaRequestDTO request = new VentaRequestDTO();
-        request.setMetodoPagoId(1L);
-        request.setMetodoEnvioId(1L);
-        request.setEstadoId(1L);
+    @Nested
+    @DisplayName("Resumen Tests")
+    class ResumenTests {
 
-        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("Debe obtener resumen de ventas")
+        void testObtenerVentasConDatos_OK() {
 
-        assertThrows(Exception.class,
-                () -> ventaService.crearVentaDesdeRequest(request, 99L));
+            // Arrange
+            Object[] fila = {
+                    1L,
+                    LocalDate.of(2025, 7, 6),
+                    LocalTime.of(14, 30),
+                    1L,
+                    "Juan",
+                    "Tarjeta de Crédito",
+                    "Despacho a domicilio",
+                    "Pagada"
+            };
+
+            List<Object[]> filas = new ArrayList<>();
+            filas.add(fila);
+
+            when(ventaRepository.obtenerVentasResumen())
+                    .thenReturn(filas);
+
+            // Act
+            List<Map<String, Object>> result =
+                    ventaService.obtenerVentasConDatos();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals(1L, result.get(0).get("ID"));
+        }
+
+        @Test
+        @DisplayName("Debe devolver lista vacía cuando no existen ventas")
+        void testObtenerVentasConDatos_Vacio() {
+
+            // Arrange
+            when(ventaRepository.obtenerVentasResumen())
+                    .thenReturn(List.of());
+
+            // Act
+            List<Map<String, Object>> result =
+                    ventaService.obtenerVentasConDatos();
+
+            // Assert
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
     }
 
-    @Test
-    public void testCrearVentaDesdeRequest_ProductoNoEncontrado_LanzaExcepcion() {
-        DetalleVentaRequestDTO detalle = new DetalleVentaRequestDTO();
-        detalle.setProductoId(999L);
-        detalle.setCantidad(1);
-        detalle.setPrecioUnitario(9990f);
+    @Nested
+    @DisplayName("Pagination And Mapper Tests")
+    class PaginationAndMapperTests {
 
-        VentaRequestDTO request = new VentaRequestDTO();
-        request.setMetodoPagoId(1L);
-        request.setMetodoEnvioId(1L);
-        request.setEstadoId(1L);
-        request.setDetalles(List.of(detalle));
+        @Test
+        @DisplayName("Debe obtener ventas paginadas")
+        void testFindAllPaged_OK() {
 
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
-        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
-        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
-        when(productoRepository.findById(999L)).thenReturn(Optional.empty());
+            // Arrange
+            Page<VentaModel> page =
+                    new PageImpl<>(List.of(ventaEntity()));
 
-        assertThrows(Exception.class,
-                () -> ventaService.crearVentaDesdeRequest(request, 1L));
+            when(ventaRepository.findAll(
+                    any(org.springframework.data.domain.Pageable.class)))
+                    .thenReturn(page);
+
+            // Act
+            PagedResponse<VentaResponseDTO> result =
+                    ventaService.findAllPaged(1, 10);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.getContenido().size());
+            assertEquals(1L,
+                    result.getContenido().get(0).getId());
+        }
+
+        @Test
+        @DisplayName("Debe obtener compras paginadas de un usuario")
+        void testFindMisComprasPaged_OK() {
+
+            // Arrange
+            Page<VentaModel> page =
+                    new PageImpl<>(List.of(ventaEntity()));
+
+            when(ventaRepository.findByUsuarioModel_Id(
+                    eq(1L),
+                    any(org.springframework.data.domain.Pageable.class)))
+                    .thenReturn(page);
+
+            // Act
+            PagedResponse<VentaResponseDTO> result =
+                    ventaService.findMisComprasPaged(1L, 1, 10);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.getContenido().size());
+            assertEquals(1L,
+                    result.getContenido().get(0).getId());
+        }
+
+        @Test
+        @DisplayName("Debe mapear venta sin relaciones")
+        void testFindById_VentaSinRelaciones_CubreToResponseDTO() {
+
+            // Arrange
+            VentaModel venta = new VentaModel();
+            venta.setId(50L);
+
+            when(ventaRepository.findById(50L))
+                    .thenReturn(Optional.of(venta));
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.findById(50L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(50L, result.getId());
+        }
+
+        @Test
+        @DisplayName("Debe mapear detalle sin producto")
+        void testFindById_DetalleSinProducto_CubreToDetalleResponseDTO() {
+
+            // Arrange
+            VentaModel venta = ventaEntity();
+
+            DetalleVentaModel detalle =
+                    new DetalleVentaModel();
+
+            detalle.setId(1L);
+            detalle.setCantidad(2);
+            detalle.setPrecioUnitario(1000f);
+
+                venta.setDetalles(List.of(detalle));
+
+            when(ventaRepository.findById(1L))
+                    .thenReturn(Optional.of(venta));
+
+            // Act
+            VentaResponseDTO result =
+                    ventaService.findById(1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1,
+                    result.getDetalles().size());
+        }
+
+        @Test
+        @DisplayName("Debe mapear venta sin detalles")
+        void testFindAll_VentaSinDetalles_CubreMapper() {
+
+            // Arrange
+            VentaModel venta = ventaEntity();
+            venta.setDetalles(null);
+
+            when(ventaRepository.findAll())
+                    .thenReturn(List.of(venta));
+
+            // Act
+            List<VentaResponseDTO> result =
+                    ventaService.findAll();
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+        }
     }
 
-    @Test
-    public void testCrearVentaDesdeRequest_SinDetalles_GuardaVentaVacia() {
-        VentaRequestDTO request = new VentaRequestDTO();
-        request.setMetodoPagoId(1L);
-        request.setMetodoEnvioId(1L);
-        request.setEstadoId(1L);
-        request.setDetalles(null); // sin detalles
-
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(metodoPagoEntity()));
-        when(metodoEnvioRepository.findById(1L)).thenReturn(Optional.of(metodoEnvioEntity()));
-        when(estadoRepository.findById(1L)).thenReturn(Optional.of(estadoEntity()));
-        when(ventaRepository.save(any(VentaModel.class)))
-                .thenAnswer(inv -> {
-                    VentaModel v = inv.getArgument(0);
-                    v.setId(21L);
-                    return v;
-                });
-
-        VentaResponseDTO result = ventaService.crearVentaDesdeRequest(request, 1L);
-
-        assertNotNull(result);
-        assertEquals(21L, result.getId());
-        verify(productoRepository, never()).findById(anyLong());
-    }
-
-    @Test
-    public void testObtenerVentasConDatos_OK() {
-        Object[] fila = new Object[] {
-            1L,
-            LocalDate.of(2025, 7, 6),
-            LocalTime.of(14, 30),
-            1L,                      // UsuarioID
-            "Juan",                  // Usuario
-            "Tarjeta de Crédito",    // Método Pago
-            "Despacho a domicilio",  // Método Envío
-            "Pagada"                 // Estado
-        };
-        List<Object[]> filas = new ArrayList<>();
-        filas.add(fila);
-        when(ventaRepository.obtenerVentasResumen()).thenReturn(filas);
-
-        List<Map<String, Object>> result = ventaService.obtenerVentasConDatos();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).get("ID"));
-    }
-
-    @Test
-    public void testFindAllPaged_OK() {
-        Page<VentaModel> page = new PageImpl<>(List.of(ventaEntity()));
-        when(ventaRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
-                .thenReturn(page);
-
-        var result = ventaService.findAllPaged(1, 10);
-
-        assertNotNull(result);
-        assertEquals(1, result.getContenido().size());
-        assertEquals(1L, result.getContenido().get(0).getId());
-    }
-
-    @Test
-    public void testFindMisComprasPaged_OK() {
-        Page<VentaModel> page = new PageImpl<>(List.of(ventaEntity()));
-        when(ventaRepository.findByUsuarioModel_Id(eq(1L), any(org.springframework.data.domain.Pageable.class)))
-                .thenReturn(page);
-
-        var result = ventaService.findMisComprasPaged(1L, 1, 10);
-
-        assertNotNull(result);
-        assertEquals(1, result.getContenido().size());
-        assertEquals(1L, result.getContenido().get(0).getId());
-    }
 }
