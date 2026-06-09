@@ -5,6 +5,7 @@ import com.example.NoLimits.Multimedia.model.usuario.RolModel;
 import com.example.NoLimits.Multimedia.model.usuario.UsuarioModel;
 import com.example.NoLimits.Multimedia.repository.usuario.RolRepository;
 import com.example.NoLimits.Multimedia.repository.usuario.UsuarioRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,80 +16,120 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @DisplayName("AdminInitializer")
 class AdminInitializerTest {
 
+    private AdminInitializer adminInitializer;
+    private UsuarioRepository usuarioRepository;
+    private RolRepository rolRepository;
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void setUp() {
+        usuarioRepository = mock(UsuarioRepository.class);
+        rolRepository = mock(RolRepository.class);
+        passwordEncoder = mock(PasswordEncoder.class);
+
+        adminInitializer = new AdminInitializer();
+
+        ReflectionTestUtils.setField(adminInitializer, "usuarioRepository", usuarioRepository);
+        ReflectionTestUtils.setField(adminInitializer, "rolRepository", rolRepository);
+        ReflectionTestUtils.setField(adminInitializer, "passwordEncoder", passwordEncoder);
+    }
+
     @Nested
-    @DisplayName("describe: run")
-    class Run {
+    @DisplayName("describe: credenciales vacías o nulas")
+    class CredencialesVacias {
 
         @Test
-        @DisplayName("it: no debería crear admin cuando correo está vacío")
-        void noDeberiaCrearAdminCuandoCorreoEstaVacio() throws Exception {
-            AdminInitializer initializer = crearInitializer("", "admin123");
+        @DisplayName("it: debería retornar sin tocar repositorios cuando correo está vacío")
+        void deberiaRetornarSinTocarRepositoriosCuandoCorreoEstaVacio() throws Exception {
+            ReflectionTestUtils.setField(adminInitializer, "correo", "  ");
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
 
-            initializer.run();
-
-            UsuarioRepository usuarioRepository =
-                    (UsuarioRepository) ReflectionTestUtils.getField(initializer, "usuarioRepository");
-            RolRepository rolRepository =
-                    (RolRepository) ReflectionTestUtils.getField(initializer, "rolRepository");
+            adminInitializer.run();
 
             verifyNoInteractions(usuarioRepository);
             verifyNoInteractions(rolRepository);
         }
 
         @Test
-        @DisplayName("it: no debería crear admin cuando password está vacío")
-        void noDeberiaCrearAdminCuandoPasswordEstaVacio() throws Exception {
-            AdminInitializer initializer = crearInitializer("admin@test.com", "");
+        @DisplayName("it: debería retornar sin tocar repositorios cuando password está vacío")
+        void deberiaRetornarSinTocarRepositoriosCuandoPasswordEstaVacio() throws Exception {
+            ReflectionTestUtils.setField(adminInitializer, "correo", "admin@test.com");
+            ReflectionTestUtils.setField(adminInitializer, "password", "");
 
-            initializer.run();
-
-            UsuarioRepository usuarioRepository =
-                    (UsuarioRepository) ReflectionTestUtils.getField(initializer, "usuarioRepository");
-            RolRepository rolRepository =
-                    (RolRepository) ReflectionTestUtils.getField(initializer, "rolRepository");
+            adminInitializer.run();
 
             verifyNoInteractions(usuarioRepository);
             verifyNoInteractions(rolRepository);
         }
+    }
+
+    @Nested
+    @DisplayName("describe: rol admin")
+    class RolAdmin {
 
         @Test
         @DisplayName("it: no debería crear admin cuando no existe ROLE_ADMIN ni ADMIN")
-        void noDeberiaCrearAdminCuandoNoExisteRolAdmin() throws Exception {
-            AdminInitializer initializer = crearInitializer("admin@test.com", "admin123");
-
-            RolRepository rolRepository =
-                    (RolRepository) ReflectionTestUtils.getField(initializer, "rolRepository");
-            UsuarioRepository usuarioRepository =
-                    (UsuarioRepository) ReflectionTestUtils.getField(initializer, "usuarioRepository");
+        void noDeberiaCrearAdminCuandoNoExisteRoleAdminNiAdmin() throws Exception {
+            ReflectionTestUtils.setField(adminInitializer, "correo", "admin@test.com");
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
 
             when(rolRepository.findByNombreIgnoreCase("ROLE_ADMIN"))
                     .thenReturn(Optional.empty());
             when(rolRepository.findByNombreIgnoreCase("ADMIN"))
                     .thenReturn(Optional.empty());
 
-            initializer.run();
+            adminInitializer.run();
 
             verify(rolRepository).findByNombreIgnoreCase("ROLE_ADMIN");
             verify(rolRepository).findByNombreIgnoreCase("ADMIN");
-            verifyNoInteractions(usuarioRepository);
+            verify(usuarioRepository, never()).save(any(UsuarioModel.class));
         }
+
+        @Test
+        @DisplayName("it: debería usar ADMIN como respaldo cuando no existe ROLE_ADMIN")
+        void deberiaUsarAdminComoRespaldoCuandoNoExisteRoleAdmin() throws Exception {
+            ReflectionTestUtils.setField(adminInitializer, "correo", "admin@test.com");
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
+
+            RolModel adminRol = new RolModel();
+            adminRol.setNombre("ADMIN");
+
+            when(rolRepository.findByNombreIgnoreCase("ROLE_ADMIN"))
+                    .thenReturn(Optional.empty());
+            when(rolRepository.findByNombreIgnoreCase("ADMIN"))
+                    .thenReturn(Optional.of(adminRol));
+            when(usuarioRepository.findByCorreoIgnoreCase("admin@test.com"))
+                    .thenReturn(Optional.empty());
+            when(passwordEncoder.encode("admin123"))
+                    .thenReturn("password-encriptada");
+
+            adminInitializer.run();
+
+            ArgumentCaptor<UsuarioModel> usuarioCaptor = ArgumentCaptor.forClass(UsuarioModel.class);
+            verify(usuarioRepository).save(usuarioCaptor.capture());
+
+            UsuarioModel adminGuardado = usuarioCaptor.getValue();
+
+            assertEquals("admin@test.com", adminGuardado.getCorreo());
+            assertEquals(adminRol, adminGuardado.getRol());
+        }
+    }
+
+    @Nested
+    @DisplayName("describe: admin nuevo")
+    class AdminNuevo {
 
         @Test
         @DisplayName("it: debería crear admin nuevo cuando no existe usuario y existe ROLE_ADMIN")
         void deberiaCrearAdminNuevoCuandoNoExisteUsuarioYExisteRoleAdmin() throws Exception {
-            AdminInitializer initializer = crearInitializer(" Admin@Test.com ", "admin123");
-
-            RolRepository rolRepository =
-                    (RolRepository) ReflectionTestUtils.getField(initializer, "rolRepository");
-            UsuarioRepository usuarioRepository =
-                    (UsuarioRepository) ReflectionTestUtils.getField(initializer, "usuarioRepository");
-            PasswordEncoder passwordEncoder =
-                    (PasswordEncoder) ReflectionTestUtils.getField(initializer, "passwordEncoder");
+            ReflectionTestUtils.setField(adminInitializer, "correo", " Admin@Test.com ");
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
 
             RolModel adminRol = new RolModel();
             adminRol.setNombre("ROLE_ADMIN");
@@ -100,7 +141,7 @@ class AdminInitializerTest {
             when(passwordEncoder.encode("admin123"))
                     .thenReturn("password-encriptada");
 
-            initializer.run();
+            adminInitializer.run();
 
             ArgumentCaptor<UsuarioModel> usuarioCaptor = ArgumentCaptor.forClass(UsuarioModel.class);
             verify(usuarioRepository).save(usuarioCaptor.capture());
@@ -114,18 +155,17 @@ class AdminInitializerTest {
             assertEquals("password-encriptada", adminGuardado.getPassword());
             assertEquals(adminRol, adminGuardado.getRol());
         }
+    }
+
+    @Nested
+    @DisplayName("describe: admin existente")
+    class AdminExistente {
 
         @Test
         @DisplayName("it: debería actualizar admin existente cuando ya existe usuario")
         void deberiaActualizarAdminExistenteCuandoYaExisteUsuario() throws Exception {
-            AdminInitializer initializer = crearInitializer("admin@test.com", "admin123");
-
-            RolRepository rolRepository =
-                    (RolRepository) ReflectionTestUtils.getField(initializer, "rolRepository");
-            UsuarioRepository usuarioRepository =
-                    (UsuarioRepository) ReflectionTestUtils.getField(initializer, "usuarioRepository");
-            PasswordEncoder passwordEncoder =
-                    (PasswordEncoder) ReflectionTestUtils.getField(initializer, "passwordEncoder");
+            ReflectionTestUtils.setField(adminInitializer, "correo", "admin@test.com");
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
 
             RolModel adminRol = new RolModel();
             adminRol.setNombre("ROLE_ADMIN");
@@ -142,7 +182,7 @@ class AdminInitializerTest {
             when(passwordEncoder.encode("admin123"))
                     .thenReturn("password-actualizada");
 
-            initializer.run();
+            adminInitializer.run();
 
             verify(usuarioRepository).save(adminExistente);
 
@@ -153,52 +193,5 @@ class AdminInitializerTest {
             assertEquals("password-actualizada", adminExistente.getPassword());
             assertEquals(adminRol, adminExistente.getRol());
         }
-
-        @Test
-        @DisplayName("it: debería usar ADMIN como respaldo cuando no existe ROLE_ADMIN")
-        void deberiaUsarAdminComoRespaldoCuandoNoExisteRoleAdmin() throws Exception {
-            AdminInitializer initializer = crearInitializer("admin@test.com", "admin123");
-
-            RolRepository rolRepository =
-                    (RolRepository) ReflectionTestUtils.getField(initializer, "rolRepository");
-            UsuarioRepository usuarioRepository =
-                    (UsuarioRepository) ReflectionTestUtils.getField(initializer, "usuarioRepository");
-            PasswordEncoder passwordEncoder =
-                    (PasswordEncoder) ReflectionTestUtils.getField(initializer, "passwordEncoder");
-
-            RolModel adminRol = new RolModel();
-            adminRol.setNombre("ADMIN");
-
-            when(rolRepository.findByNombreIgnoreCase("ROLE_ADMIN"))
-                    .thenReturn(Optional.empty());
-            when(rolRepository.findByNombreIgnoreCase("ADMIN"))
-                    .thenReturn(Optional.of(adminRol));
-            when(usuarioRepository.findByCorreoIgnoreCase("admin@test.com"))
-                    .thenReturn(Optional.empty());
-            when(passwordEncoder.encode("admin123"))
-                    .thenReturn("password-encriptada");
-
-            initializer.run();
-
-            ArgumentCaptor<UsuarioModel> usuarioCaptor = ArgumentCaptor.forClass(UsuarioModel.class);
-            verify(usuarioRepository).save(usuarioCaptor.capture());
-
-            UsuarioModel adminGuardado = usuarioCaptor.getValue();
-
-            assertEquals("admin@test.com", adminGuardado.getCorreo());
-            assertEquals(adminRol, adminGuardado.getRol());
-        }
-    }
-
-    private AdminInitializer crearInitializer(String correo, String password) {
-        AdminInitializer initializer = new AdminInitializer();
-
-        ReflectionTestUtils.setField(initializer, "usuarioRepository", mock(UsuarioRepository.class));
-        ReflectionTestUtils.setField(initializer, "rolRepository", mock(RolRepository.class));
-        ReflectionTestUtils.setField(initializer, "passwordEncoder", mock(PasswordEncoder.class));
-        ReflectionTestUtils.setField(initializer, "correo", correo);
-        ReflectionTestUtils.setField(initializer, "password", password);
-
-        return initializer;
     }
 }

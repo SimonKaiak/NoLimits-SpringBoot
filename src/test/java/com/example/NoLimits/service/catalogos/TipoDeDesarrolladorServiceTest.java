@@ -10,272 +10,246 @@ import com.example.NoLimits.Multimedia.repository.catalogos.TiposDeDesarrollador
 import com.example.NoLimits.Multimedia.service.catalogos.TipoDeDesarrolladorService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
-import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import org.springframework.data.domain.Page;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class TipoDeDesarrolladorServiceTest extends AbstractContainerBaseTest{
+public class TipoDeDesarrolladorServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private TipoDeDesarrolladorService service;
 
     @MockBean
-    private TipoDeDesarrolladorRepository tipoRepo;
+    private TipoDeDesarrolladorRepository tipoDeDesarrolladorRepository;
 
     @MockBean
-    private TiposDeDesarrolladorRepository tpRepo;
+    private TiposDeDesarrolladorRepository tiposDeDesarrolladorRepository;
 
-    // ================== HELPERS ==================
+    // ==========================
+    // HELPERS
+    // ==========================
 
-    private TipoDeDesarrolladorModel tipo() {
-        TipoDeDesarrolladorModel t = new TipoDeDesarrolladorModel();
-        t.setId(1L);
-        t.setNombre("Estudio");
-        return t;
+    private TipoDeDesarrolladorModel entity() {
+        TipoDeDesarrolladorModel m = new TipoDeDesarrolladorModel();
+        m.setId(1L);
+        m.setNombre("Indie");
+        return m;
     }
 
-    private TipoDeDesarrolladorRequestDTO createRequestDTO() {
+    private TipoDeDesarrolladorRequestDTO req(String nombre) {
         TipoDeDesarrolladorRequestDTO dto = new TipoDeDesarrolladorRequestDTO();
-        dto.setNombre("Publisher");
+        dto.setNombre(nombre);
         return dto;
     }
 
-    private TipoDeDesarrolladorUpdateDTO createUpdateDTO() {
+    private TipoDeDesarrolladorUpdateDTO upd(String nombre) {
         TipoDeDesarrolladorUpdateDTO dto = new TipoDeDesarrolladorUpdateDTO();
-        dto.setNombre("Co-desarrollador");
+        dto.setNombre(nombre);
         return dto;
     }
 
-    // ================== TESTS FIND ==================
+    // ==========================
+    // findAll / findById
+    // ==========================
 
     @Test
     void testFindAll() {
-        when(tipoRepo.findAll()).thenReturn(List.of(tipo()));
-
+        when(tipoDeDesarrolladorRepository.findAll()).thenReturn(List.of(entity()));
         List<TipoDeDesarrolladorResponseDTO> lista = service.findAll();
-
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertEquals(1L, lista.get(0).getId());
-        assertEquals("Estudio", lista.get(0).getNombre());
+        assertEquals("Indie", lista.get(0).getNombre());
     }
 
     @Test
     void testFindById_Existe() {
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(tipo()));
-
-        TipoDeDesarrolladorResponseDTO t = service.findById(1L);
-
-        assertNotNull(t);
-        assertEquals(1L, t.getId());
-        assertEquals("Estudio", t.getNombre());
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        TipoDeDesarrolladorResponseDTO dto = service.findById(1L);
+        assertNotNull(dto);
+        assertEquals(1L, dto.getId());
     }
 
     @Test
     void testFindById_NoExiste_Lanza404() {
-        when(tipoRepo.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> service.findById(99L));
+        when(tipoDeDesarrolladorRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () -> service.findById(99L));
     }
 
-    // ================== TESTS SAVE ==================
+    // ==========================
+    // save
+    // ==========================
 
     @Test
     void testSave_Ok() {
-        TipoDeDesarrolladorRequestDTO input = new TipoDeDesarrolladorRequestDTO();
-        input.setNombre("  Publisher  ");
-
-        when(tipoRepo.existsByNombreIgnoreCase("Publisher")).thenReturn(false);
-        when(tipoRepo.save(any(TipoDeDesarrolladorModel.class)))
-                .thenAnswer(invocation -> {
-                    TipoDeDesarrolladorModel t = invocation.getArgument(0);
-                    t.setId(5L);
-                    return t;
-                });
-
-        TipoDeDesarrolladorResponseDTO saved = service.save(input);
-
-        assertNotNull(saved);
-        assertEquals(5L, saved.getId());
-        assertEquals("Publisher", saved.getNombre());
+        when(tipoDeDesarrolladorRepository.existsByNombreIgnoreCase("AAA")).thenReturn(false);
+        when(tipoDeDesarrolladorRepository.save(any())).thenAnswer(inv -> {
+            TipoDeDesarrolladorModel m = inv.getArgument(0);
+            m.setId(2L);
+            return m;
+        });
+        TipoDeDesarrolladorResponseDTO dto = service.save(req("AAA"));
+        assertNotNull(dto);
+        assertEquals("AAA", dto.getNombre());
     }
 
     @Test
     void testSave_NombreNull_LanzaIllegalArgument() {
-        TipoDeDesarrolladorRequestDTO input = new TipoDeDesarrolladorRequestDTO();
-        input.setNombre(null);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.save(input));
-
-        verify(tipoRepo, never()).save(any(TipoDeDesarrolladorModel.class));
+        assertThrows(IllegalArgumentException.class, () -> service.save(req(null)));
+        verify(tipoDeDesarrolladorRepository, never()).save(any());
     }
 
     @Test
     void testSave_NombreVacio_LanzaIllegalArgument() {
-        TipoDeDesarrolladorRequestDTO input = new TipoDeDesarrolladorRequestDTO();
-        input.setNombre("   ");
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.save(input));
-
-        verify(tipoRepo, never()).save(any(TipoDeDesarrolladorModel.class));
+        assertThrows(IllegalArgumentException.class, () -> service.save(req("  ")));
+        verify(tipoDeDesarrolladorRepository, never()).save(any());
     }
 
     @Test
     void testSave_NombreDuplicado_LanzaIllegalArgument() {
-        TipoDeDesarrolladorRequestDTO input = new TipoDeDesarrolladorRequestDTO();
-        input.setNombre("Publisher");
-
-        when(tipoRepo.existsByNombreIgnoreCase("Publisher")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.save(input));
-
-        verify(tipoRepo, never()).save(any(TipoDeDesarrolladorModel.class));
+        when(tipoDeDesarrolladorRepository.existsByNombreIgnoreCase("Indie")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> service.save(req("Indie")));
     }
 
-    // ================== TESTS UPDATE ==================
+    // ==========================
+    // update (PUT)
+    // ==========================
 
     @Test
     void testUpdate_CambiaNombre() {
-        TipoDeDesarrolladorModel original = tipo();
-        TipoDeDesarrolladorUpdateDTO cambios = new TipoDeDesarrolladorUpdateDTO();
-        cambios.setNombre("Co-desarrollador");
+        TipoDeDesarrolladorModel existente = entity();
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoDeDesarrolladorRepository.existsByNombreIgnoreCase("AAA")).thenReturn(false);
+        when(tipoDeDesarrolladorRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(original));
-        when(tipoRepo.existsByNombreIgnoreCase("Co-desarrollador")).thenReturn(false);
-        when(tipoRepo.save(any(TipoDeDesarrolladorModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        TipoDeDesarrolladorResponseDTO dto = service.update(1L, upd("AAA"));
+        assertEquals("AAA", dto.getNombre());
+    }
 
-        TipoDeDesarrolladorResponseDTO actualizado = service.update(1L, cambios);
+    @Test
+    void testUpdate_MismoNombre_NoVerificaDuplicado() {
+        TipoDeDesarrolladorModel existente = entity(); // nombre = "Indie"
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoDeDesarrolladorRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertNotNull(actualizado);
-        assertEquals("Co-desarrollador", actualizado.getNombre());
+        TipoDeDesarrolladorResponseDTO dto = service.update(1L, upd("Indie"));
+        assertEquals("Indie", dto.getNombre());
+        // mismo nombre → no debe verificar duplicado
+        verify(tipoDeDesarrolladorRepository, never()).existsByNombreIgnoreCase(anyString());
     }
 
     @Test
     void testUpdate_NombreVacio_LanzaIllegalArgument() {
-        TipoDeDesarrolladorModel original = tipo();
-        TipoDeDesarrolladorUpdateDTO cambios = new TipoDeDesarrolladorUpdateDTO();
-        cambios.setNombre("   ");
-
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(original));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.update(1L, cambios));
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        assertThrows(IllegalArgumentException.class, () -> service.update(1L, upd("   ")));
     }
 
     @Test
     void testUpdate_NombreDuplicado_LanzaIllegalArgument() {
-        TipoDeDesarrolladorModel original = tipo();
-        TipoDeDesarrolladorUpdateDTO cambios = new TipoDeDesarrolladorUpdateDTO();
-        cambios.setNombre("Publisher");
-
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(original));
-        when(tipoRepo.existsByNombreIgnoreCase("Publisher")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.update(1L, cambios));
+        TipoDeDesarrolladorModel existente = entity();
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoDeDesarrolladorRepository.existsByNombreIgnoreCase("AAA")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> service.update(1L, upd("AAA")));
     }
 
     @Test
     void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
-        TipoDeDesarrolladorUpdateDTO cambios = createUpdateDTO();
-
-        when(tipoRepo.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> service.update(99L, cambios));
+        when(tipoDeDesarrolladorRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () -> service.update(99L, upd("X")));
     }
 
-    // ================== TESTS PATCH (delegado a update) ==================
+    @Test
+    void testUpdate_NombreNull_NoCambia() {
+        // Si nombre es null, la condición `in.getNombre() != null` es false → no modifica nombre
+        TipoDeDesarrolladorModel existente = entity();
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoDeDesarrolladorRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        TipoDeDesarrolladorResponseDTO dto = service.update(1L, upd(null));
+        assertEquals("Indie", dto.getNombre()); // no cambió
+    }
+
+    // ==========================
+    // patch (delega a update)
+    // ==========================
 
     @Test
     void testPatch_CambiaNombre() {
-        TipoDeDesarrolladorModel original = tipo();
-        TipoDeDesarrolladorUpdateDTO cambios = new TipoDeDesarrolladorUpdateDTO();
-        cambios.setNombre("Co-desarrollador");
+        TipoDeDesarrolladorModel existente = entity();
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoDeDesarrolladorRepository.existsByNombreIgnoreCase("AAA")).thenReturn(false);
+        when(tipoDeDesarrolladorRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(original));
-        when(tipoRepo.existsByNombreIgnoreCase("Co-desarrollador")).thenReturn(false);
-        when(tipoRepo.save(any(TipoDeDesarrolladorModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        TipoDeDesarrolladorResponseDTO actualizado = service.patch(1L, cambios);
-
-        assertNotNull(actualizado);
-        assertEquals("Co-desarrollador", actualizado.getNombre());
+        TipoDeDesarrolladorResponseDTO dto = service.patch(1L, upd("AAA"));
+        assertEquals("AAA", dto.getNombre());
     }
 
-    // ================== TESTS DELETE ==================
+    // ==========================
+    // deleteById
+    // ==========================
 
     @Test
     void testDeleteById_SinRelaciones() {
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(tipo()));
-        when(tpRepo.existsByTipoDeDesarrollador_Id(1L)).thenReturn(false);
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(tiposDeDesarrolladorRepository.existsByTipoDeDesarrollador_Id(1L)).thenReturn(false);
 
         service.deleteById(1L);
-
-        verify(tipoRepo, times(1)).deleteById(1L);
+        verify(tipoDeDesarrolladorRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void testDeleteById_ConRelaciones_LanzaIllegalState() {
-        when(tipoRepo.findById(1L)).thenReturn(Optional.of(tipo()));
-        when(tpRepo.existsByTipoDeDesarrollador_Id(1L)).thenReturn(true);
+        when(tipoDeDesarrolladorRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(tiposDeDesarrolladorRepository.existsByTipoDeDesarrollador_Id(1L)).thenReturn(true);
 
-        assertThrows(IllegalStateException.class,
-                () -> service.deleteById(1L));
-
-        verify(tipoRepo, never()).deleteById(any(Long.class));
+        assertThrows(IllegalStateException.class, () -> service.deleteById(1L));
+        verify(tipoDeDesarrolladorRepository, never()).deleteById(any());
     }
 
     @Test
     void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
-        when(tipoRepo.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> service.deleteById(99L));
-
-        verify(tipoRepo, never()).deleteById(any(Long.class));
+        when(tipoDeDesarrolladorRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () -> service.deleteById(99L));
     }
+
+    // ==========================
+    // findAllPaged / findByNombrePaged
+    // ==========================
 
     @Test
     void testFindAllPaged() {
-        Page<TipoDeDesarrolladorModel> page = new org.springframework.data.domain.PageImpl<>(List.of(tipo()));
-        when(tipoRepo.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        Page<TipoDeDesarrolladorModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(tipoDeDesarrolladorRepository.findAll(any(Pageable.class))).thenReturn(page);
+
         var resultado = service.findAllPaged(1, 10);
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
+        assertEquals("Indie", resultado.getContenido().get(0).getNombre());
     }
 
     @Test
     void testFindByNombrePaged() {
-        Page<TipoDeDesarrolladorModel> page = new org.springframework.data.domain.PageImpl<>(List.of(tipo()));
-        when(tipoRepo.findByNombreContainingIgnoreCase(any(), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
-        var resultado = service.findByNombrePaged("Estudio", 1, 10);
+        Page<TipoDeDesarrolladorModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(tipoDeDesarrolladorRepository.findByNombreContainingIgnoreCase(any(), any(Pageable.class)))
+                .thenReturn(page);
+
+        var resultado = service.findByNombrePaged("indie", 1, 10);
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
     }

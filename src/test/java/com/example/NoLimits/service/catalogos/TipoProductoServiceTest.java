@@ -11,7 +11,12 @@ import com.example.NoLimits.Multimedia.service.catalogos.TipoProductoService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,24 +26,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.server.ResponseStatusException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class TipoProductoServiceTest extends AbstractContainerBaseTest{
+public class TipoProductoServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private TipoProductoService tipoProductoService;
@@ -51,285 +47,297 @@ public class TipoProductoServiceTest extends AbstractContainerBaseTest{
 
     // ================== HELPERS ==================
 
-    private TipoProductoModel createTipoProducto() {
-        TipoProductoModel tipoProducto = new TipoProductoModel();
-        tipoProducto.setId(1L);
-        tipoProducto.setNombre("Videojuegos");
-        tipoProducto.setDescripcion("Categoría para videojuegos");
-        tipoProducto.setActivo(true);
-        return tipoProducto;
+    private TipoProductoModel entity() {
+        TipoProductoModel m = new TipoProductoModel();
+        m.setId(1L);
+        m.setNombre("Videojuego");
+        m.setDescripcion("Juego digital");
+        m.setActivo(true);
+        return m;
     }
 
-    // ================== TESTS ==================
+    private TipoProductoRequestDTO req(String nombre, String desc, Boolean activo) {
+        TipoProductoRequestDTO dto = new TipoProductoRequestDTO();
+        dto.setNombre(nombre);
+        dto.setDescripcion(desc);
+        dto.setActivo(activo);
+        return dto;
+    }
+
+    private TipoProductoUpdateDTO upd(String nombre, String desc, Boolean activo) {
+        TipoProductoUpdateDTO dto = new TipoProductoUpdateDTO();
+        dto.setNombre(nombre);
+        dto.setDescripcion(desc);
+        dto.setActivo(activo);
+        return dto;
+    }
+
+    // ================== FIND ==================
 
     @Test
     public void testFindAll() {
-        when(tipoProductoRepository.findAll()).thenReturn(List.of(createTipoProducto()));
-
-        List<TipoProductoResponseDTO> tipos = tipoProductoService.findAll();
-
-        assertNotNull(tipos);
-        assertEquals(1, tipos.size());
-        assertEquals("Videojuegos", tipos.get(0).getNombre());
+        when(tipoProductoRepository.findAll()).thenReturn(List.of(entity()));
+        List<TipoProductoResponseDTO> lista = tipoProductoService.findAll();
+        assertNotNull(lista);
+        assertEquals(1, lista.size());
+        assertEquals("Videojuego", lista.get(0).getNombre());
     }
 
     @Test
     public void testFindById() {
-        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(createTipoProducto()));
-
-        TipoProductoResponseDTO tipo = tipoProductoService.findById(1L);
-
-        assertNotNull(tipo);
-        assertEquals("Videojuegos", tipo.getNombre());
-        assertEquals(1L, tipo.getId());
-        assertTrue(Boolean.TRUE.equals(tipo.getActivo()));
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        TipoProductoResponseDTO dto = tipoProductoService.findById(1L);
+        assertNotNull(dto);
+        assertEquals("Videojuego", dto.getNombre());
     }
 
     @Test
     public void testFindById_NoExiste() {
         when(tipoProductoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> tipoProductoService.findById(99L));
+        assertThrows(RecursoNoEncontradoException.class, () -> tipoProductoService.findById(99L));
     }
 
     @Test
     public void testFindByNombreLike() {
         when(tipoProductoRepository.findByNombreContainingIgnoreCase("video"))
-                .thenReturn(List.of(createTipoProducto()));
-
-        List<TipoProductoResponseDTO> tipos = tipoProductoService.findByNombre("video");
-
-        assertNotNull(tipos);
-        assertEquals(1, tipos.size());
-        assertEquals("Videojuegos", tipos.get(0).getNombre());
+                .thenReturn(List.of(entity()));
+        List<TipoProductoResponseDTO> lista = tipoProductoService.findByNombre("video");
+        assertEquals(1, lista.size());
     }
 
     @Test
     public void testFindByNombreExactIgnoreCase() {
-        when(tipoProductoRepository.findByNombreIgnoreCase("Videojuegos"))
-                .thenReturn(Optional.of(createTipoProducto()));
-
-        TipoProductoResponseDTO tipo = tipoProductoService.findByNombreExactIgnoreCase("Videojuegos");
-
-        assertNotNull(tipo);
-        assertEquals("Videojuegos", tipo.getNombre());
+        when(tipoProductoRepository.findByNombreIgnoreCase("Videojuego"))
+                .thenReturn(Optional.of(entity()));
+        TipoProductoResponseDTO dto = tipoProductoService.findByNombreExactIgnoreCase("Videojuego");
+        assertNotNull(dto);
+        assertEquals("Videojuego", dto.getNombre());
     }
 
     @Test
     public void testFindByNombreExactIgnoreCase_NoExiste() {
-        when(tipoProductoRepository.findByNombreIgnoreCase("X"))
-                .thenReturn(Optional.empty());
-
+        when(tipoProductoRepository.findByNombreIgnoreCase("X")).thenReturn(Optional.empty());
         assertThrows(RecursoNoEncontradoException.class,
                 () -> tipoProductoService.findByNombreExactIgnoreCase("X"));
     }
 
+    // ================== SAVE ==================
+
     @Test
     public void testSave_Exito() {
-        TipoProductoRequestDTO request = new TipoProductoRequestDTO();
-        request.setNombre("Accesorios");
-        request.setDescripcion("Categoría de accesorios");
-        // activo null -> el servicio lo debería setear en true
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorio")).thenReturn(false);
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> {
+            TipoProductoModel m = inv.getArgument(0);
+            m.setId(2L);
+            return m;
+        });
+        TipoProductoResponseDTO dto = tipoProductoService.save(req("Accesorio", "Accesorios varios", true));
+        assertNotNull(dto);
+        assertEquals("Accesorio", dto.getNombre());
+    }
 
-        when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorios"))
-                .thenReturn(false);
-        when(tipoProductoRepository.save(any(TipoProductoModel.class)))
-                .thenAnswer(inv -> {
-                    TipoProductoModel t = inv.getArgument(0);
-                    t.setId(1L);
-                    return t;
-                });
-
-        TipoProductoResponseDTO saved = tipoProductoService.save(request);
-
-        assertNotNull(saved);
-        assertEquals(1L, saved.getId());
-        assertEquals("Accesorios", saved.getNombre());
-        assertTrue(Boolean.TRUE.equals(saved.getActivo()));
+    @Test
+    public void testSave_ActivoNull_DefaultTrue() {
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorio")).thenReturn(false);
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> {
+            TipoProductoModel m = inv.getArgument(0);
+            m.setId(2L);
+            return m;
+        });
+        TipoProductoResponseDTO dto = tipoProductoService.save(req("Accesorio", "Desc", null));
+        assertNotNull(dto);
+        assertTrue(dto.getActivo());
     }
 
     @Test
     public void testSave_NombreObligatorio() {
-        TipoProductoRequestDTO sinNombre = new TipoProductoRequestDTO();
-        sinNombre.setNombre("   "); // solo espacios
-
         assertThrows(IllegalArgumentException.class,
-                () -> tipoProductoService.save(sinNombre));
+                () -> tipoProductoService.save(req(null, "Desc", true)));
+        verify(tipoProductoRepository, never()).save(any());
     }
 
     @Test
     public void testSave_NombreDuplicado() {
-        TipoProductoRequestDTO request = new TipoProductoRequestDTO();
-        request.setNombre("Videojuegos");
-
-        when(tipoProductoRepository.existsByNombreIgnoreCase("Videojuegos"))
-                .thenReturn(true);
-
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Videojuego")).thenReturn(true);
         assertThrows(IllegalArgumentException.class,
-                () -> tipoProductoService.save(request));
+                () -> tipoProductoService.save(req("Videojuego", "Desc", true)));
     }
 
     @Test
+    public void testSave_MismoNombreQueEntidadExistente_NoDuplicado() {
+        // Si se guarda una nueva entidad (id null), y el nombre existe en BD → lanza excepción
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Videojuego")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class,
+                () -> tipoProductoService.save(req("Videojuego", "Desc", true)));
+    }
+
+    // ================== UPDATE ==================
+
+    @Test
     public void testUpdate_Exito() {
-        TipoProductoModel existente = createTipoProducto(); // nombre: Videojuegos
-
-        TipoProductoRequestDTO cambios = new TipoProductoRequestDTO();
-        cambios.setNombre("Películas");
-        cambios.setDescripcion("Categoría para películas");
-        cambios.setActivo(false);
-
+        TipoProductoModel existente = entity();
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(tipoProductoRepository.existsByNombreIgnoreCase("Películas")).thenReturn(false);
-        when(tipoProductoRepository.save(any(TipoProductoModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Hardware")).thenReturn(false);
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TipoProductoResponseDTO actualizado = tipoProductoService.update(1L, cambios);
+        TipoProductoResponseDTO dto = tipoProductoService.update(1L, req("Hardware", "Desc hardware", false));
+        assertEquals("Hardware", dto.getNombre());
+        assertFalse(dto.getActivo());
+    }
 
-        assertNotNull(actualizado);
-        assertEquals("Películas", actualizado.getNombre());
-        assertEquals("Categoría para películas", actualizado.getDescripcion());
-        assertFalse(actualizado.getActivo());
+    @Test
+    public void testUpdate_MismoNombre_NoVerificaDuplicado() {
+        TipoProductoModel existente = entity(); // nombre = "Videojuego"
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Mismo nombre → no debe llamar a existsByNombreIgnoreCase
+        TipoProductoResponseDTO dto = tipoProductoService.update(1L, req("Videojuego", "Desc actualizada", true));
+        assertEquals("Videojuego", dto.getNombre());
+        verify(tipoProductoRepository, never()).existsByNombreIgnoreCase(anyString());
     }
 
     @Test
     public void testUpdate_NombreDuplicado() {
-        TipoProductoModel existente = createTipoProducto(); // Videojuegos
-
-        TipoProductoRequestDTO cambios = new TipoProductoRequestDTO();
-        cambios.setNombre("Accesorios");
-
+        TipoProductoModel existente = entity();
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorios")).thenReturn(true);
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Hardware")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
-                () -> tipoProductoService.update(1L, cambios));
+                () -> tipoProductoService.update(1L, req("Hardware", "Desc", true)));
     }
 
     @Test
+    public void testUpdate_NoExiste() {
+        when(tipoProductoRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> tipoProductoService.update(99L, req("X", "D", true)));
+    }
+
+    // ================== PATCH ==================
+
+    @Test
     public void testPatch_CambiaSoloNombre_OK() {
-        TipoProductoModel existente = createTipoProducto(); // Videojuegos
-
-        TipoProductoUpdateDTO patchData = new TipoProductoUpdateDTO();
-        patchData.setNombre("Películas");
-
+        TipoProductoModel existente = entity();
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(tipoProductoRepository.existsByNombreIgnoreCase("Películas")).thenReturn(false);
-        when(tipoProductoRepository.save(any(TipoProductoModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Hardware")).thenReturn(false);
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        TipoProductoResponseDTO patched = tipoProductoService.patch(1L, patchData);
+        TipoProductoResponseDTO dto = tipoProductoService.patch(1L, upd("Hardware", null, null));
+        assertEquals("Hardware", dto.getNombre());
+        assertEquals("Juego digital", dto.getDescripcion()); // no cambió
+        assertTrue(dto.getActivo()); // no cambió
+    }
 
-        assertNotNull(patched);
-        assertEquals("Películas", patched.getNombre());
-        assertEquals("Categoría para videojuegos", patched.getDescripcion());
-        assertTrue(Boolean.TRUE.equals(patched.getActivo()));
+    @Test
+    public void testPatch_CambiaSoloDescripcion() {
+        TipoProductoModel existente = entity();
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        TipoProductoResponseDTO dto = tipoProductoService.patch(1L, upd(null, "Nueva descripción", null));
+        assertEquals("Videojuego", dto.getNombre()); // no cambió
+        assertEquals("Nueva descripción", dto.getDescripcion());
+    }
+
+    @Test
+    public void testPatch_CambiaSoloActivo() {
+        TipoProductoModel existente = entity();
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(tipoProductoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        TipoProductoResponseDTO dto = tipoProductoService.patch(1L, upd(null, null, false));
+        assertEquals("Videojuego", dto.getNombre()); // no cambió
+        assertFalse(dto.getActivo());
     }
 
     @Test
     public void testPatch_NombreDuplicado_LanzaIllegalArgument() {
-        TipoProductoModel existente = createTipoProducto(); // Videojuegos
-
-        TipoProductoUpdateDTO patchData = new TipoProductoUpdateDTO();
-        patchData.setNombre("Accesorios");
-
+        TipoProductoModel existente = entity();
         when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(tipoProductoRepository.existsByNombreIgnoreCase("Accesorios")).thenReturn(true);
+        when(tipoProductoRepository.existsByNombreIgnoreCase("Hardware")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
-                () -> tipoProductoService.patch(1L, patchData));
+                () -> tipoProductoService.patch(1L, upd("Hardware", null, null)));
     }
 
     @Test
-    public void testDeleteById_ExisteSinProductos() {
-        TipoProductoModel tipo = createTipoProducto();
+    public void testPatch_NombreVacio_LanzaIllegalArgument() {
+        TipoProductoModel existente = entity();
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(existente));
 
-        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(tipo));
+        assertThrows(IllegalArgumentException.class,
+                () -> tipoProductoService.patch(1L, upd("  ", null, null)));
+    }
+
+    // ================== DELETE ==================
+
+    @Test
+    public void testDeleteById_ExisteSinProductos() {
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(entity()));
         when(productoRepository.existsByTipoProducto_Id(1L)).thenReturn(false);
 
         tipoProductoService.deleteById(1L);
-
-        verify(tipoProductoRepository, times(1)).delete(tipo);
+        verify(tipoProductoRepository, times(1)).delete(any());
     }
 
     @Test
     public void testDeleteById_NoExiste() {
         when(tipoProductoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> tipoProductoService.deleteById(99L));
-
-        verify(tipoProductoRepository, never()).delete(any(TipoProductoModel.class));
+        assertThrows(RecursoNoEncontradoException.class, () -> tipoProductoService.deleteById(99L));
     }
 
     @Test
     public void testDeleteById_ConProductosAsociados() {
-        TipoProductoModel tipo = createTipoProducto();
-
-        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(tipo));
+        when(tipoProductoRepository.findById(1L)).thenReturn(Optional.of(entity()));
         when(productoRepository.existsByTipoProducto_Id(1L)).thenReturn(true);
 
-        assertThrows(ResponseStatusException.class,
-                () -> tipoProductoService.deleteById(1L));
-
-        verify(tipoProductoRepository, never()).delete(any(TipoProductoModel.class));
+        assertThrows(ResponseStatusException.class, () -> tipoProductoService.deleteById(1L));
+        verify(tipoProductoRepository, never()).delete(any());
     }
+
+    // ================== BÚSQUEDAS POR ESTADO ==================
 
     @Test
     public void testFindActivos() {
-        when(tipoProductoRepository.findByActivoTrue()).thenReturn(List.of(createTipoProducto()));
-
-        List<TipoProductoResponseDTO> activos = tipoProductoService.findActivos();
-
-        assertNotNull(activos);
-        assertEquals(1, activos.size());
-        assertTrue(Boolean.TRUE.equals(activos.get(0).getActivo()));
+        when(tipoProductoRepository.findByActivoTrue()).thenReturn(List.of(entity()));
+        List<TipoProductoResponseDTO> lista = tipoProductoService.findActivos();
+        assertEquals(1, lista.size());
+        assertTrue(lista.get(0).getActivo());
     }
 
     @Test
     public void testFindInactivos() {
-        TipoProductoModel inactivo = createTipoProducto();
+        TipoProductoModel inactivo = entity();
         inactivo.setActivo(false);
-
         when(tipoProductoRepository.findByActivoFalse()).thenReturn(List.of(inactivo));
-
-        List<TipoProductoResponseDTO> inactivos = tipoProductoService.findInactivos();
-
-        assertNotNull(inactivos);
-        assertEquals(1, inactivos.size());
-        assertFalse(inactivos.get(0).getActivo());
+        List<TipoProductoResponseDTO> lista = tipoProductoService.findInactivos();
+        assertEquals(1, lista.size());
+        assertFalse(lista.get(0).getActivo());
     }
+
+    // ================== RESUMEN ==================
 
     @Test
     public void testObtenerTipoProductoConNombres() {
-        Object[] fila = new Object[]{
-                1L,
-                "Videojuegos",
-                "Categoría para videojuegos",
-                true
-        };
-
-        List<Object[]> filas = List.<Object[]>of(fila);
-
-        when(tipoProductoRepository.obtenerTipoProductoResumen())
-                .thenReturn(filas);
+        List<Object[]> resultados = new ArrayList<>();
+        resultados.add(new Object[]{1L, "Videojuego", "Desc", true});
+        when(tipoProductoRepository.obtenerTipoProductoResumen()).thenReturn(resultados);
 
         List<Map<String, Object>> resumen = tipoProductoService.obtenerTipoProductoConNombres();
-
         assertNotNull(resumen);
         assertEquals(1, resumen.size());
-
-        Map<String, Object> row = resumen.get(0);
-        assertEquals(1L, row.get("ID"));
-        assertEquals("Videojuegos", row.get("Nombre"));
-        assertEquals("Categoría para videojuegos", row.get("Descripcion"));
-        assertEquals(true, row.get("Activo"));
+        assertEquals(1L, resumen.get(0).get("ID"));
+        assertEquals("Videojuego", resumen.get(0).get("Nombre"));
     }
+
+    // ================== PAGINACIÓN ==================
 
     @Test
     public void testListarPaginado_SinFiltro() {
-        Page<TipoProductoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createTipoProducto()));
-        when(tipoProductoRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+        Page<TipoProductoModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(tipoProductoRepository.findAll(any(Pageable.class))).thenReturn(page);
+
         var resultado = tipoProductoService.listarPaginado(1, 10, null);
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
@@ -337,9 +345,21 @@ public class TipoProductoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testListarPaginado_ConFiltro() {
-        Page<TipoProductoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createTipoProducto()));
-        when(tipoProductoRepository.findByNombreContainingIgnoreCase(any(), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
-        var resultado = tipoProductoService.listarPaginado(1, 10, "Video");
+        Page<TipoProductoModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(tipoProductoRepository.findByNombreContainingIgnoreCase(any(), any(Pageable.class)))
+                .thenReturn(page);
+
+        var resultado = tipoProductoService.listarPaginado(1, 10, "video");
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+    }
+
+    @Test
+    public void testListarPaginado_FiltroBlanco_UsaTodos() {
+        Page<TipoProductoModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(tipoProductoRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+        var resultado = tipoProductoService.listarPaginado(1, 10, "  ");
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
     }

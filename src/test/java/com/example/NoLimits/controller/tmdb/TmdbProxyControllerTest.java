@@ -1,65 +1,114 @@
 package com.example.NoLimits.controller.tmdb;
 
-import com.example.NoLimits.config.AbstractContainerBaseTest;
+import com.example.NoLimits.Multimedia.controller.tmdb.TmdbProxyController;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-public class TmdbProxyControllerTest extends AbstractContainerBaseTest {
+@DisplayName("TmdbProxyController — unitario")
+class TmdbProxyControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    private TmdbProxyController controller;
+    private RestTemplate restTemplateMock;
+
+    @BeforeEach
+    void setUp() {
+        controller       = new TmdbProxyController();
+        restTemplateMock = mock(RestTemplate.class);
+        ReflectionTestUtils.setField(controller, "tmdbToken",    "TEST_TOKEN");
+        ReflectionTestUtils.setField(controller, "restTemplate", restTemplateMock);
+    }
 
     @Nested
-    @DisplayName("GET /api/tmdb/**")
-    class Proxy {
+    @DisplayName("sanitización del body")
+    class SanitizacionBody {
 
         @Test
-        @DisplayName("retorna 200 con el body de TMDB (sin api_key expuesta en 'next')")
-        void retornaBodyDeTmdb() throws Exception {
-            // El controller construye su propio RestTemplate internamente, por lo que
-            // simplemente verificamos que el endpoint responde sin lanzar excepción
-            // en el contexto de test. Si la propiedad tmdb.token no existe, el
-            // contexto no levanta; se usa application-test.properties o @Value placeholder.
-            // Aquí verificamos que el mapeo existe y el controller está registrado.
-            mockMvc.perform(get("/api/tmdb/movie/popular"))
-                    .andExpect(result -> {
-                        int status = result.getResponse().getStatus();
-                        // Puede ser 200 (conecta) o 5xx (token inválido en test), pero el endpoint existe
-                        org.assertj.core.api.Assertions.assertThat(status)
-                                .isIn(200, 500, 503, 502);
-                    });
+        @DisplayName("body sin campo 'next' → se devuelve intacto")
+        void bodySinNext_seDevuelveIntacto() {
+            String body = "{\"results\":[{\"id\":1}]}";
+            when(restTemplateMock.getForEntity(anyString(), eq(String.class)))
+                    .thenReturn(ResponseEntity.ok(body));
+
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/tmdb/movie/popular");
+            ResponseEntity<String> response = controller.proxy(request);
+
+            assertEquals(200, response.getStatusCode().value());
+            assertEquals(body, response.getBody());
         }
 
         @Test
-        @DisplayName("el controller elimina 'next' con api_key del body de TMDB")
-        void eliminaApiKeyDelNext() {
-            // Test unitario directo sobre la lógica de sanitización del body
-            String bodyOriginal = "{\"results\":[],\"next\":\"https://api.themoviedb.org/3/movie?api_key=SECRETO&page=2\"}";
-            String bodySanitizado = bodyOriginal.replaceAll(
-                    "\"next\":\"[^\"]*api_key=[^\"]*\"",
-                    "\"next\":null"
-            );
-            org.assertj.core.api.Assertions.assertThat(bodySanitizado)
-                    .contains("\"next\":null")
-                    .doesNotContain("SECRETO");
+        @DisplayName("body con 'next' que contiene api_key → se reemplaza por null")
+        void bodyConNext_apiKeyEliminada() {
+            String body = "{\"results\":[],\"next\":\"https://api.themoviedb.org/3/movie?api_key=SECRETO&page=2\"}";
+            when(restTemplateMock.getForEntity(anyString(), eq(String.class)))
+                    .thenReturn(ResponseEntity.ok(body));
+
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/tmdb/movie/popular");
+            ResponseEntity<String> response = controller.proxy(request);
+
+            assertNotNull(response.getBody());
+            assertTrue(response.getBody().contains("\"next\":null"));
+            assertFalse(response.getBody().contains("SECRETO"));
+        }
+
+        @Test
+        @DisplayName("body null de TMDB → response con body null sin lanzar excepción")
+        void bodyNullDeTmdb_noLanzaExcepcion() {
+            when(restTemplateMock.getForEntity(anyString(), eq(String.class)))
+                    .thenReturn(ResponseEntity.ok(null));
+
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/tmdb/movie/popular");
+            ResponseEntity<String> response = controller.proxy(request);
+
+            assertNull(response.getBody());
+        }
+    }
+
+    @Nested
+    @DisplayName("construcción de URL")
+    class ConstruccionUrl {
+
+        @Test
+        @DisplayName("sin queryString → URL contiene token pero no parámetros extra")
+        void sinQueryString_urlContieneToken() {
+            when(restTemplateMock.getForEntity(anyString(), eq(String.class)))
+                    .thenReturn(ResponseEntity.ok("{}"));
+
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/tmdb/movie/popular");
+            controller.proxy(request);
+
+            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(restTemplateMock).getForEntity(urlCaptor.capture(), eq(String.class));
+            assertTrue(urlCaptor.getValue().contains("TEST_TOKEN"));
+        }
+
+        @Test
+        @DisplayName("con queryString → URL incluye los parámetros")
+        void conQueryString_urlContieneParametros() {
+            when(restTemplateMock.getForEntity(anyString(), eq(String.class)))
+                    .thenReturn(ResponseEntity.ok("{}"));
+
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/tmdb/search/movie");
+            request.setQueryString("query=matrix&page=1");
+            controller.proxy(request);
+
+            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(restTemplateMock).getForEntity(urlCaptor.capture(), eq(String.class));
+            String url = urlCaptor.getValue();
+            assertTrue(url.contains("query=matrix"));
+            assertTrue(url.contains("page=1"));
         }
     }
 }

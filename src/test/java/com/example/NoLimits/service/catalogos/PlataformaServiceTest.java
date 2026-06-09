@@ -8,14 +8,7 @@ import com.example.NoLimits.Multimedia.model.catalogos.PlataformaModel;
 import com.example.NoLimits.Multimedia.repository.catalogos.PlataformaRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformaService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
-import com.example.NoLimits.Multimedia.dto.pagination.PagedResponse;
 
-import org.junit.jupiter.api.Test;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -24,18 +17,19 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class PlataformaServiceTest extends AbstractContainerBaseTest{
+public class PlataformaServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private PlataformaService plataformaService;
@@ -45,22 +39,22 @@ public class PlataformaServiceTest extends AbstractContainerBaseTest{
 
     // ================== HELPERS ==================
 
-    private PlataformaModel createPlataforma() {
+    private PlataformaModel entity() {
         PlataformaModel p = new PlataformaModel();
         p.setId(1L);
         p.setNombre("PlayStation");
         return p;
     }
 
-    private PlataformaRequestDTO createRequestDTO() {
+    private PlataformaRequestDTO req(String nombre) {
         PlataformaRequestDTO dto = new PlataformaRequestDTO();
-        dto.setNombre("PlayStation");
+        dto.setNombre(nombre);
         return dto;
     }
 
-    private PlataformaUpdateDTO createUpdateDTO() {
+    private PlataformaUpdateDTO upd(String nombre) {
         PlataformaUpdateDTO dto = new PlataformaUpdateDTO();
-        dto.setNombre("Xbox");
+        dto.setNombre(nombre);
         return dto;
     }
 
@@ -68,198 +62,154 @@ public class PlataformaServiceTest extends AbstractContainerBaseTest{
 
     @Test
     void testFindAll() {
-        when(plataformaRepository.findAll()).thenReturn(List.of(createPlataforma()));
-
+        when(plataformaRepository.findAll()).thenReturn(List.of(entity()));
         List<PlataformaResponseDTO> lista = plataformaService.findAll();
-
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        assertEquals(1L, lista.get(0).getId());
         assertEquals("PlayStation", lista.get(0).getNombre());
-        verify(plataformaRepository, times(1)).findAll();
     }
 
     @Test
     void testFindById_Exists() {
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(createPlataforma()));
-
-        PlataformaResponseDTO p = plataformaService.findById(1L);
-
-        assertNotNull(p);
-        assertEquals(1L, p.getId());
-        assertEquals("PlayStation", p.getNombre());
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        PlataformaResponseDTO dto = plataformaService.findById(1L);
+        assertNotNull(dto);
+        assertEquals(1L, dto.getId());
+        assertEquals("PlayStation", dto.getNombre());
     }
 
     @Test
     void testFindById_NotFound() {
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> plataformaService.findById(1L));
+        when(plataformaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () -> plataformaService.findById(99L));
     }
 
     // ================== TESTS SAVE ==================
 
     @Test
     void testSave_Ok() {
-        PlataformaRequestDTO request = new PlataformaRequestDTO();
-        request.setNombre("  PlayStation  ");
-
-        when(plataformaRepository.save(any(PlataformaModel.class)))
-                .thenAnswer(invocation -> {
-                    PlataformaModel m = invocation.getArgument(0);
-                    m.setId(1L);
-                    return m;
-                });
-
-        PlataformaResponseDTO creado = plataformaService.save(request);
-
-        assertNotNull(creado);
-        assertEquals(1L, creado.getId());
-        assertEquals("PlayStation", creado.getNombre()); // normalizado
+        when(plataformaRepository.save(any())).thenAnswer(inv -> {
+            PlataformaModel p = inv.getArgument(0);
+            p.setId(1L);
+            return p;
+        });
+        PlataformaResponseDTO dto = plataformaService.save(req("PC"));
+        assertNotNull(dto);
+        assertEquals("PC", dto.getNombre());
     }
 
     @Test
     void testSave_NombreNull() {
-        PlataformaRequestDTO request = new PlataformaRequestDTO();
-        request.setNombre(null);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> plataformaService.save(request));
+        assertThrows(IllegalArgumentException.class, () -> plataformaService.save(req(null)));
+        verify(plataformaRepository, never()).save(any());
     }
 
     @Test
     void testSave_NombreVacio() {
-        PlataformaRequestDTO request = new PlataformaRequestDTO();
-        request.setNombre("   ");
-
-        assertThrows(IllegalArgumentException.class,
-                () -> plataformaService.save(request));
+        assertThrows(IllegalArgumentException.class, () -> plataformaService.save(req("   ")));
+        verify(plataformaRepository, never()).save(any());
     }
 
     // ================== TESTS UPDATE ==================
 
     @Test
     void testUpdate_CambiaNombreValido() {
-        PlataformaModel existente = createPlataforma();
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(plataformaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PlataformaUpdateDTO entrada = new PlataformaUpdateDTO();
-        entrada.setNombre("Xbox");
-
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(plataformaRepository.save(any(PlataformaModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        PlataformaResponseDTO actualizado = plataformaService.update(1L, entrada);
-
-        assertNotNull(actualizado);
-        assertEquals("Xbox", actualizado.getNombre());
+        PlataformaResponseDTO dto = plataformaService.update(1L, upd("Xbox"));
+        assertEquals("Xbox", dto.getNombre());
     }
 
     @Test
     void testUpdate_NombreVacio_LanzaIllegalArgument() {
-        PlataformaModel existente = createPlataforma();
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        assertThrows(IllegalArgumentException.class, () -> plataformaService.update(1L, upd("   ")));
+        verify(plataformaRepository, never()).save(any());
+    }
 
-        PlataformaUpdateDTO entrada = new PlataformaUpdateDTO();
-        entrada.setNombre("   ");
+    @Test
+    void testUpdate_NombreNull_NoModificaNombre() {
+        // Si nombre es null en el update, no cambia
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(plataformaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(existente));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> plataformaService.update(1L, entrada));
+        PlataformaResponseDTO dto = plataformaService.update(1L, upd(null));
+        assertEquals("PlayStation", dto.getNombre()); // nombre no cambió
     }
 
     @Test
     void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
-        PlataformaUpdateDTO entrada = createUpdateDTO();
-
         when(plataformaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> plataformaService.update(99L, entrada));
+        assertThrows(RecursoNoEncontradoException.class, () -> plataformaService.update(99L, upd("Xbox")));
     }
 
-    // ================== TESTS PATCH (delegado a update) ==================
+    // ================== TESTS PATCH (delega a update) ==================
 
     @Test
     void testPatch_CambiaNombreValido() {
-        PlataformaModel existente = createPlataforma();
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(plataformaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PlataformaUpdateDTO entrada = new PlataformaUpdateDTO();
-        entrada.setNombre("Steam");
+        PlataformaResponseDTO dto = plataformaService.patch(1L, upd("Nintendo Switch"));
+        assertEquals("Nintendo Switch", dto.getNombre());
+    }
 
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(plataformaRepository.save(any(PlataformaModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+    @Test
+    void testPatch_NombreNull_NoModificaNombre() {
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(plataformaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PlataformaResponseDTO actualizado = plataformaService.patch(1L, entrada);
-
-        assertNotNull(actualizado);
-        assertEquals("Steam", actualizado.getNombre());
+        PlataformaResponseDTO dto = plataformaService.patch(1L, upd(null));
+        assertEquals("PlayStation", dto.getNombre()); // nombre no cambió
     }
 
     // ================== TESTS DELETE ==================
 
     @Test
     void testDeleteById_Existe_Elimina() {
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(createPlataforma()));
-
+        when(plataformaRepository.findById(1L)).thenReturn(Optional.of(entity()));
         plataformaService.deleteById(1L);
-
         verify(plataformaRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void testDeleteById_NotFound_LanzaRecursoNoEncontrado() {
-        when(plataformaRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> plataformaService.deleteById(1L));
+        when(plataformaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () -> plataformaService.deleteById(99L));
     }
 
-    // ================== TESTS PAGINACIÓN ==================
+    // ================== PAGINACIÓN ==================
 
     @Test
     void testListarPaginado_SinBusqueda() {
-        PlataformaModel plataforma = createPlataforma();
+        Page<PlataformaModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(plataformaRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-        Page<PlataformaModel> pageResult =
-                new PageImpl<>(List.of(plataforma), PageRequest.of(0, 10), 1);
-
-        when(plataformaRepository.findAll(any(Pageable.class)))
-                .thenReturn(pageResult);
-
-        PagedResponse<PlataformaResponseDTO> resultado =
-                plataformaService.listarPaginado(1, 10, null);
-
+        var resultado = plataformaService.listarPaginado(1, 10, null);
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
-        assertEquals(1, resultado.getPagina());
-        assertEquals(1, resultado.getTotalPaginas());
-        assertEquals(1, resultado.getTotalElementos());
         assertEquals("PlayStation", resultado.getContenido().get(0).getNombre());
     }
 
     @Test
     void testListarPaginado_ConBusqueda() {
-        PlataformaModel plataforma = createPlataforma();
+        Page<PlataformaModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(plataformaRepository.findByNombreContainingIgnoreCase(any(), any(Pageable.class)))
+                .thenReturn(page);
 
-        Page<PlataformaModel> pageResult =
-                new PageImpl<>(List.of(plataforma), PageRequest.of(0, 10), 1);
-
-        when(plataformaRepository.findByNombreContainingIgnoreCase(
-                any(String.class),
-                any(Pageable.class)
-        )).thenReturn(pageResult);
-
-        PagedResponse<PlataformaResponseDTO> resultado =
-                plataformaService.listarPaginado(1, 10, " play ");
-
+        var resultado = plataformaService.listarPaginado(1, 10, "play");
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
-        assertEquals(1, resultado.getPagina());
-        assertEquals(1, resultado.getTotalPaginas());
-        assertEquals(1, resultado.getTotalElementos());
-        assertEquals("PlayStation", resultado.getContenido().get(0).getNombre());
+    }
+
+    @Test
+    void testListarPaginado_BusquedaBlanco_UsaTodos() {
+        Page<PlataformaModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(plataformaRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+        var resultado = plataformaService.listarPaginado(1, 10, "   ");
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
     }
 }

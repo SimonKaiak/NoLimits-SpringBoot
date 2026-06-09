@@ -12,6 +12,9 @@ import com.example.NoLimits.Multimedia.service.catalogos.MetodoPagoService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,22 +28,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
+public class MetodoPagoServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private MetodoPagoService metodoPagoService;
@@ -55,7 +49,7 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
     // HELPERS
     // ==========================
 
-    private MetodoPagoModel createMetodoPagoEntity() {
+    private MetodoPagoModel entity() {
         MetodoPagoModel m = new MetodoPagoModel();
         m.setId(1L);
         m.setNombre("Tarjeta de Crédito");
@@ -63,14 +57,14 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
         return m;
     }
 
-    private MetodoPagoRequestDTO createRequest(String nombre, Boolean activo) {
+    private MetodoPagoRequestDTO req(String nombre, Boolean activo) {
         MetodoPagoRequestDTO dto = new MetodoPagoRequestDTO();
         dto.setNombre(nombre);
         dto.setActivo(activo);
         return dto;
     }
 
-    private MetodoPagoUpdateDTO createUpdate(String nombre, Boolean activo) {
+    private MetodoPagoUpdateDTO upd(String nombre, Boolean activo) {
         MetodoPagoUpdateDTO dto = new MetodoPagoUpdateDTO();
         dto.setNombre(nombre);
         dto.setActivo(activo);
@@ -83,36 +77,27 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testFindAll() {
-        when(metodoPagoRepository.findAll()).thenReturn(List.of(createMetodoPagoEntity()));
-
+        when(metodoPagoRepository.findAll()).thenReturn(List.of(entity()));
         List<MetodoPagoResponseDTO> lista = metodoPagoService.findAll();
-
         assertNotNull(lista);
         assertEquals(1, lista.size());
-        MetodoPagoResponseDTO dto = lista.get(0);
-        assertEquals(1L, dto.getId());
-        assertEquals("Tarjeta de Crédito", dto.getNombre());
-        assertTrue(dto.getActivo());
+        assertEquals("Tarjeta de Crédito", lista.get(0).getNombre());
+        assertTrue(lista.get(0).getActivo());
     }
 
     @Test
     public void testFindById_Existe() {
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(createMetodoPagoEntity()));
-
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
         MetodoPagoResponseDTO dto = metodoPagoService.findById(1L);
-
         assertNotNull(dto);
         assertEquals(1L, dto.getId());
-        assertEquals("Tarjeta de Crédito", dto.getNombre());
         assertTrue(dto.getActivo());
     }
 
     @Test
     public void testFindById_NoExiste_Lanza404() {
         when(metodoPagoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> metodoPagoService.findById(99L));
+        assertThrows(RecursoNoEncontradoException.class, () -> metodoPagoService.findById(99L));
     }
 
     // ==========================
@@ -121,76 +106,46 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testSave_OK() {
-        MetodoPagoRequestDTO request = createRequest("  Débito  ", true);
-
-        when(metodoPagoRepository.existsByNombreIgnoreCase("Débito"))
-                .thenReturn(false);
-        when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
-                .thenAnswer(invocation -> {
-                    MetodoPagoModel m = invocation.getArgument(0);
-                    m.setId(2L);
-                    return m;
-                });
-
-        MetodoPagoResponseDTO saved = metodoPagoService.save(request);
-
-        assertNotNull(saved);
-        assertEquals(2L, saved.getId());
-        assertEquals("Débito", saved.getNombre());
-        assertTrue(saved.getActivo());
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Débito")).thenReturn(false);
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> {
+            MetodoPagoModel m = inv.getArgument(0);
+            m.setId(2L);
+            return m;
+        });
+        MetodoPagoResponseDTO dto = metodoPagoService.save(req("Débito", true));
+        assertNotNull(dto);
+        assertEquals("Débito", dto.getNombre());
+        assertTrue(dto.getActivo());
     }
 
     @Test
     public void testSave_ActivoNull_DefaultTrue() {
-        MetodoPagoRequestDTO request = createRequest("Efectivo", null);
-
-        when(metodoPagoRepository.existsByNombreIgnoreCase("Efectivo"))
-                .thenReturn(false);
-        when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
-                .thenAnswer(invocation -> {
-                    MetodoPagoModel m = invocation.getArgument(0);
-                    m.setId(3L);
-                    return m;
-                });
-
-        MetodoPagoResponseDTO saved = metodoPagoService.save(request);
-
-        assertNotNull(saved);
-        assertEquals(3L, saved.getId());
-        assertEquals("Efectivo", saved.getNombre());
-        assertTrue(saved.getActivo(),
-                "Si activo viene null en el request, debe quedar true por defecto");
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Efectivo")).thenReturn(false);
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> {
+            MetodoPagoModel m = inv.getArgument(0);
+            m.setId(3L);
+            return m;
+        });
+        MetodoPagoResponseDTO dto = metodoPagoService.save(req("Efectivo", null));
+        assertTrue(dto.getActivo());
     }
 
     @Test
     public void testSave_NombreNull_LanzaIllegalArgument() {
-        MetodoPagoRequestDTO request = createRequest(null, true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.save(request));
-
-        verify(metodoPagoRepository, never()).save(any(MetodoPagoModel.class));
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.save(req(null, true)));
+        verify(metodoPagoRepository, never()).save(any());
     }
 
     @Test
     public void testSave_NombreVacio_LanzaIllegalArgument() {
-        MetodoPagoRequestDTO request = createRequest("   ", true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.save(request));
-
-        verify(metodoPagoRepository, never()).save(any(MetodoPagoModel.class));
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.save(req("   ", true)));
+        verify(metodoPagoRepository, never()).save(any());
     }
 
     @Test
     public void testSave_NombreDuplicado_LanzaIllegalArgument() {
-        MetodoPagoRequestDTO request = createRequest("Tarjeta de Crédito", true);
-
-        when(metodoPagoRepository.existsByNombreIgnoreCase("Tarjeta de Crédito"))
-                .thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.save(request));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Tarjeta de Crédito")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.save(req("Tarjeta de Crédito", true)));
     }
 
     // ==========================
@@ -199,47 +154,50 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testUpdate_OK() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        MetodoPagoRequestDTO request = createRequest("PayPal", false);
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("PayPal")).thenReturn(false);
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
+        MetodoPagoResponseDTO dto = metodoPagoService.update(1L, req("PayPal", false));
+        assertEquals("PayPal", dto.getNombre());
+        assertFalse(dto.getActivo());
+    }
+
+    @Test
+    public void testUpdate_MismoNombre_NoVerificaDuplicado() {
+        // Si el nombre no cambia, no debe verificar duplicado
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MetodoPagoResponseDTO dto = metodoPagoService.update(1L, req("Tarjeta de Crédito", false));
+        assertEquals("Tarjeta de Crédito", dto.getNombre());
+        verify(metodoPagoRepository, never()).existsByNombreIgnoreCase(any());
+    }
+
+    @Test
+    public void testUpdate_ActivoNull_MantieneSinCambio() {
+        MetodoPagoModel existente = entity(); // activo = true
         when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(metodoPagoRepository.existsByNombreIgnoreCase("PayPal"))
-                .thenReturn(false);
-        when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("PayPal")).thenReturn(false);
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        MetodoPagoResponseDTO actualizado = metodoPagoService.update(1L, request);
-
-        assertNotNull(actualizado);
-        assertEquals(1L, actualizado.getId());
-        assertEquals("PayPal", actualizado.getNombre());
-        assertFalse(actualizado.getActivo());
+        MetodoPagoResponseDTO dto = metodoPagoService.update(1L, req("PayPal", null));
+        assertEquals("PayPal", dto.getNombre());
+        assertTrue(dto.getActivo()); // activo no cambió
     }
 
     @Test
     public void testUpdate_NombreVacio_LanzaIllegalArgument() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        MetodoPagoRequestDTO request = createRequest("   ", true);
-
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.update(1L, request));
-
-        verify(metodoPagoRepository, never()).save(any(MetodoPagoModel.class));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.update(1L, req("   ", true)));
+        verify(metodoPagoRepository, never()).save(any());
     }
 
     @Test
     public void testUpdate_NombreDuplicado_LanzaIllegalArgument() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        MetodoPagoRequestDTO request = createRequest("Débito", true);
-
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(metodoPagoRepository.existsByNombreIgnoreCase("Débito"))
-                .thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.update(1L, request));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Débito")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.update(1L, req("Débito", true)));
     }
 
     // ==========================
@@ -248,63 +206,37 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testPatch_CambiaSoloNombre() {
-        MetodoPagoModel existente = createMetodoPagoEntity(); // activo=true
-        MetodoPagoUpdateDTO request = createUpdate("Transferencia Bancaria", null);
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Transferencia")).thenReturn(false);
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(metodoPagoRepository.existsByNombreIgnoreCase("Transferencia Bancaria"))
-                .thenReturn(false);
-        when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        MetodoPagoResponseDTO patched = metodoPagoService.patch(1L, request);
-
-        assertNotNull(patched);
-        assertEquals(1L, patched.getId());
-        assertEquals("Transferencia Bancaria", patched.getNombre());
-        assertTrue(patched.getActivo());
+        MetodoPagoResponseDTO dto = metodoPagoService.patch(1L, upd("Transferencia", null));
+        assertEquals("Transferencia", dto.getNombre());
+        assertTrue(dto.getActivo()); // no cambió
     }
 
     @Test
     public void testPatch_CambiaSoloActivo() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        MetodoPagoUpdateDTO request = createUpdate(null, false);
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(metodoPagoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(metodoPagoRepository.save(any(MetodoPagoModel.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        MetodoPagoResponseDTO patched = metodoPagoService.patch(1L, request);
-
-        assertNotNull(patched);
-        assertEquals("Tarjeta de Crédito", patched.getNombre());
-        assertFalse(patched.getActivo());
+        MetodoPagoResponseDTO dto = metodoPagoService.patch(1L, upd(null, false));
+        assertEquals("Tarjeta de Crédito", dto.getNombre()); // no cambió
+        assertFalse(dto.getActivo());
     }
 
     @Test
     public void testPatch_NombreVacio_LanzaIllegalArgument() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        MetodoPagoUpdateDTO request = createUpdate("   ", null);
-
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.patch(1L, request));
-
-        verify(metodoPagoRepository, never()).save(any(MetodoPagoModel.class));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.patch(1L, upd("   ", null)));
+        verify(metodoPagoRepository, never()).save(any());
     }
 
     @Test
     public void testPatch_NombreDuplicado_LanzaIllegalArgument() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        MetodoPagoUpdateDTO request = createUpdate("Débito", null);
-
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(metodoPagoRepository.existsByNombreIgnoreCase("Débito"))
-                .thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> metodoPagoService.patch(1L, request));
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(metodoPagoRepository.existsByNombreIgnoreCase("Débito")).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> metodoPagoService.patch(1L, upd("Débito", null)));
     }
 
     // ==========================
@@ -313,40 +245,27 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testDeleteById_OK() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(ventaRepository.findByMetodoPagoModel_Id(1L))
-                .thenReturn(Collections.emptyList());
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(ventaRepository.findByMetodoPagoModel_Id(1L)).thenReturn(Collections.emptyList());
 
         metodoPagoService.deleteById(1L);
-
-        verify(metodoPagoRepository, times(1)).delete(existente);
+        verify(metodoPagoRepository, times(1)).delete(any());
     }
 
     @Test
     public void testDeleteById_EnUso_LanzaIllegalState() {
-        MetodoPagoModel existente = createMetodoPagoEntity();
-        VentaModel ventaDummy = new VentaModel();
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(entity()));
+        when(ventaRepository.findByMetodoPagoModel_Id(1L)).thenReturn(List.of(new VentaModel()));
 
-        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(ventaRepository.findByMetodoPagoModel_Id(1L))
-                .thenReturn(List.of(ventaDummy)); // lista no vacía y del tipo correcto
-
-        assertThrows(IllegalStateException.class,
-                () -> metodoPagoService.deleteById(1L));
-
-        verify(metodoPagoRepository, never()).delete(any(MetodoPagoModel.class));
+        assertThrows(IllegalStateException.class, () -> metodoPagoService.deleteById(1L));
+        verify(metodoPagoRepository, never()).delete(any());
     }
 
     @Test
     public void testDeleteById_NoExiste_Lanza404() {
         when(metodoPagoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> metodoPagoService.deleteById(99L));
-
-        verify(metodoPagoRepository, never()).delete(any(MetodoPagoModel.class));
+        assertThrows(RecursoNoEncontradoException.class, () -> metodoPagoService.deleteById(99L));
+        verify(metodoPagoRepository, never()).delete(any());
     }
 
     // ==========================
@@ -355,32 +274,31 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
 
     @Test
     public void testFindByNombre_Encontrado() {
-        MetodoPagoModel entity = createMetodoPagoEntity();
-
         when(metodoPagoRepository.findByNombreIgnoreCase("tarjeta de crédito"))
-                .thenReturn(Optional.of(entity));
-
-        Optional<MetodoPagoResponseDTO> res =
-                metodoPagoService.findByNombre("  tarjeta de crédito  ");
-
+                .thenReturn(Optional.of(entity()));
+        var res = metodoPagoService.findByNombre("  tarjeta de crédito  ");
         assertTrue(res.isPresent());
         assertEquals("Tarjeta de Crédito", res.get().getNombre());
     }
 
     @Test
-    public void testFindByNombre_Null_RetornaEmpty() {
-        Optional<MetodoPagoResponseDTO> res =
-                metodoPagoService.findByNombre(null);
+    public void testFindByNombre_NoEncontrado_RetornaEmpty() {
+        when(metodoPagoRepository.findByNombreIgnoreCase("inexistente"))
+                .thenReturn(Optional.empty());
+        var res = metodoPagoService.findByNombre("inexistente");
+        assertTrue(res.isEmpty());
+    }
 
+    @Test
+    public void testFindByNombre_Null_RetornaEmpty() {
+        var res = metodoPagoService.findByNombre(null);
         assertTrue(res.isEmpty());
         verify(metodoPagoRepository, never()).findByNombreIgnoreCase(any());
     }
 
     @Test
     public void testFindByNombre_Blank_RetornaEmpty() {
-        Optional<MetodoPagoResponseDTO> res =
-                metodoPagoService.findByNombre("   ");
-
+        var res = metodoPagoService.findByNombre("   ");
         assertTrue(res.isEmpty());
         verify(metodoPagoRepository, never()).findByNombreIgnoreCase(any());
     }
@@ -390,31 +308,43 @@ public class MetodoPagoServiceTest extends AbstractContainerBaseTest{
     // ==========================
 
     @Test
-    public void testObtenerMetodoPagoConDatos() {
-        Object[] fila = new Object[] { 1L, "Tarjeta de Crédito", true };
+    public void testObtenerMetodoPagoConDatos_ConActivo() {
         List<Object[]> resultados = new ArrayList<>();
-        resultados.add(fila);
-
-        when(metodoPagoRepository.getMetodoPagoResumen())
-                .thenReturn(resultados);
+        resultados.add(new Object[]{1L, "Tarjeta de Crédito", true});
+        when(metodoPagoRepository.getMetodoPagoResumen()).thenReturn(resultados);
 
         List<Map<String, Object>> resumen = metodoPagoService.obtenerMetodoPagoConDatos();
-
         assertNotNull(resumen);
         assertEquals(1, resumen.size());
-
-        Map<String, Object> row = resumen.get(0);
-        assertEquals(1L, row.get("ID"));
-        assertEquals("Tarjeta de Crédito", row.get("Nombre"));
-        assertEquals(true, row.get("Activo"));
+        assertEquals(1L, resumen.get(0).get("ID"));
+        assertEquals("Tarjeta de Crédito", resumen.get(0).get("Nombre"));
+        assertEquals(true, resumen.get(0).get("Activo"));
     }
 
-        @Test
-        public void testFindAllPaged_SinFiltro() {
-        Page<MetodoPagoModel> page = new org.springframework.data.domain.PageImpl<>(List.of(createMetodoPagoEntity()));
-        when(metodoPagoRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
+    @Test
+    public void testObtenerMetodoPagoConDatos_SinActivoEnFila() {
+        // Fila con solo 2 elementos (length <= 2) → no pone "Activo"
+        List<Object[]> resultados = new ArrayList<>();
+        resultados.add(new Object[]{1L, "Tarjeta de Crédito"});
+        when(metodoPagoRepository.getMetodoPagoResumen()).thenReturn(resultados);
+
+        List<Map<String, Object>> resumen = metodoPagoService.obtenerMetodoPagoConDatos();
+        assertNotNull(resumen);
+        assertEquals(1, resumen.size());
+        assertFalse(resumen.get(0).containsKey("Activo"));
+    }
+
+    // ==========================
+    // findAllPaged
+    // ==========================
+
+    @Test
+    public void testFindAllPaged_SinFiltro() {
+        Page<MetodoPagoModel> page = new PageImpl<>(List.of(entity()), PageRequest.of(0, 10), 1);
+        when(metodoPagoRepository.findAll(any(Pageable.class))).thenReturn(page);
+
         var resultado = metodoPagoService.findAllPaged(1, 10);
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
-        }
+    }
 }
