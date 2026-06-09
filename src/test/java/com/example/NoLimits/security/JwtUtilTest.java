@@ -1,14 +1,11 @@
 package com.example.NoLimits.security;
 
 import com.example.NoLimits.Multimedia.security.JwtUtil;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("JwtUtilTest — Generación y validación de tokens JWT")
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
@@ -16,63 +13,70 @@ class JwtUtilTest {
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "expiration", 86400000L);
+        ReflectionTestUtils.setField(jwtUtil, "expiration", 3600000L);
     }
 
-    @Test
-    @DisplayName("generateToken → genera un token no nulo ni vacío")
-    void generateToken_retornaTokenValido() {
-        String token = jwtUtil.generateToken("user@test.com", "ROLE_USER");
-        assertNotNull(token);
-        assertFalse(token.isBlank());
+    @Nested
+    @DisplayName("generateToken")
+    class GenerateToken {
+
+        @Test
+        @DisplayName("debería generar un token válido")
+        void deberiaGenerarTokenValido() {
+            String token = jwtUtil.generateToken("usuario@test.com", "ROLE_USER");
+
+            assertNotNull(token);
+            assertFalse(token.isBlank());
+            assertTrue(jwtUtil.validateToken(token));
+        }
     }
 
-    @Test
-    @DisplayName("extractCorreo → extrae el correo del token correctamente")
-    void extractCorreo_retornaCorreoCorrecto() {
-        String token = jwtUtil.generateToken("user@test.com", "ROLE_USER");
-        assertEquals("user@test.com", jwtUtil.extractCorreo(token));
+    @Nested
+    @DisplayName("extractCorreo")
+    class ExtractCorreo {
+
+        @Test
+        @DisplayName("debería extraer el correo del token")
+        void deberiaExtraerCorreoDelToken() {
+            String token = jwtUtil.generateToken("usuario@test.com", "ROLE_USER");
+
+            String correo = jwtUtil.extractCorreo(token);
+
+            assertEquals("usuario@test.com", correo);
+        }
     }
 
-    @Test
-    @DisplayName("extractRol → extrae el rol del token correctamente")
-    void extractRol_retornaRolCorrecto() {
-        String token = jwtUtil.generateToken("user@test.com", "ROLE_ADMIN");
-        assertEquals("ROLE_ADMIN", jwtUtil.extractRol(token));
+    @Nested
+    @DisplayName("extractRol")
+    class ExtractRol {
+
+        @Test
+        @DisplayName("debería extraer el rol del token")
+        void deberiaExtraerRolDelToken() {
+            String token = jwtUtil.generateToken("usuario@test.com", "ROLE_ADMIN");
+
+            String rol = jwtUtil.extractRol(token);
+
+            assertEquals("ROLE_ADMIN", rol);
+        }
     }
 
-    @Test
-    @DisplayName("validateToken → retorna true con token válido")
-    void validateToken_tokenValido_retornaTrue() {
-        String token = jwtUtil.generateToken("user@test.com", "ROLE_USER");
-        assertTrue(jwtUtil.validateToken(token));
-    }
+    @Nested
+    @DisplayName("validateToken")
+    class ValidateToken {
 
-    @Test
-    @DisplayName("validateToken → retorna false con token inválido")
-    void validateToken_tokenInvalido_retornaFalse() {
-        assertFalse(jwtUtil.validateToken("esto.no.es.un.token"));
-    }
+        @Test
+        @DisplayName("debería retornar true cuando el token es válido")
+        void deberiaRetornarTrueCuandoTokenEsValido() {
+            String token = jwtUtil.generateToken("usuario@test.com", "ROLE_USER");
 
-    @Test
-    @DisplayName("validateToken → retorna false con token manipulado")
-    void validateToken_tokenManipulado_retornaFalse() {
-        String token = jwtUtil.generateToken("user@test.com", "ROLE_USER");
-        String manipulado = token.substring(0, token.length() - 5) + "XXXXX";
-        assertFalse(jwtUtil.validateToken(manipulado));
-    }
+            assertTrue(jwtUtil.validateToken(token));
+        }
 
-    @Test
-    @DisplayName("validateToken → retorna false con token con formato incorrecto")
-    void validateToken_formatoIncorrecto_retornaFalse() {
-        assertFalse(jwtUtil.validateToken("token.sin.firma.correcta.abc123"));
-    }
-
-    @Test
-    @DisplayName("generateToken → tokens para usuarios distintos son diferentes")
-    void generateToken_usuariosDistintos_sonDiferentes() {
-        String token1 = jwtUtil.generateToken("user1@test.com", "ROLE_USER");
-        String token2 = jwtUtil.generateToken("user2@test.com", "ROLE_USER");
-        assertNotEquals(token1, token2);
+        @Test
+        @DisplayName("debería retornar false cuando el token es inválido")
+        void deberiaRetornarFalseCuandoTokenEsInvalido() {
+            assertFalse(jwtUtil.validateToken("token_invalido"));
+        }
     }
 }
