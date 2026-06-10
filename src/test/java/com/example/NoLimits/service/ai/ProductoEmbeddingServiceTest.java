@@ -159,4 +159,60 @@ class ProductoEmbeddingServiceTest {
             );
         }
     }
+
+    @Nested
+    @DisplayName("Unitario - indexarTodosLosProductos branches adicionales")
+    class IndexarTodosLosProductosBranches {
+
+        @Test
+        @DisplayName("retorna 0 cuando resultado es lista vacía")
+        void retornaCeroCuandoResultadoEsListaVacia() {
+            when(jdbcTemplate.query(anyString(), any(ResultSetExtractor.class)))
+                    .thenReturn(List.of());
+
+            int resultado = service.indexarTodosLosProductos();
+
+            assertEquals(0, resultado);
+        }
+
+        @Test
+        @DisplayName("retorna el valor cuando resultado tiene elementos")
+        void retornaValorCuandoResultadoTieneElementos() {
+            when(jdbcTemplate.query(anyString(), any(ResultSetExtractor.class)))
+                    .thenReturn(List.of(3));
+
+            int resultado = service.indexarTodosLosProductos();
+
+            assertEquals(3, resultado);
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - buscarSimilares delegación overload")
+    class BuscarSimilaresDelegacion {
+
+        @Test
+        @DisplayName("buscarSimilares sin límite delega en buscarSimilares con límite 5")
+        void sinLimiteDelegaConCinco() {
+            when(embeddingService.generarEmbedding("terror"))
+                    .thenReturn(List.of(0.1f, 0.2f));
+
+            when(jdbcTemplate.queryForList(
+                    contains("SELECT contenido"),
+                    eq(String.class),
+                    eq("[0.1, 0.2]"),
+                    eq(5)
+            )).thenReturn(List.of("Película A"));
+
+            List<String> resultado = service.buscarSimilares("terror");
+
+            assertEquals(List.of("Película A"), resultado);
+            verify(jdbcTemplate).queryForList(
+                    contains("SELECT contenido"),
+                    eq(String.class),
+                    eq("[0.1, 0.2]"),
+                    eq(5)
+            );
+        }
+    }
 }

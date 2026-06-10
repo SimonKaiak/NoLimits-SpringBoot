@@ -212,4 +212,80 @@ class UsuarioModelTest {
             assertNotNull(usuario.toString());
         }
     }
+
+    @Nested
+    @DisplayName("getNombreCompleto — ramas null")
+    class NombreCompletoNull {
+
+        @Test
+        @DisplayName("nombre null → resultado contiene apellidos")
+        void nombreNull_contieneApellidos() {
+            UsuarioModel u = new UsuarioModel();
+            u.setNombre(null);
+            u.setApellidos("Pérez");
+            assertTrue(u.getNombreCompleto().contains("Pérez"));
+        }
+
+        @Test
+        @DisplayName("apellidos null → resultado contiene nombre")
+        void apellidosNull_contieneNombre() {
+            UsuarioModel u = new UsuarioModel();
+            u.setNombre("Juan");
+            u.setApellidos(null);
+            assertTrue(u.getNombreCompleto().contains("Juan"));
+        }
+
+        @Test
+        @DisplayName("ambos null → no lanza excepción")
+        void ambosNull_noLanzaExcepcion() {
+            UsuarioModel u = new UsuarioModel();
+            u.setNombre(null);
+            u.setApellidos(null);
+            assertNotNull(u.getNombreCompleto());
+        }
+    }
+
+    @Nested
+    @DisplayName("getRol — ramas null")
+    class RolNull {
+
+        @Test
+        @DisplayName("sin rol → getRol() es null")
+        void sinRol_esNull() {
+            UsuarioModel u = new UsuarioModel();
+            assertNull(u.getRol());
+        }
+
+        @Test
+        @DisplayName("con rol → getRol() retorna el rol")
+        void conRol_retornaRol() {
+            RolModel rol = new RolModel();
+            rol.setId(1L);
+            rol.setNombre("ROLE_USER");
+            UsuarioModel u = new UsuarioModel();
+            u.setRol(rol);
+            assertEquals("ROLE_USER", u.getRol().getNombre());
+        }
+    }
+
+    @Nested
+    @DisplayName("getters adicionales")
+    class GettersAdicionales {
+
+        @Test
+        @DisplayName("setTelefono / getTelefono")
+        void telefonoGetterSetter() {
+            UsuarioModel u = new UsuarioModel();
+            u.setTelefono(987654321L);
+            assertEquals(987654321L, u.getTelefono());
+        }
+
+        @Test
+        @DisplayName("setFotoPerfil / getFotoPerfil")
+        void fotoPerfilGetterSetter() {
+            UsuarioModel u = new UsuarioModel();
+            u.setFotoPerfil("https://foto.jpg");
+            assertEquals("https://foto.jpg", u.getFotoPerfil());
+        }
+    }
 }
