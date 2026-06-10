@@ -300,6 +300,20 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             assertNull(result.getComunaId());
             assertNull(result.getRegionId());
         }
+
+        @Test
+        @DisplayName("it: no debe crear nombreCompleto si apellidos es null")
+        void itFindById_apellidosNull_noMapeaNombreCompleto() {
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setApellidos(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+            UsuarioResponseDTO result = usuarioService.findById(1L);
+
+            assertNotNull(result);
+            assertNull(result.getNombreCompleto());
+        }
     }
 
     @Nested
@@ -590,6 +604,40 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
                     Boolean.FALSE.equals(direccionGuardada.getActivo())
             ));
         }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si password es null")
+        void itSave_passwordNull() {
+            UsuarioRegistroDTO dto = registroDTO();
+            dto.setPassword(null);
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.save(dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            assertTrue(ex.getReason().contains("La contraseña es obligatoria"));
+
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si correo es null")
+        void itSave_correoNull() {
+            UsuarioRegistroDTO dto = registroDTO();
+            dto.setCorreo(null);
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.save(dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            assertTrue(ex.getReason().contains("El correo es obligatorio"));
+
+            verify(usuarioRepository, never()).save(any());
+        }
     }
 
     @Nested
@@ -843,6 +891,52 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
                     Boolean.FALSE.equals(direccionGuardada.getActivo())
             ));
         }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si correo es null")
+        void itSaveDesdeAdmin_correoNull() {
+            UsuarioRequestDTO dto = requestDTO();
+            dto.setCorreo(null);
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.saveDesdeAdmin(dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si password está vacía")
+        void itSaveDesdeAdmin_passwordVacia() {
+            UsuarioRequestDTO dto = requestDTO();
+            dto.setPassword("");
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.saveDesdeAdmin(dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si password supera 255 caracteres")
+        void itSaveDesdeAdmin_passwordMuyLarga() {
+            UsuarioRequestDTO dto = requestDTO();
+            dto.setPassword("A".repeat(256));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.saveDesdeAdmin(dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+
+            verify(usuarioRepository, never()).save(any());
+        }
     }
 
     @Nested
@@ -1028,6 +1122,91 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             ResponseStatusException ex = assertThrows(
                     ResponseStatusException.class,
                     () -> usuarioService.update(1L, new UsuarioUpdateDTO())
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si apellidos es null en update")
+        void itUpdate_apellidosNull_lanza400() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setApellidos(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.update(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si correo es null en update")
+        void itUpdate_correoNull_lanza400() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setCorreo(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.update(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si telefono es null en update")
+        void itUpdate_telefonoNull_lanza400() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setTelefono(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.update(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si password es null en update")
+        void itUpdate_passwordNull_lanza400() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setPassword(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.update(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            verify(usuarioRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si rolId es null en update")
+        void itUpdate_rolIdNull_lanza400() {
+            UsuarioUpdateDTO dto = updateCompletoDTO();
+            dto.setRolId(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioEntity()));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.update(1L, dto)
             );
 
             assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -1481,6 +1660,27 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
         }
 
         @Test
+        @DisplayName("it: no debe validar duplicado si correo viene null")
+        void itPatch_correoNull_noValidaDuplicado() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setCorreo(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("juan@test.com", result.getCorreo());
+
+            verify(usuarioRepository, never()).existsByCorreo(anyString());
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
         @DisplayName("it: debe aceptar el mismo correo sin validar duplicado")
         void itPatch_mismoCorreo_noValidaDuplicado() {
             UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
@@ -1518,6 +1718,179 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
 
             verify(direccionRepository, never()).save(any());
             verify(usuarioRepository, times(1)).save(any(UsuarioModel.class));
+        }
+
+        @Test
+        @DisplayName("it: no debe modificar nombre si viene null")
+        void itPatch_nombreNull_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setNombre(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("Juan", result.getNombre());
+
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: no debe modificar nombre si viene vacío")
+        void itPatch_nombreVacio_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setNombre("");
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("Juan", result.getNombre());
+
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: no debe modificar password si viene null")
+        void itPatch_passwordNull_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setPassword(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.patch(1L, dto);
+
+            assertEquals("$2a$10$hash", usuario.getPassword());
+
+            verify(passwordEncoder, never()).encode(anyString());
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: no debe modificar password si viene vacío")
+        void itPatch_passwordVacio_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setPassword("");
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.patch(1L, dto);
+
+            assertEquals("$2a$10$hash", usuario.getPassword());
+
+            verify(passwordEncoder, never()).encode(anyString());
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: no debe modificar fotoPerfil si viene null")
+        void itPatch_fotoPerfilNull_noModifica() {
+            UsuarioModel usuario = usuarioEntity();
+            usuario.setFotoPerfil("actual.png");
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            dto.setFotoPerfil(null);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            UsuarioResponseDTO result = usuarioService.patch(1L, dto);
+
+            assertNotNull(result);
+            assertEquals("actual.png", result.getFotoPerfil());
+
+            verify(usuarioRepository, times(1)).save(usuario);
+        }
+
+        @Test
+        @DisplayName("it: debe actualizar solo número en dirección")
+        void itPatch_actualizaSoloNumeroDireccion() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            DireccionRequestDTO dir = new DireccionRequestDTO();
+            dir.setNumero("456");
+            dto.setDireccion(dir);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.patch(1L, dto);
+
+            assertNotNull(usuario.getDireccion());
+            assertEquals("456", usuario.getDireccion().getNumero());
+
+            verify(direccionRepository, times(1)).save(any(DireccionModel.class));
+        }
+
+        @Test
+        @DisplayName("it: debe actualizar solo complemento en dirección")
+        void itPatch_actualizaSoloComplementoDireccion() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            DireccionRequestDTO dir = new DireccionRequestDTO();
+            dir.setComplemento("Casa B");
+            dto.setDireccion(dir);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.patch(1L, dto);
+
+            assertNotNull(usuario.getDireccion());
+            assertEquals("Casa B", usuario.getDireccion().getComplemento());
+
+            verify(direccionRepository, times(1)).save(any(DireccionModel.class));
+        }
+
+        @Test
+        @DisplayName("it: debe actualizar solo código postal en dirección")
+        void itPatch_actualizaSoloCodigoPostalDireccion() {
+            UsuarioModel usuario = usuarioEntity();
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+            DireccionRequestDTO dir = new DireccionRequestDTO();
+            dir.setCodigoPostal("9999999");
+            dto.setDireccion(dir);
+
+            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+            when(direccionRepository.save(any(DireccionModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+            when(usuarioRepository.save(any(UsuarioModel.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.patch(1L, dto);
+
+            assertNotNull(usuario.getDireccion());
+            assertEquals("9999999", usuario.getDireccion().getCodigoPostal());
+
+            verify(direccionRepository, times(1)).save(any(DireccionModel.class));
         }
     }
 
@@ -1829,6 +2202,25 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
 
             assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si obraId es null")
+        void itAgregarFavorito_obraIdNull() {
+            FavoritoRequestDTO dto = new FavoritoRequestDTO();
+            dto.setObraId(null);
+
+            when(usuarioRepository.findById(1L))
+                    .thenReturn(Optional.of(usuarioEntity()));
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.agregarFavorito(1L, dto)
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+
+            verify(favoritoRepository, never()).save(any());
+        }
     }
 
     @Nested
@@ -1899,6 +2291,31 @@ class UsuarioServiceTest extends AbstractContainerBaseTest {
             );
 
             assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        }
+
+        @Test
+        @DisplayName("it: debe lanzar 400 si nueva password es null")
+        void itCambiarPassword_nuevaPasswordNull() {
+            UsuarioModel usuario = usuarioEntity();
+
+            when(usuarioRepository.findByCorreoIgnoreCase("juan@test.com"))
+                    .thenReturn(Optional.of(usuario));
+
+            when(passwordEncoder.matches("Password123!", "$2a$10$hash"))
+                    .thenReturn(true);
+
+            ResponseStatusException ex = assertThrows(
+                    ResponseStatusException.class,
+                    () -> usuarioService.cambiarPassword(
+                            "juan@test.com",
+                            "Password123!",
+                            null
+                    )
+            );
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+
+            verify(usuarioRepository, never()).save(any());
         }
     }
 
