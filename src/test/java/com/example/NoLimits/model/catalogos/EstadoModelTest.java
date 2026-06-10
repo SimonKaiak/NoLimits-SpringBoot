@@ -54,6 +54,17 @@ class EstadoModelTest {
             assertEquals("Sin stock", model.getDescripcion());
             assertFalse(model.getActivo());
         }
+
+        @Test
+        @DisplayName("debe asignar y obtener productos")
+        void debeAsignarYObtenerProductos() {
+
+            EstadoModel model = new EstadoModel();
+
+            model.setProductos(new java.util.ArrayList<>());
+
+            assertNotNull(model.getProductos());
+        }
     }
 
     @Nested
@@ -132,6 +143,129 @@ class EstadoModelTest {
             EstadoModel model = new EstadoModel();
 
             assertNotNull(model.toString());
+        }
+
+        @Test
+        @DisplayName("equals con null")
+        void equalsConNull() {
+
+            EstadoModel model = new EstadoModel();
+
+            assertNotEquals(null, model);
+        }
+
+        @Test
+        @DisplayName("equals con otra clase")
+        void equalsConOtraClase() {
+
+            EstadoModel model = new EstadoModel();
+
+            assertNotEquals("texto", model);
+        }
+
+        @Test
+        @DisplayName("equals consigo mismo")
+        void equalsConsigoMismo() {
+
+            EstadoModel model = new EstadoModel();
+
+            assertEquals(model, model);
+        }
+
+        @Test
+        @DisplayName("equals con id distinto")
+        void equalsIdDistinto() {
+
+            EstadoModel a =
+                    new EstadoModel(
+                            1L,
+                            "Activo",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            EstadoModel b =
+                    new EstadoModel(
+                            2L,
+                            "Activo",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            assertNotEquals(a, b);
+        }
+
+        @Test
+        @DisplayName("equals con campos null")
+        void equalsCamposNull() {
+
+            EstadoModel a =
+                    new EstadoModel(
+                            1L,
+                            null,
+                            null,
+                            true,
+                            null
+                    );
+
+            EstadoModel b =
+                    new EstadoModel(
+                            1L,
+                            null,
+                            null,
+                            true,
+                            null
+                    );
+
+            assertEquals(a, b);
+        }
+
+        @Test
+        @DisplayName("equals con descripcion distinta")
+        void equalsDescripcionDistinta() {
+
+            EstadoModel a = new EstadoModel(
+                    1L,
+                    "Activo",
+                    "Descripcion 1",
+                    true,
+                    null
+            );
+
+            EstadoModel b = new EstadoModel(
+                    1L,
+                    "Activo",
+                    "Descripcion 2",
+                    true,
+                    null
+            );
+
+            assertNotEquals(a, b);
+        }
+
+        @Test
+        @DisplayName("equals con activo distinto")
+        void equalsActivoDistinto() {
+
+            EstadoModel a = new EstadoModel(
+                    1L,
+                    "Activo",
+                    "Descripcion",
+                    true,
+                    null
+            );
+
+            EstadoModel b = new EstadoModel(
+                    1L,
+                    "Activo",
+                    "Descripcion",
+                    false,
+                    null
+            );
+
+            assertNotEquals(a, b);
         }
     }
 }
