@@ -54,6 +54,17 @@ class MetodoEnvioModelTest {
             assertEquals("Envío a domicilio", model.getDescripcion());
             assertFalse(model.getActivo());
         }
+
+        @Test
+        @DisplayName("debe asignar y obtener ventas")
+        void debeAsignarYObtenerVentas() {
+
+            MetodoEnvioModel model = new MetodoEnvioModel();
+
+            model.setVentas(java.util.List.of());
+
+            assertNotNull(model.getVentas());
+        }
     }
 
     @Nested
@@ -132,6 +143,183 @@ class MetodoEnvioModelTest {
             MetodoEnvioModel model = new MetodoEnvioModel();
 
             assertNotNull(model.toString());
+        }
+
+        @Test
+        @DisplayName("equals retorna false con null")
+        void equalsConNull() {
+
+            MetodoEnvioModel model = new MetodoEnvioModel();
+
+            assertNotEquals(null, model);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con otra clase")
+        void equalsConOtraClase() {
+
+            MetodoEnvioModel model = new MetodoEnvioModel();
+
+            assertNotEquals("texto", model);
+        }
+
+        @Test
+        @DisplayName("equals retorna true consigo mismo")
+        void equalsConsigoMismo() {
+
+            MetodoEnvioModel model = new MetodoEnvioModel();
+
+            assertEquals(model, model);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando los ids son distintos")
+        void equalsIdsDistintos() {
+
+            MetodoEnvioModel m1 =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            MetodoEnvioModel m2 =
+                    new MetodoEnvioModel(
+                            2L,
+                            "Retiro",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            assertNotEquals(m1, m2);
+        }
+
+        @Test
+        @DisplayName("equals cubre campos null")
+        void equalsCamposNull() {
+
+            MetodoEnvioModel m1 =
+                    new MetodoEnvioModel(
+                            1L,
+                            null,
+                            null,
+                            true,
+                            null
+                    );
+
+            MetodoEnvioModel m2 =
+                    new MetodoEnvioModel(
+                            1L,
+                            null,
+                            null,
+                            true,
+                            null
+                    );
+
+            assertEquals(m1, m2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando nombre es distinto")
+        void equalsNombreDistinto() {
+
+            MetodoEnvioModel a =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            MetodoEnvioModel b =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Express",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            assertNotEquals(a, b);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando descripcion es distinta")
+        void equalsDescripcionDistinta() {
+
+            MetodoEnvioModel a =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc1",
+                            true,
+                            null
+                    );
+
+            MetodoEnvioModel b =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc2",
+                            true,
+                            null
+                    );
+
+            assertNotEquals(a, b);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando activo es distinto")
+        void equalsActivoDistinto() {
+
+            MetodoEnvioModel a =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            MetodoEnvioModel b =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc",
+                            false,
+                            null
+                    );
+
+            assertNotEquals(a, b);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando ventas son distintas")
+        void equalsVentasDistintas() {
+
+            MetodoEnvioModel a =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc",
+                            true,
+                            java.util.List.of()
+                    );
+
+            MetodoEnvioModel b =
+                    new MetodoEnvioModel(
+                            1L,
+                            "Retiro",
+                            "Desc",
+                            true,
+                            null
+                    );
+
+            assertNotEquals(a, b);
         }
     }
 }
