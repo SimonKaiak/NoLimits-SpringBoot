@@ -312,5 +312,91 @@ class ProductoControllerTest {
                 .andExpect(status().isOk());
     }
 
+        @Test
+        @DisplayName("Debe retornar 200 con alias /saga/{saga}")
+        void debeBuscarPorSagaAlias() throws Exception {
+                PagedResponse<ProductoResumenDTO> respuesta =
+                        new PagedResponse<>(List.of(new ProductoResumenDTO()), 1, 1, 1);
 
+                when(productoService.findBySagaIgnoreCase("Spider-Man", 1, 20))
+                        .thenReturn(respuesta);
+
+                mockMvc.perform(get("/api/v1/productos/saga/Spider-Man"))
+                        .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("Debe retornar 204 cuando buscar por nombre no encuentra nada")
+        void debeRetornar204BuscarNombreVacio() throws Exception {
+                PagedResponse<ProductoResumenDTO> vacio =
+                        new PagedResponse<>(List.of(), 1, 0, 0);
+
+                when(productoService.findByNombreContainingIgnoreCase(eq("xyz"), anyInt(), anyInt()))
+                        .thenReturn(vacio);
+
+                mockMvc.perform(get("/api/v1/productos/buscar").param("nombre", "xyz"))
+                        .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("Debe retornar 204 cuando buscar por tipo no encuentra nada")
+        void debeRetornar204BuscarTipoVacio() throws Exception {
+                PagedResponse<ProductoResumenDTO> vacio =
+                        new PagedResponse<>(List.of(), 1, 0, 0);
+
+                when(productoService.findByTipoProducto(eq(99L), anyInt(), anyInt()))
+                        .thenReturn(vacio);
+
+                mockMvc.perform(get("/api/v1/productos/tipo/99"))
+                        .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("Debe retornar 204 cuando buscar por estado no encuentra nada")
+        void debeRetornar204BuscarEstadoVacio() throws Exception {
+                PagedResponse<ProductoResumenDTO> vacio =
+                        new PagedResponse<>(List.of(), 1, 0, 0);
+
+                when(productoService.findByEstado(eq(99L), anyInt(), anyInt()))
+                        .thenReturn(vacio);
+
+                mockMvc.perform(get("/api/v1/productos/estado/99"))
+                        .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("Debe retornar 204 cuando sagas/completo no encuentra nada")
+        void debeRetornar204SagaCompletoVacio() throws Exception {
+                when(productoService.findBySagaCompleto("SagaInexistente"))
+                        .thenReturn(List.of());
+
+                mockMvc.perform(get("/api/v1/productos/sagas/SagaInexistente/completo"))
+                        .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @DisplayName("Rama page < 1 en buscarPorTipo se corrige a 1")
+        void debeCorregirPageMenorQueUnoBuscarTipo() throws Exception {
+                PagedResponse<ProductoResumenDTO> respuesta =
+                        new PagedResponse<>(List.of(new ProductoResumenDTO()), 1, 1, 1);
+
+                when(productoService.findByTipoProducto(eq(1L), eq(1), anyInt()))
+                        .thenReturn(respuesta);
+
+                mockMvc.perform(get("/api/v1/productos/tipo/1").param("page", "0"))
+                        .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("Rama page < 1 en buscarPorEstado se corrige a 1")
+        void debeCorregirPageMenorQueUnoBuscarEstado() throws Exception {
+                PagedResponse<ProductoResumenDTO> respuesta =
+                        new PagedResponse<>(List.of(new ProductoResumenDTO()), 1, 1, 1);
+
+                when(productoService.findByEstado(eq(1L), eq(1), anyInt()))
+                        .thenReturn(respuesta);
+
+                mockMvc.perform(get("/api/v1/productos/estado/1").param("page", "-1"))
+                        .andExpect(status().isOk());
+        }
 }

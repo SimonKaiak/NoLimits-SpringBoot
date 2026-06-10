@@ -3368,4 +3368,58 @@ public class ProductoServiceTest extends AbstractContainerBaseTest{
         org.junit.jupiter.api.Assertions.assertDoesNotThrow(
                 () -> productoService.actualizarEmbeddingProducto(producto));
         }
+
+        @Nested
+        @DisplayName("branches vacíos — sagas y búsquedas")
+        class BranchesVacios {
+
+                @Test
+                @DisplayName("obtenerSagasConPortada con lista vacía → retorna lista vacía")
+                void obtenerSagasConPortada_listaVacia() {
+                when(productoRepository.findDistinctSagasWithPortada())
+                        .thenReturn(List.of());
+
+                List<Map<String, Object>> resultado = productoService.obtenerSagasConPortada();
+
+                assertNotNull(resultado);
+                assertTrue(resultado.isEmpty());
+                }
+
+                @Test
+                @DisplayName("findBySagaCompleto con saga inexistente → lista vacía")
+                void findBySagaCompleto_sagaInexistente() {
+                when(productoRepository.findIdsBySagaIgnoreCase("SagaFalsa"))
+                        .thenReturn(List.of());
+
+                List<ProductoResponseDTO> resultado =
+                        productoService.findBySagaCompleto("SagaFalsa");
+
+                assertNotNull(resultado);
+                assertTrue(resultado.isEmpty());
+                }
+
+                @Test
+                @DisplayName("findByNombreContainingIgnoreCase sin resultados → paginado vacío")
+                void buscarPorNombreContiene_sinResultados() {
+                when(productoRepository.obtenerResumenPorNombre(eq("xyz"), any()))
+                        .thenReturn(new PageImpl<>(List.of()));
+
+                var resultado = productoService.findByNombreContainingIgnoreCase("xyz", 1, 10);
+
+                assertNotNull(resultado);
+                assertTrue(resultado.getContenido().isEmpty());
+                }
+
+                @Test
+                @DisplayName("findBySaga sin resultados → paginado vacío")
+                void findBySaga_sinResultados() {
+                when(productoRepository.obtenerResumenPorSaga(eq("SagaX"), any()))
+                        .thenReturn(new PageImpl<>(List.of()));
+
+                var resultado = productoService.findBySaga("SagaX", 1, 10);
+
+                assertNotNull(resultado);
+                assertTrue(resultado.getContenido().isEmpty());
+                }
+        }
 }

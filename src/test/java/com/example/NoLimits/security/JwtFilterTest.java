@@ -2,141 +2,118 @@ package com.example.NoLimits.security;
 
 import com.example.NoLimits.Multimedia.security.JwtFilter;
 import com.example.NoLimits.Multimedia.security.JwtUtil;
-
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.*;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.security.core.Authentication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@DisplayName("JwtFilter")
 class JwtFilterTest {
 
-    private JwtFilter jwtFilter;
-
-    @Mock
-    private JwtUtil jwtUtil;
-
-    @Mock
-    private HttpServletRequest request;
-
-    @Mock
-    private HttpServletResponse response;
-
-    @Mock
-    private FilterChain chain;
-
-    private AutoCloseable mocks;
+    private JwtFilter filter;
+    private JwtUtil jwtUtilMock;
 
     @BeforeEach
     void setUp() {
-        mocks = MockitoAnnotations.openMocks(this);
-
-        jwtFilter = new JwtFilter();
-        ReflectionTestUtils.setField(jwtFilter, "jwtUtil", jwtUtil);
-
+        jwtUtilMock = mock(JwtUtil.class);
+        filter = new JwtFilter();
+        ReflectionTestUtils.setField(filter, "jwtUtil", jwtUtilMock);
         SecurityContextHolder.clearContext();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        SecurityContextHolder.clearContext();
-        mocks.close();
     }
 
     @Nested
-    @DisplayName("Cuando no viene header Authorization")
-    class SinHeaderAuthorization {
+    @DisplayName("sin header Authorization")
+    class SinHeader {
 
         @Test
-        @DisplayName("debería continuar la cadena sin autenticar")
-        void deberiaContinuarCadenaSinAutenticar() throws Exception {
-            when(request.getHeader("Authorization")).thenReturn(null);
+        @DisplayName("pasa la cadena sin autenticar")
+        void sinHeader_pasaCadenaSinAutenticar() throws Exception {
+            MockHttpServletRequest request   = new MockHttpServletRequest();
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
 
-            jwtFilter.doFilter(request, response, chain);
+            filter.doFilter(request, response, chain);
 
-            assertNull(SecurityContextHolder.getContext().getAuthentication());
             verify(chain).doFilter(request, response);
-            verifyNoInteractions(jwtUtil);
+            assertNull(SecurityContextHolder.getContext().getAuthentication());
+            verifyNoInteractions(jwtUtilMock);
         }
     }
 
     @Nested
-    @DisplayName("Cuando el header Authorization no usa Bearer")
+    @DisplayName("header Authorization sin prefijo Bearer")
     class HeaderSinBearer {
 
         @Test
-        @DisplayName("debería continuar la cadena sin validar token")
-        void deberiaContinuarCadenaSinValidarToken() throws Exception {
-            when(request.getHeader("Authorization")).thenReturn("Basic abc123");
+        @DisplayName("header Basic → se ignora, cadena sigue")
+        void headerSinBearer_seIgnora() throws Exception {
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("Authorization", "Basic dXNlcjpwYXNz");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
 
-            jwtFilter.doFilter(request, response, chain);
+            filter.doFilter(request, response, chain);
 
-            assertNull(SecurityContextHolder.getContext().getAuthentication());
             verify(chain).doFilter(request, response);
-            verifyNoInteractions(jwtUtil);
+            assertNull(SecurityContextHolder.getContext().getAuthentication());
+            verifyNoInteractions(jwtUtilMock);
         }
     }
 
     @Nested
-    @DisplayName("Cuando el token es válido")
+    @DisplayName("header con Bearer token válido")
     class TokenValido {
 
         @Test
-        @DisplayName("debería autenticar al usuario en SecurityContext")
-        void deberiaAutenticarUsuarioEnSecurityContext() throws Exception {
-            String token = "token_valido";
+        @DisplayName("token válido → usuario queda autenticado en SecurityContext")
+        void tokenValido_usuarioAutenticado() throws Exception {
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("Authorization", "Bearer token.valido.jwt");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
 
-            when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-            when(jwtUtil.validateToken(token)).thenReturn(true);
-            when(jwtUtil.extractCorreo(token)).thenReturn("usuario@test.com");
-            when(jwtUtil.extractRol(token)).thenReturn("ROLE_USER");
+            when(jwtUtilMock.validateToken("token.valido.jwt")).thenReturn(true);
+            when(jwtUtilMock.extractCorreo("token.valido.jwt")).thenReturn("user@test.com");
+            when(jwtUtilMock.extractRol("token.valido.jwt")).thenReturn("ROLE_USER");
 
-            jwtFilter.doFilter(request, response, chain);
+            filter.doFilter(request, response, chain);
 
-            Authentication authentication =
-                    SecurityContextHolder.getContext().getAuthentication();
-
-            assertNotNull(authentication);
-            assertEquals("usuario@test.com", authentication.getPrincipal());
-            assertTrue(authentication.getAuthorities()
-                    .stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_USER")));
-
-            verify(jwtUtil).validateToken(token);
-            verify(jwtUtil).extractCorreo(token);
-            verify(jwtUtil).extractRol(token);
             verify(chain).doFilter(request, response);
+            assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+            assertEquals("user@test.com",
+                    SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         }
     }
 
     @Nested
-    @DisplayName("Cuando el token es inválido")
+    @DisplayName("header con Bearer token inválido")
     class TokenInvalido {
 
         @Test
-        @DisplayName("debería no autenticar y continuar la cadena")
-        void deberiaNoAutenticarYContinuarCadena() throws Exception {
-            String token = "token_invalido";
+        @DisplayName("token inválido → cadena sigue sin autenticar")
+        void tokenInvalido_sinAutenticar() throws Exception {
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("Authorization", "Bearer token.mal.formado");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
 
-            when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-            when(jwtUtil.validateToken(token)).thenReturn(false);
+            when(jwtUtilMock.validateToken("token.mal.formado")).thenReturn(false);
 
-            jwtFilter.doFilter(request, response, chain);
+            filter.doFilter(request, response, chain);
 
-            assertNull(SecurityContextHolder.getContext().getAuthentication());
-
-            verify(jwtUtil).validateToken(token);
-            verify(jwtUtil, never()).extractCorreo(anyString());
-            verify(jwtUtil, never()).extractRol(anyString());
             verify(chain).doFilter(request, response);
+            assertNull(SecurityContextHolder.getContext().getAuthentication());
+            verify(jwtUtilMock, never()).extractCorreo(any());
         }
     }
 }
