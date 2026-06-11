@@ -3,6 +3,7 @@ package com.example.NoLimits.controller.igdb;
 import com.example.NoLimits.Multimedia.controller.igdb.IgdbProxyController;
 import com.example.NoLimits.Multimedia.service.igdb.IgdbTokenService;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,61 +29,120 @@ class IgdbProxyControllerTest {
     @MockBean
     private IgdbTokenService igdbTokenService;
 
-    @Test
-    @DisplayName("GET /api/igdb/games → cuando token falla retorna 500 con mensaje JSON")
-    void getGames_tokenFalla_retorna500ConMensaje() throws Exception {
-        when(igdbTokenService.getAccessToken())
-                .thenThrow(new RuntimeException("Token service error"));
+    @Nested
+    @DisplayName("GET /api/igdb/games")
+    class GetGames {
 
-        mockMvc.perform(get("/api/igdb/games"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        @Test
+        @DisplayName("debería retornar 500 con mensaje JSON cuando el token falla")
+        void deberiaRetornar500ConMensajeJsonCuandoTokenFalla() throws Exception {
+
+            when(igdbTokenService.getAccessToken())
+                    .thenThrow(new RuntimeException("Token service error"));
+
+            mockMvc.perform(get("/api/igdb/games"))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(content().string(
+                            org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        }
+
+        @Test
+        @DisplayName("debería existir el endpoint y no retornar 404")
+        void deberiaExistirEndpointYNoRetornar404() throws Exception {
+
+            when(igdbTokenService.getAccessToken())
+                    .thenReturn("fake-token");
+
+            mockMvc.perform(get("/api/igdb/games"))
+                    .andExpect(result -> {
+                        int status = result.getResponse().getStatus();
+
+                        org.junit.jupiter.api.Assertions.assertNotEquals(
+                                404,
+                                status,
+                                "El endpoint /api/igdb/games no debe retornar 404"
+                        );
+                    });
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/igdb/games → cuando token falla retorna 500 con mensaje JSON")
-    void queryGames_tokenFalla_retorna500ConMensaje() throws Exception {
-        when(igdbTokenService.getAccessToken())
-                .thenThrow(new RuntimeException("Token expirado"));
+    @Nested
+    @DisplayName("POST /api/igdb/games")
+    class QueryGames {
 
-        mockMvc.perform(post("/api/igdb/games")
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content("fields name; limit 5;"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        @Test
+        @DisplayName("debería retornar 500 con mensaje JSON cuando el token falla")
+        void deberiaRetornar500ConMensajeJsonCuandoTokenFalla() throws Exception {
+
+            when(igdbTokenService.getAccessToken())
+                    .thenThrow(new RuntimeException("Token expirado"));
+
+            mockMvc.perform(post("/api/igdb/games")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content("fields name; limit 5;"))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(content().string(
+                            org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        }
+
+        @Test
+        @DisplayName("debería retornar 500 cuando no viene body")
+        void deberiaRetornar500CuandoNoVieneBody() throws Exception {
+
+            when(igdbTokenService.getAccessToken())
+                    .thenThrow(new RuntimeException("Sin token"));
+
+            mockMvc.perform(post("/api/igdb/games"))
+                    .andExpect(status().isInternalServerError());
+        }
+
+        @Test
+        @DisplayName("debería usar query por defecto cuando el body viene vacío")
+        void deberiaUsarQueryPorDefectoCuandoBodyVieneVacio() throws Exception {
+
+            when(igdbTokenService.getAccessToken())
+                    .thenThrow(new RuntimeException("Sin token"));
+
+            mockMvc.perform(post("/api/igdb/games")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content(""))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(content().string(
+                            org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        }
+
+        @Test
+        @DisplayName("debería usar query por defecto cuando el body viene en blanco")
+        void deberiaUsarQueryPorDefectoCuandoBodyVieneEnBlanco() throws Exception {
+
+            when(igdbTokenService.getAccessToken())
+                    .thenThrow(new RuntimeException("Sin token"));
+
+            mockMvc.perform(post("/api/igdb/games")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content("   "))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(content().string(
+                            org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        }
     }
 
-    @Test
-    @DisplayName("GET /api/igdb/games/search → cuando token falla retorna 500 con mensaje JSON")
-    void searchGames_tokenFalla_retorna500ConMensaje() throws Exception {
-        when(igdbTokenService.getAccessToken())
-                .thenThrow(new RuntimeException("Token inválido"));
+    @Nested
+    @DisplayName("GET /api/igdb/games/search")
+    class SearchGames {
 
-        mockMvc.perform(get("/api/igdb/games/search").queryParam("q", "zelda"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
-    }
+        @Test
+        @DisplayName("debería retornar 500 con mensaje JSON cuando el token falla")
+        void deberiaRetornar500ConMensajeJsonCuandoTokenFalla() throws Exception {
 
-    @Test
-    @DisplayName("POST /api/igdb/games sin body → cuando token falla retorna 500")
-    void queryGames_sinBody_tokenFalla_retorna500() throws Exception {
-        when(igdbTokenService.getAccessToken())
-                .thenThrow(new RuntimeException("Sin token"));
+            when(igdbTokenService.getAccessToken())
+                    .thenThrow(new RuntimeException("Token inválido"));
 
-        mockMvc.perform(post("/api/igdb/games"))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
-    @DisplayName("GET /api/igdb/games → endpoint existe (no retorna 404)")
-    void getGames_endpointExiste() throws Exception {
-        when(igdbTokenService.getAccessToken()).thenReturn("fake-token");
-
-        mockMvc.perform(get("/api/igdb/games"))
-                .andExpect(result -> {
-                    int status = result.getResponse().getStatus();
-                    org.junit.jupiter.api.Assertions.assertNotEquals(404, status,
-                        "El endpoint /api/igdb/games no debe retornar 404");
-                });
+            mockMvc.perform(get("/api/igdb/games/search")
+                            .queryParam("q", "zelda"))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(content().string(
+                            org.hamcrest.Matchers.containsString("No se pudo consultar IGDB")));
+        }
     }
 }

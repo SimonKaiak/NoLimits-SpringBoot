@@ -44,6 +44,12 @@ class JwtUtilTest {
 
             assertEquals("usuario@test.com", correo);
         }
+
+        @Test
+        @DisplayName("debería lanzar excepción cuando el token es inválido")
+        void deberiaLanzarExcepcionCuandoTokenEsInvalido() {
+            assertThrows(Exception.class, () -> jwtUtil.extractCorreo("token_invalido"));
+        }
     }
 
     @Nested
@@ -58,6 +64,12 @@ class JwtUtilTest {
             String rol = jwtUtil.extractRol(token);
 
             assertEquals("ROLE_ADMIN", rol);
+        }
+
+        @Test
+        @DisplayName("debería lanzar excepción cuando el token es inválido")
+        void deberiaLanzarExcepcionCuandoTokenEsInvalido() {
+            assertThrows(Exception.class, () -> jwtUtil.extractRol("token_invalido"));
         }
     }
 
@@ -77,6 +89,16 @@ class JwtUtilTest {
         @DisplayName("debería retornar false cuando el token es inválido")
         void deberiaRetornarFalseCuandoTokenEsInvalido() {
             assertFalse(jwtUtil.validateToken("token_invalido"));
+        }
+
+        @Test
+        @DisplayName("debería retornar false cuando el token está expirado")
+        void deberiaRetornarFalseCuandoTokenEstaExpirado() {
+            ReflectionTestUtils.setField(jwtUtil, "expiration", -1000L);
+
+            String token = jwtUtil.generateToken("usuario@test.com", "ROLE_USER");
+
+            assertFalse(jwtUtil.validateToken(token));
         }
     }
 }

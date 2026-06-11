@@ -11,6 +11,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @DisplayName("RawgProxyController")
@@ -130,6 +132,36 @@ class RawgProxyControllerTest {
 
             assertEquals(200, response.getStatusCode().value());
             assertNull(response.getBody());
+        }
+
+        @Test
+        @DisplayName("it: debería construir URL con solo separador cuando query string viene vacío")
+        void deberiaConstruirUrlConSeparadorCuandoQueryStringVieneVacio() {
+            RawgProxyController controller = new RawgProxyController();
+
+            RestTemplate restTemplate = mock(RestTemplate.class);
+            HttpServletRequest request = mock(HttpServletRequest.class);
+
+            ReflectionTestUtils.setField(controller, "rawgKey", "test-key");
+            ReflectionTestUtils.setField(controller, "restTemplate", restTemplate);
+
+            when(request.getRequestURI()).thenReturn("/api/rawg/games");
+            when(request.getQueryString()).thenReturn("");
+
+            when(restTemplate.getForEntity(anyString(), eq(String.class)))
+                    .thenReturn(ResponseEntity.ok("{\"results\":[]}"));
+
+            ResponseEntity<String> response = controller.proxy(request);
+
+            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(restTemplate).getForEntity(urlCaptor.capture(), eq(String.class));
+
+            assertEquals(200, response.getStatusCode().value());
+            assertEquals("{\"results\":[]}", response.getBody());
+            assertEquals(
+                    "https://api.rawg.io/api/games?key=test-key&",
+                    urlCaptor.getValue()
+            );
         }
     }
 }

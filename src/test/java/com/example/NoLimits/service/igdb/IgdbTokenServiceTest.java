@@ -130,5 +130,53 @@ class IgdbTokenServiceTest {
 
             assertEquals("Error al renovar token IGDB", ex.getMessage());
         }
+
+        @Test
+        @DisplayName("lanza RuntimeException cuando la respuesta tiene body null")
+        void lanzaRuntimeExceptionCuandoRespuestaTieneBodyNull() throws Exception {
+            RestTemplate restTemplateMock = mock(RestTemplate.class);
+            IgdbTokenService service = crearServiceConMock(restTemplateMock);
+
+            when(restTemplateMock.postForEntity(
+                    anyString(),
+                    isNull(),
+                    eq(IgdbTokenResponse.class)
+            )).thenReturn(ResponseEntity.ok(null));
+
+            RuntimeException ex = assertThrows(
+                    RuntimeException.class,
+                    service::getAccessToken
+            );
+
+            assertEquals("No se pudo obtener token IGDB", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("renueva token cuando el token existente expira dentro de los próximos 60 segundos")
+        void renuevaTokenCuandoTokenExistenteExpiraPronto() throws Exception {
+            RestTemplate restTemplateMock = mock(RestTemplate.class);
+            IgdbTokenService service = crearServiceConMock(restTemplateMock);
+
+            setPrivateField(service, "accessToken", "token-antiguo");
+            setPrivateField(service, "expiresAt", Instant.now().plusSeconds(30));
+
+            IgdbTokenResponse tokenResponse = crearTokenResponse("token-renovado", 3600L);
+
+            when(restTemplateMock.postForEntity(
+                    anyString(),
+                    isNull(),
+                    eq(IgdbTokenResponse.class)
+            )).thenReturn(ResponseEntity.ok(tokenResponse));
+
+            String resultado = service.getAccessToken();
+
+            assertEquals("token-renovado", resultado);
+
+            verify(restTemplateMock).postForEntity(
+                    contains("https://id.twitch.tv/oauth2/token"),
+                    isNull(),
+                    eq(IgdbTokenResponse.class)
+            );
+        }
     }
 }
