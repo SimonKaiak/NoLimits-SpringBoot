@@ -123,4 +123,34 @@ class EmbeddingServiceTest {
             verify(embeddingApi).create(any(EmbeddingCreateParams.class));
         }
     }
+
+    @Nested
+    @DisplayName("generarEmbedding — entradas extremas")
+    class GenerarEmbeddingEntradaExtrema {
+
+        @Test
+        @DisplayName("texto vacío → igual llama a OpenAI con texto vacío")
+        void textoVacio_llamaIgualAOpenAI() {
+            var embeddingApi  = mock(com.openai.services.blocking.EmbeddingService.class);
+            var responseMock  = mock(CreateEmbeddingResponse.class);
+            var embeddingMock = mock(Embedding.class);
+
+            when(openAIClientMock.embeddings()).thenReturn(embeddingApi);
+            when(embeddingApi.create(any(EmbeddingCreateParams.class))).thenReturn(responseMock);
+            when(responseMock.data()).thenReturn(List.of(embeddingMock));
+            when(embeddingMock.embedding()).thenReturn(List.of(0.0f));
+
+            List<Float> resultado = embeddingService.generarEmbedding("");
+
+            assertThat(resultado).isNotNull();
+            verify(embeddingApi).create(any(EmbeddingCreateParams.class));
+        }
+
+        @Test
+        @DisplayName("texto null → lanza NullPointerException")
+        void textoNull_lanzaExcepcion() {
+            assertThrows(Exception.class,
+                    () -> embeddingService.generarEmbedding(null));
+        }
+    }
 }

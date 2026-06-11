@@ -13,7 +13,9 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import java.sql.ResultSet;
 import java.util.List;
 
+import static org.mockito.Mockito.doThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -212,6 +214,43 @@ class ProductoEmbeddingServiceTest {
                     eq(String.class),
                     eq("[0.1, 0.2]"),
                     eq(5)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("Unitario - guardarEmbeddingProducto branches adicionales")
+    class GuardarEmbeddingBranches {
+
+        @Test
+        @DisplayName("jdbcTemplate lanza excepción → se propaga")
+        void jdbcTemplateLanzaExcepcion_sepropaga() {
+            when(embeddingService.generarEmbedding("contenido"))
+                    .thenReturn(List.of(0.1f, 0.2f));
+
+            doThrow(new RuntimeException("DB error"))
+                    .when(jdbcTemplate).update(anyString(), any(), any(), any());
+
+            assertThrows(RuntimeException.class,
+                    () -> service.guardarEmbeddingProducto(1L, "contenido"));
+        }
+
+        @Test
+        @DisplayName("embedding con lista grande → vector formateado correctamente")
+        void embeddingListaGrande_vectorFormateado() {
+            List<Float> embedding = new java.util.ArrayList<>();
+            for (int i = 0; i < 10; i++) embedding.add(0.1f * i);
+
+            when(embeddingService.generarEmbedding("texto largo"))
+                    .thenReturn(embedding);
+
+            service.guardarEmbeddingProducto(5L, "texto largo");
+
+            verify(jdbcTemplate).update(
+                    contains("INSERT INTO producto_embeddings"),
+                    eq(5L),
+                    eq("texto largo"),
+                    anyString()
             );
         }
     }

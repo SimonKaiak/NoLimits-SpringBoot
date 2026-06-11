@@ -288,4 +288,51 @@ class UsuarioModelTest {
             assertEquals("https://foto.jpg", u.getFotoPerfil());
         }
     }
+
+    @Nested
+    @DisplayName("getComunaId / getRegionId — cadena de nulls")
+    class CadenaNullsUbicacion {
+
+        @Test
+        @DisplayName("direccion no null pero comuna null → getComunaId retorna null")
+        void direccionNoNull_comunaNull_getComunaIdEsNull() {
+            DireccionModel direccion = new DireccionModel();
+            direccion.setComuna(null);
+
+            UsuarioModel u = new UsuarioModel();
+            u.setDireccion(direccion);
+
+            assertNull(u.getComunaId());
+            assertNull(u.getComunaNombre());
+        }
+
+        @Test
+        @DisplayName("direccion no null, comuna no null, region null → getRegionId retorna null")
+        void comunaNoNull_regionNull_getRegionIdEsNull() {
+            ComunaModel comuna = new ComunaModel();
+            comuna.setRegion(null);
+
+            DireccionModel direccion = new DireccionModel();
+            direccion.setComuna(comuna);
+
+            UsuarioModel u = new UsuarioModel();
+            u.setDireccion(direccion);
+
+            assertNull(u.getRegionId());
+            assertNull(u.getRegionNombre());
+        }
+
+        @Test
+        @DisplayName("direccion null → todas las propiedades de ubicación son null")
+        void direccionNull_todasLasPropiedadesUbicacionNull() {
+            UsuarioModel u = new UsuarioModel();
+            u.setDireccion(null);
+
+            assertNull(u.getDireccionId());
+            assertNull(u.getComunaId());
+            assertNull(u.getComunaNombre());
+            assertNull(u.getRegionId());
+            assertNull(u.getRegionNombre());
+        }
+    }
 }
