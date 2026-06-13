@@ -53,4 +53,38 @@ class ClasificacionModelAssemblerTest {
 
         assertTrue(model.hasLink("relacionada_por_nombre"));
     }
+
+    @Test
+    @DisplayName("No agrega link cuando nombre está vacío")
+    void noAgregaLinkCuandoNombreEstaVacio() {
+
+        // Arrange
+        ClasificacionResponseDTO dto = new ClasificacionResponseDTO();
+        dto.setId(1L);
+        dto.setNombre("");
+
+            // Act
+        EntityModel<ClasificacionResponseDTO> model =
+                assembler.toModel(dto);
+
+        // Assert
+        assertFalse(model.hasLink("relacionada_por_nombre"));
+    }
+
+    @Test
+    @DisplayName("No agrega link cuando nombre contiene solo espacios")
+    void noAgregaLinkCuandoNombreTieneSoloEspacios() {
+
+        // Arrange
+        ClasificacionResponseDTO dto = new ClasificacionResponseDTO();
+        dto.setId(1L);
+        dto.setNombre("   ");
+
+        // Act
+        EntityModel<ClasificacionResponseDTO> model =
+            assembler.toModel(dto);
+
+        // Assert
+        assertFalse(model.hasLink("relacionada_por_nombre"));
+    }
 }

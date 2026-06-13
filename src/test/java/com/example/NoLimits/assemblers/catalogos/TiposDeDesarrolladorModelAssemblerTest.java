@@ -47,4 +47,49 @@ class TiposDeDesarrolladorModelAssemblerTest {
         assertTrue(model.hasLink("desvincular"));
         assertTrue(model.hasLink("actualizar_relacion"));
     }
+
+    @Test
+    @DisplayName("Agrega solo link lista cuando faltan tipo y relacion")
+    void agregaSoloLinkLista() {
+
+        // Arrange
+        TiposDeDesarrolladorResponseDTO dto =
+        new TiposDeDesarrolladorResponseDTO();
+
+        dto.setDesarrolladorId(10L);
+
+        // Act
+        EntityModel<TiposDeDesarrolladorResponseDTO> model =
+                assembler.toModel(dto);
+
+        // Assert
+        assertTrue(model.hasLink("lista"));
+
+        assertFalse(model.hasLink("vincular"));
+        assertFalse(model.hasLink("desvincular"));
+        assertFalse(model.hasLink("actualizar_relacion"));
+    }
+
+    @Test
+    @DisplayName("Agrega lista y actualizar relacion sin tipo")
+    void agregaListaYActualizarRelacionSinTipo() {
+
+        // Arrange
+        TiposDeDesarrolladorResponseDTO dto =
+                new TiposDeDesarrolladorResponseDTO();
+
+        dto.setDesarrolladorId(10L);
+        dto.setId(1L);
+
+        // Act
+        EntityModel<TiposDeDesarrolladorResponseDTO> model =
+                assembler.toModel(dto);
+
+        // Assert
+        assertTrue(model.hasLink("lista"));
+        assertTrue(model.hasLink("actualizar_relacion"));
+
+        assertFalse(model.hasLink("vincular"));
+        assertFalse(model.hasLink("desvincular"));
+    }
 }
