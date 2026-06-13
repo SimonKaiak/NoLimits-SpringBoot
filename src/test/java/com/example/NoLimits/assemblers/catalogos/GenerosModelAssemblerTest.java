@@ -52,4 +52,48 @@ class GenerosModelAssemblerTest {
         assertTrue(model.hasLink("producto"));
         assertTrue(model.hasLink("genero"));
     }
+
+    @Test
+    @DisplayName("No agrega links cuando productoId es null")
+    void noAgregaLinksCuandoProductoIdEsNull() {
+
+        // Arrange
+        GenerosResponseDTO dto = new GenerosResponseDTO();
+        dto.setProductoId(null);
+        dto.setGeneroId(2L);
+
+        // Act
+        EntityModel<GenerosResponseDTO> model =
+            assembler.toModel(dto);
+
+        // Assert
+        assertFalse(model.hasLink("self"));
+        assertFalse(model.hasLink("desvincular"));
+        assertFalse(model.hasLink("generos_del_producto"));
+        assertFalse(model.hasLink("productos_del_genero"));
+        assertFalse(model.hasLink("producto"));
+        assertFalse(model.hasLink("genero"));
+    }
+
+    @Test
+    @DisplayName("No agrega links cuando generoId es null")
+    void noAgregaLinksCuandoGeneroIdEsNull() {
+
+        // Arrange
+        GenerosResponseDTO dto = new GenerosResponseDTO();
+        dto.setProductoId(1L);
+        dto.setGeneroId(null);
+
+        // Act
+        EntityModel<GenerosResponseDTO> model =
+                assembler.toModel(dto);
+
+        // Assert
+        assertFalse(model.hasLink("self"));
+        assertFalse(model.hasLink("desvincular"));
+        assertFalse(model.hasLink("generos_del_producto"));
+        assertFalse(model.hasLink("productos_del_genero"));
+        assertFalse(model.hasLink("producto"));
+        assertFalse(model.hasLink("genero"));
+    }
 }

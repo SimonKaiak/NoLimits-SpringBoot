@@ -46,4 +46,49 @@ class TiposEmpresaModelAssemblerTest {
         assertTrue(model.hasLink("tipo-empresa"));
         assertTrue(model.hasLink("desvincular"));
     }
+
+    @Test
+    @DisplayName("Agrega enlaces de empresa cuando tipoEmpresaId es null")
+    void agregaLinksEmpresaSinTipoEmpresa() {
+
+        // Arrange
+        TiposEmpresaResponseDTO dto =
+                new TiposEmpresaResponseDTO();
+
+        dto.setEmpresaId(1L);
+
+        // Act
+        EntityModel<TiposEmpresaResponseDTO> model =
+                assembler.toModel(dto);
+
+        // Assert
+        assertTrue(model.hasLink("self"));
+        assertTrue(model.hasLink("empresa"));
+
+        assertFalse(model.hasLink("tipo-empresa"));
+        assertFalse(model.hasLink("desvincular"));
+    }
+
+    @Test
+    @DisplayName("Agrega enlace tipoEmpresa cuando empresaId es null")
+    void agregaLinkTipoEmpresaSinEmpresa() {
+
+        // Arrange
+        TiposEmpresaResponseDTO dto =
+                new TiposEmpresaResponseDTO();
+
+        dto.setTipoEmpresaId(2L);
+
+        // Act
+        EntityModel<TiposEmpresaResponseDTO> model =
+                assembler.toModel(dto);
+
+        // Assert
+        assertFalse(model.hasLink("self"));
+        assertFalse(model.hasLink("empresa"));
+
+        assertTrue(model.hasLink("tipo-empresa"));
+
+        assertFalse(model.hasLink("desvincular"));
+    }
 }
