@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +62,215 @@ class PlataformasUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el productoId")
+        void testEqualsProductoIdDistinto() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el plataformaId")
+        void testEqualsPlataformaIdDistinto() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+            dto2.setPlataformaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene productoId")
+        void testEqualsProductoIdNuloVsNoNulo() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene plataformaId")
+        void testEqualsPlataformaIdNuloVsNoNulo() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el productoId")
+        void testHashCodeProductoIdDistinto() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el plataformaId")
+        void testHashCodePlataformaIdDistinto() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+            dto2.setPlataformaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es igual para objetos equivalentes")
+        void testHashCodeIgual() {
+
+            // Arrange
+            PlataformasUpdateDTO dto1 = new PlataformasUpdateDTO();
+            dto1.setProductoId(10L);
+            dto1.setPlataformaId(1L);
+
+            PlataformasUpdateDTO dto2 = new PlataformasUpdateDTO();
+            dto2.setProductoId(10L);
+            dto2.setPlataformaId(1L);
+
+            // Act + Assert
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente para la misma instancia")
+        void testHashCodeConsistente() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+            dto.setProductoId(10L);
+
+            int hash1 = dto.hashCode();
+            int hash2 = dto.hashCode();
+
+            // Act + Assert
+            assertEquals(hash1, hash2);
+        }
+
+        @Test
+        @DisplayName("toString no retorna null")
+        void testToStringNoEsNull() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertNotNull(resultado);
+        }
+
+        @Test
+        @DisplayName("toString contiene productoId cuando está informado")
+        void testToStringContieneProductoId() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+            dto.setProductoId(10L);
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertTrue(resultado.contains("productoId=10"));
+        }
+
+        @Test
+        @DisplayName("toString contiene plataformaId cuando está informado")
+        void testToStringContienePlataformaId() {
+
+            // Arrange
+            PlataformasUpdateDTO dto = new PlataformasUpdateDTO();
+            dto.setPlataformaId(1L);
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertTrue(resultado.contains("plataformaId=1"));
         }
 
         @Test

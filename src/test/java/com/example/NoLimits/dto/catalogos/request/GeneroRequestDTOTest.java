@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -54,6 +55,110 @@ class GeneroRequestDTOTest {
             dto2.setNombre("Acción");
 
             assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            GeneroRequestDTO dto1 = new GeneroRequestDTO();
+            dto1.setNombre("Acción");
+
+            GeneroRequestDTO dto2 = new GeneroRequestDTO();
+            dto2.setNombre("Aventura");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            GeneroRequestDTO dto = new GeneroRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            GeneroRequestDTO dto = new GeneroRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            GeneroRequestDTO dto = new GeneroRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            // Arrange
+            GeneroRequestDTO dto1 = new GeneroRequestDTO();
+            dto1.setNombre("Acción");
+
+            GeneroRequestDTO dto2 = new GeneroRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            GeneroRequestDTO dto1 = new GeneroRequestDTO();
+            dto1.setNombre("Acción");
+
+            GeneroRequestDTO dto2 = new GeneroRequestDTO();
+            dto2.setNombre("Aventura");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos nombres son null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            GeneroRequestDTO dto1 = new GeneroRequestDTO();
+            GeneroRequestDTO dto2 = new GeneroRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode coincide cuando ambos objetos son iguales")
+        void testHashCodeObjetosIguales() {
+
+            // Arrange
+            GeneroRequestDTO dto1 = new GeneroRequestDTO();
+            dto1.setNombre("Acción");
+
+            GeneroRequestDTO dto2 = new GeneroRequestDTO();
+            dto2.setNombre("Acción");
+
+            // Act + Assert
             assertEquals(dto1.hashCode(), dto2.hashCode());
         }
 

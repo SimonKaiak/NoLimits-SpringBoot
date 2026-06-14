@@ -5,7 +5,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +62,120 @@ class TipoEmpresaResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto1 =
+                    new TipoEmpresaResponseDTO();
+            dto1.setId(1L);
+
+            TipoEmpresaResponseDTO dto2 =
+                    new TipoEmpresaResponseDTO();
+            dto2.setId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto1 =
+                    new TipoEmpresaResponseDTO();
+            dto1.setNombre("Publisher");
+
+            TipoEmpresaResponseDTO dto2 =
+                    new TipoEmpresaResponseDTO();
+            dto2.setNombre("Distribuidor");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto =
+                    new TipoEmpresaResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto =
+                    new TipoEmpresaResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto =
+                    new TipoEmpresaResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando un id es null")
+        void testEqualsIdNull() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto1 =
+                    new TipoEmpresaResponseDTO();
+            dto1.setId(1L);
+
+            TipoEmpresaResponseDTO dto2 =
+                    new TipoEmpresaResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando un nombre es null")
+        void testEqualsNombreNull() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto1 =
+                    new TipoEmpresaResponseDTO();
+            dto1.setNombre("Publisher");
+
+            TipoEmpresaResponseDTO dto2 =
+                    new TipoEmpresaResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode funciona con campos null")
+        void testHashCodeConCamposNull() {
+
+            // Arrange
+            TipoEmpresaResponseDTO dto =
+                    new TipoEmpresaResponseDTO();
+
+            // Act + Assert
+            assertDoesNotThrow(dto::hashCode);
         }
 
         @Test

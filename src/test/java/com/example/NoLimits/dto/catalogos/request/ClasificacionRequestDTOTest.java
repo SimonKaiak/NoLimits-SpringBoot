@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -66,6 +67,144 @@ class ClasificacionRequestDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            ClasificacionRequestDTO dto1 =
+                    new ClasificacionRequestDTO();
+            dto1.setNombre("T");
+
+            ClasificacionRequestDTO dto2 =
+                    new ClasificacionRequestDTO();
+            dto2.setNombre("M");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            ClasificacionRequestDTO dto1 =
+                    new ClasificacionRequestDTO();
+            dto1.setDescripcion("Descripcion A");
+
+            ClasificacionRequestDTO dto2 =
+                    new ClasificacionRequestDTO();
+            dto2.setDescripcion("Descripcion B");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            ClasificacionRequestDTO dto1 =
+                    new ClasificacionRequestDTO();
+            dto1.setActivo(true);
+
+            ClasificacionRequestDTO dto2 =
+                    new ClasificacionRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            ClasificacionRequestDTO dto =
+                    new ClasificacionRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            ClasificacionRequestDTO dto =
+                    new ClasificacionRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            ClasificacionRequestDTO dto =
+                    new ClasificacionRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            ClasificacionRequestDTO dto1 =
+                    new ClasificacionRequestDTO();
+            dto1.setNombre("T");
+
+            ClasificacionRequestDTO dto2 =
+                    new ClasificacionRequestDTO();
+            dto2.setNombre("M");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia la descripcion")
+        void testHashCodeDescripcionDistinta() {
+
+            // Arrange
+            ClasificacionRequestDTO dto1 =
+                    new ClasificacionRequestDTO();
+            dto1.setDescripcion("Descripcion A");
+
+            ClasificacionRequestDTO dto2 =
+                    new ClasificacionRequestDTO();
+            dto2.setDescripcion("Descripcion B");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            // Arrange
+            ClasificacionRequestDTO dto1 =
+                    new ClasificacionRequestDTO();
+            dto1.setActivo(true);
+
+            ClasificacionRequestDTO dto2 =
+                    new ClasificacionRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
         }
 
         @Test

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +61,110 @@ class DesarrolladoresRequestDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el productoId")
+        void testEqualsProductoIdDistinto() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto1 =
+                    new DesarrolladoresRequestDTO();
+            dto1.setProductoId(10L);
+
+            DesarrolladoresRequestDTO dto2 =
+                    new DesarrolladoresRequestDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el desarrolladorId")
+        void testEqualsDesarrolladorIdDistinto() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto1 =
+                    new DesarrolladoresRequestDTO();
+            dto1.setDesarrolladorId(1L);
+
+            DesarrolladoresRequestDTO dto2 =
+                    new DesarrolladoresRequestDTO();
+            dto2.setDesarrolladorId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto =
+                    new DesarrolladoresRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto =
+                    new DesarrolladoresRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto =
+                    new DesarrolladoresRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el productoId")
+        void testHashCodeProductoIdDistinto() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto1 =
+                    new DesarrolladoresRequestDTO();
+            dto1.setProductoId(10L);
+
+            DesarrolladoresRequestDTO dto2 =
+                    new DesarrolladoresRequestDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el desarrolladorId")
+        void testHashCodeDesarrolladorIdDistinto() {
+
+            // Arrange
+            DesarrolladoresRequestDTO dto1 =
+                    new DesarrolladoresRequestDTO();
+            dto1.setDesarrolladorId(1L);
+
+            DesarrolladoresRequestDTO dto2 =
+                    new DesarrolladoresRequestDTO();
+            dto2.setDesarrolladorId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
         }
 
         @Test

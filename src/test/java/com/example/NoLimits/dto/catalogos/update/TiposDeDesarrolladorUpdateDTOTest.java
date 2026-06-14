@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +62,190 @@ class TiposDeDesarrolladorUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia desarrolladorId")
+        void testEqualsDesarrolladorIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto1.setDesarrolladorId(3L);
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto2.setDesarrolladorId(4L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia tipoDeDesarrolladorId")
+        void testEqualsTipoDeDesarrolladorIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto1.setTipoDeDesarrolladorId(2L);
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto2.setTipoDeDesarrolladorId(5L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene desarrolladorId")
+        void testEqualsDesarrolladorIdNuloVsNoNulo() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto1.setDesarrolladorId(3L);
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene tipoDeDesarrolladorId")
+        void testEqualsTipoDeDesarrolladorIdNuloVsNoNulo() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto1.setTipoDeDesarrolladorId(2L);
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia desarrolladorId")
+        void testHashCodeDesarrolladorIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto1.setDesarrolladorId(3L);
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto2.setDesarrolladorId(4L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia tipoDeDesarrolladorId")
+        void testHashCodeTipoDeDesarrolladorIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto1 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto1.setTipoDeDesarrolladorId(2L);
+
+            TiposDeDesarrolladorUpdateDTO dto2 =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto2.setTipoDeDesarrolladorId(5L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente")
+        void testHashCodeConsistente() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto =
+                    new TiposDeDesarrolladorUpdateDTO();
+            dto.setDesarrolladorId(3L);
+            dto.setTipoDeDesarrolladorId(2L);
+
+            // Act
+            int hash1 = dto.hashCode();
+            int hash2 = dto.hashCode();
+
+            // Assert
+            assertEquals(hash1, hash2);
+        }
+
+        @Test
+        @DisplayName("toString no retorna null")
+        void testToStringNoEsNull() {
+
+            // Arrange
+            TiposDeDesarrolladorUpdateDTO dto =
+                    new TiposDeDesarrolladorUpdateDTO();
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertNotNull(resultado);
         }
 
         @Test

@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +67,231 @@ class MetodoEnvioUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setNombre("Despacho a domicilio");
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setNombre("Retiro en tienda");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setDescripcion("Entrega directa al cliente");
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setDescripcion("Retiro en sucursal");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setActivo(true);
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setNombre("Despacho a domicilio");
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene descripcion")
+        void testEqualsDescripcionNuloVsNoNulo() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setDescripcion("Entrega directa");
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setActivo(true);
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setNombre("Despacho a domicilio");
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setNombre("Retiro en tienda");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia la descripcion")
+        void testHashCodeDescripcionDistinta() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setDescripcion("Entrega directa");
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setDescripcion("Retiro en sucursal");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setActivo(true);
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es igual para objetos equivalentes")
+        void testHashCodeIgual() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto1 = new MetodoEnvioUpdateDTO();
+            dto1.setNombre("Despacho a domicilio");
+            dto1.setDescripcion("Entrega directa");
+            dto1.setActivo(true);
+
+            MetodoEnvioUpdateDTO dto2 = new MetodoEnvioUpdateDTO();
+            dto2.setNombre("Despacho a domicilio");
+            dto2.setDescripcion("Entrega directa");
+            dto2.setActivo(true);
+
+            // Act + Assert
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente para la misma instancia")
+        void testHashCodeConsistente() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto = new MetodoEnvioUpdateDTO();
+            dto.setNombre("Despacho a domicilio");
+
+            int hash1 = dto.hashCode();
+            int hash2 = dto.hashCode();
+
+            // Act + Assert
+            assertEquals(hash1, hash2);
+        }
+
+        @Test
+        @DisplayName("toString no retorna null")
+        void testToStringNoEsNull() {
+
+            // Arrange
+            MetodoEnvioUpdateDTO dto = new MetodoEnvioUpdateDTO();
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertNotNull(resultado);
         }
 
         @Test

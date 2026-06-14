@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +71,99 @@ class EmpresasResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            EmpresasResponseDTO dto1 = new EmpresasResponseDTO();
+            dto1.setId(7L);
+
+            EmpresasResponseDTO dto2 = new EmpresasResponseDTO();
+            dto2.setId(8L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia productoId")
+        void testEqualsProductoIdDistinto() {
+
+            // Arrange
+            EmpresasResponseDTO dto1 = new EmpresasResponseDTO();
+            dto1.setProductoId(10L);
+
+            EmpresasResponseDTO dto2 = new EmpresasResponseDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia empresaId")
+        void testEqualsEmpresaIdDistinto() {
+
+            // Arrange
+            EmpresasResponseDTO dto1 = new EmpresasResponseDTO();
+            dto1.setEmpresaId(5L);
+
+            EmpresasResponseDTO dto2 = new EmpresasResponseDTO();
+            dto2.setEmpresaId(6L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia empresaNombre")
+        void testEqualsEmpresaNombreDistinto() {
+
+            // Arrange
+            EmpresasResponseDTO dto1 = new EmpresasResponseDTO();
+            dto1.setEmpresaNombre("Sony Pictures");
+
+            EmpresasResponseDTO dto2 = new EmpresasResponseDTO();
+            dto2.setEmpresaNombre("Warner Bros");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            EmpresasResponseDTO dto = new EmpresasResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            EmpresasResponseDTO dto = new EmpresasResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            EmpresasResponseDTO dto = new EmpresasResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test
