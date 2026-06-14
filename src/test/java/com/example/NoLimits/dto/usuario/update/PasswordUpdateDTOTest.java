@@ -73,5 +73,71 @@ class PasswordUpdateDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("NuevaPassword456"));
         }
+
+        @Test
+        @DisplayName("equals retorna true cuando es la misma instancia")
+        void testEqualsMismaInstancia() {
+
+            PasswordUpdateDTO dto = new PasswordUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            PasswordUpdateDTO dto = new PasswordUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsConOtroTipo() {
+
+            PasswordUpdateDTO dto = new PasswordUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia passwordActual")
+        void testEqualsPasswordActualDistinta() {
+
+            PasswordUpdateDTO dto1 = new PasswordUpdateDTO();
+            dto1.setPasswordActual("Actual123");
+
+            PasswordUpdateDTO dto2 = new PasswordUpdateDTO();
+            dto2.setPasswordActual("Actual456");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nuevaPassword")
+        void testEqualsNuevaPasswordDistinta() {
+
+            PasswordUpdateDTO dto1 = new PasswordUpdateDTO();
+            dto1.setNuevaPassword("Nueva123");
+
+            PasswordUpdateDTO dto2 = new PasswordUpdateDTO();
+            dto2.setNuevaPassword("Nueva456");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el contenido")
+        void testHashCodeDistinto() {
+
+            PasswordUpdateDTO dto1 = new PasswordUpdateDTO();
+            dto1.setNuevaPassword("Nueva123");
+
+            PasswordUpdateDTO dto2 = new PasswordUpdateDTO();
+            dto2.setNuevaPassword("Nueva456");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 }

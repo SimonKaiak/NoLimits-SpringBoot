@@ -81,5 +81,86 @@ class RolResponseDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("CLIENTE"));
         }
+
+        @Test
+        @DisplayName("equals retorna false con null")
+        void testEqualsNull() {
+
+            // Arrange
+            RolResponseDTO dto = new RolResponseDTO();
+            dto.setId(1L);
+
+            // Assert
+            assertNotEquals(null, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con otro tipo")
+        void testEqualsOtraClase() {
+
+            // Arrange
+            RolResponseDTO dto = new RolResponseDTO();
+            dto.setId(1L);
+
+            // Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna true consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            RolResponseDTO dto = new RolResponseDTO();
+            dto.setId(1L);
+
+            // Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            RolResponseDTO dto1 = new RolResponseDTO();
+            dto1.setId(1L);
+
+            RolResponseDTO dto2 = new RolResponseDTO();
+            dto2.setId(2L);
+
+            // Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            RolResponseDTO dto1 = new RolResponseDTO();
+            dto1.setNombre("CLIENTE");
+
+            RolResponseDTO dto2 = new RolResponseDTO();
+            dto2.setNombre("ADMIN");
+
+            // Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            RolResponseDTO dto1 = new RolResponseDTO();
+            dto1.setActivo(true);
+
+            RolResponseDTO dto2 = new RolResponseDTO();
+            dto2.setActivo(false);
+
+            // Assert
+            assertNotEquals(dto1, dto2);
+        }
     }
 }

@@ -91,5 +91,109 @@ class UsuarioRequestDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("juan.perez@example.com"));
         }
+
+        @Test
+        @DisplayName("equals retorna true cuando es el mismo objeto")
+        void testEqualsMismaInstancia() {
+
+            UsuarioRequestDTO dto = new UsuarioRequestDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            UsuarioRequestDTO dto = new UsuarioRequestDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsConOtroTipo() {
+
+            UsuarioRequestDTO dto = new UsuarioRequestDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nombre")
+        void testEqualsNombreDistinto() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setNombre("Juan");
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setNombre("Pedro");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia correo")
+        void testEqualsCorreoDistinto() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setCorreo("juan@test.cl");
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setCorreo("pedro@test.cl");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia rol")
+        void testEqualsRolDistinto() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setRolId(1L);
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setRolId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia telefono")
+        void testEqualsTelefonoDistinto() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setTelefono(111111111L);
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setTelefono(222222222L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia password")
+        void testEqualsPasswordDistinta() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setPassword("Clave123");
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setPassword("OtraClave123");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia direccion")
+        void testEqualsDireccionDistinta() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setDireccion(new DireccionRequestDTO());
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 }

@@ -94,5 +94,148 @@ class UsuarioUpdateDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("juan.perez@example.com"));
         }
+
+        @Test
+        @DisplayName("equals retorna true cuando es la misma instancia")
+        void testEqualsMismaInstancia() {
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsConOtroTipo() {
+
+            UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nombre")
+        void testEqualsNombreDistinto() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setNombre("Juan");
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setNombre("Pedro");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia apellidos")
+        void testEqualsApellidosDistintos() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setApellidos("Pérez");
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setApellidos("González");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia correo")
+        void testEqualsCorreoDistinto() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setCorreo("juan@test.cl");
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setCorreo("pedro@test.cl");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia telefono")
+        void testEqualsTelefonoDistinto() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setTelefono(111111111L);
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setTelefono(222222222L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia password")
+        void testEqualsPasswordDistinta() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setPassword("Clave123");
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setPassword("OtraClave123");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia fotoPerfil")
+        void testEqualsFotoPerfilDistinta() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setFotoPerfil("foto1.jpg");
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setFotoPerfil("foto2.jpg");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia rol")
+        void testEqualsRolDistinto() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setRolId(1L);
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setRolId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia direccion")
+        void testEqualsDireccionDistinta() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setDireccion(new DireccionRequestDTO());
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el contenido")
+        void testHashCodeDistinto() {
+
+            UsuarioUpdateDTO dto1 = new UsuarioUpdateDTO();
+            dto1.setCorreo("juan@test.cl");
+
+            UsuarioUpdateDTO dto2 = new UsuarioUpdateDTO();
+            dto2.setCorreo("pedro@test.cl");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 }

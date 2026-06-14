@@ -73,5 +73,71 @@ class CambiarCorreoDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("nuevo@correo.com"));
         }
+
+        @Test
+        @DisplayName("equals retorna true cuando es la misma instancia")
+        void testEqualsMismaInstancia() {
+
+            CambiarCorreoDTO dto = new CambiarCorreoDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            CambiarCorreoDTO dto = new CambiarCorreoDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsConOtroTipo() {
+
+            CambiarCorreoDTO dto = new CambiarCorreoDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nuevoCorreo")
+        void testEqualsNuevoCorreoDistinto() {
+
+            CambiarCorreoDTO dto1 = new CambiarCorreoDTO();
+            dto1.setNuevoCorreo("correo1@test.cl");
+
+            CambiarCorreoDTO dto2 = new CambiarCorreoDTO();
+            dto2.setNuevoCorreo("correo2@test.cl");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia passwordActual")
+        void testEqualsPasswordActualDistinta() {
+
+            CambiarCorreoDTO dto1 = new CambiarCorreoDTO();
+            dto1.setPasswordActual("Password123");
+
+            CambiarCorreoDTO dto2 = new CambiarCorreoDTO();
+            dto2.setPasswordActual("Password456");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el contenido")
+        void testHashCodeDistinto() {
+
+            CambiarCorreoDTO dto1 = new CambiarCorreoDTO();
+            dto1.setNuevoCorreo("correo1@test.cl");
+
+            CambiarCorreoDTO dto2 = new CambiarCorreoDTO();
+            dto2.setNuevoCorreo("correo2@test.cl");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 }

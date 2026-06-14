@@ -123,5 +123,113 @@ class UsuarioResponseDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("juan.perez@example.com"));
         }
+
+        @Test
+        @DisplayName("equals retorna true consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            UsuarioResponseDTO dto = new UsuarioResponseDTO();
+            dto.setId(1L);
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con null")
+        void testEqualsNull() {
+
+            UsuarioResponseDTO dto = new UsuarioResponseDTO();
+            dto.setId(1L);
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con otra clase")
+        void testEqualsOtraClase() {
+
+            UsuarioResponseDTO dto = new UsuarioResponseDTO();
+            dto.setId(1L);
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia id")
+        void testEqualsIdDistinto() {
+
+            UsuarioResponseDTO dto1 = new UsuarioResponseDTO();
+            dto1.setId(1L);
+
+            UsuarioResponseDTO dto2 = new UsuarioResponseDTO();
+            dto2.setId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia correo")
+        void testEqualsCorreoDistinto() {
+
+            UsuarioResponseDTO dto1 = new UsuarioResponseDTO();
+            dto1.setCorreo("juan@test.cl");
+
+            UsuarioResponseDTO dto2 = new UsuarioResponseDTO();
+            dto2.setCorreo("pedro@test.cl");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia rol")
+        void testEqualsRolDistinto() {
+
+            UsuarioResponseDTO dto1 = new UsuarioResponseDTO();
+            dto1.setRolId(1L);
+
+            UsuarioResponseDTO dto2 = new UsuarioResponseDTO();
+            dto2.setRolId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia región")
+        void testEqualsRegionDistinta() {
+
+            // Arrange
+            UsuarioResponseDTO dto1 = crearDTO();
+            UsuarioResponseDTO dto2 = crearDTO();
+
+            dto2.setRegionId(5L);
+
+            // Assert
+            assertNotEquals(dto1, dto2);
+        }
+    }
+
+       // ==========================================
+    // MÉTODO AUXILIAR
+    // ==========================================
+
+    private UsuarioResponseDTO crearDTO() {
+
+        UsuarioResponseDTO dto = new UsuarioResponseDTO();
+        dto.setId(1L);
+        dto.setNombre("Juan");
+        dto.setApellidos("Pérez Soto");
+        dto.setNombreCompleto("Juan Pérez Soto");
+        dto.setCorreo("juan.perez@example.com");
+        dto.setTelefono(987654321L);
+        dto.setFotoPerfil("foto.jpg");
+        dto.setRolId(1L);
+        dto.setRolNombre("CLIENTE");
+        dto.setDireccionId(10L);
+        dto.setComunaId(13101L);
+        dto.setComunaNombre("Santiago");
+        dto.setRegionId(13L);
+        dto.setRegionNombre("Región Metropolitana");
+
+        return dto;
     }
 }
