@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +66,84 @@ class MetodoPagoResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            MetodoPagoResponseDTO dto1 = new MetodoPagoResponseDTO();
+            dto1.setId(1L);
+
+            MetodoPagoResponseDTO dto2 = new MetodoPagoResponseDTO();
+            dto2.setId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            MetodoPagoResponseDTO dto1 = new MetodoPagoResponseDTO();
+            dto1.setNombre("Tarjeta de Crédito");
+
+            MetodoPagoResponseDTO dto2 = new MetodoPagoResponseDTO();
+            dto2.setNombre("Transferencia Bancaria");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            MetodoPagoResponseDTO dto1 = new MetodoPagoResponseDTO();
+            dto1.setActivo(true);
+
+            MetodoPagoResponseDTO dto2 = new MetodoPagoResponseDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            MetodoPagoResponseDTO dto = new MetodoPagoResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            MetodoPagoResponseDTO dto = new MetodoPagoResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            MetodoPagoResponseDTO dto = new MetodoPagoResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test

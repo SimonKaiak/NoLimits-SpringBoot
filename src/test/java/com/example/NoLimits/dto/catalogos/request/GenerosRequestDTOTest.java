@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +61,139 @@ class GenerosRequestDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el productoId")
+        void testEqualsProductoIdDistinto() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            dto1.setProductoId(10L);
+
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el generoId")
+        void testEqualsGeneroIdDistinto() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            dto1.setGeneroId(1L);
+
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+            dto2.setGeneroId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            GenerosRequestDTO dto = new GenerosRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            GenerosRequestDTO dto = new GenerosRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            GenerosRequestDTO dto = new GenerosRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene productoId")
+        void testEqualsProductoIdNuloVsNoNulo() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            dto1.setProductoId(10L);
+
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene generoId")
+        void testEqualsGeneroIdNuloVsNoNulo() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            dto1.setGeneroId(1L);
+
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el productoId")
+        void testHashCodeProductoIdDistinto() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            dto1.setProductoId(10L);
+
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el generoId")
+        void testHashCodeGeneroIdDistinto() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            dto1.setGeneroId(1L);
+
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+            dto2.setGeneroId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            GenerosRequestDTO dto1 = new GenerosRequestDTO();
+            GenerosRequestDTO dto2 = new GenerosRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
         }
 
         @Test

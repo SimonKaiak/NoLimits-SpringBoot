@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -73,6 +74,99 @@ class PlataformasResponseDTOTest {
         }
 
         @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            PlataformasResponseDTO dto1 = new PlataformasResponseDTO();
+            dto1.setId(5L);
+
+            PlataformasResponseDTO dto2 = new PlataformasResponseDTO();
+            dto2.setId(6L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia productoId")
+        void testEqualsProductoIdDistinto() {
+
+            // Arrange
+            PlataformasResponseDTO dto1 = new PlataformasResponseDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasResponseDTO dto2 = new PlataformasResponseDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia plataformaId")
+        void testEqualsPlataformaIdDistinto() {
+
+            // Arrange
+            PlataformasResponseDTO dto1 = new PlataformasResponseDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasResponseDTO dto2 = new PlataformasResponseDTO();
+            dto2.setPlataformaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia plataformaNombre")
+        void testEqualsPlataformaNombreDistinto() {
+
+            // Arrange
+            PlataformasResponseDTO dto1 = new PlataformasResponseDTO();
+            dto1.setPlataformaNombre("PC");
+
+            PlataformasResponseDTO dto2 = new PlataformasResponseDTO();
+            dto2.setPlataformaNombre("PlayStation 5");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            PlataformasResponseDTO dto = new PlataformasResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            PlataformasResponseDTO dto = new PlataformasResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            PlataformasResponseDTO dto = new PlataformasResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
         @DisplayName("Debe validar toString correctamente")
         void debeValidarToString() {
             PlataformasResponseDTO dto = new PlataformasResponseDTO();
@@ -88,5 +182,6 @@ class PlataformasResponseDTOTest {
             assertTrue(resultado.contains("plataformaId=1"));
             assertTrue(resultado.contains("plataformaNombre=PC"));
         }
+
     }
 }

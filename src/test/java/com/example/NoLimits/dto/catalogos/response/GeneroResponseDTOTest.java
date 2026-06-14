@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +61,110 @@ class GeneroResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            GeneroResponseDTO dto1 = new GeneroResponseDTO();
+            dto1.setId(1L);
+
+            GeneroResponseDTO dto2 = new GeneroResponseDTO();
+            dto2.setId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            GeneroResponseDTO dto1 = new GeneroResponseDTO();
+            dto1.setNombre("Acción");
+
+            GeneroResponseDTO dto2 = new GeneroResponseDTO();
+            dto2.setNombre("Aventura");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            GeneroResponseDTO dto = new GeneroResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            GeneroResponseDTO dto = new GeneroResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            GeneroResponseDTO dto = new GeneroResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando un id es null")
+        void testEqualsIdNull() {
+
+            // Arrange
+            GeneroResponseDTO dto1 = new GeneroResponseDTO();
+            dto1.setId(1L);
+
+            GeneroResponseDTO dto2 = new GeneroResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando un nombre es null")
+        void testEqualsNombreNull() {
+
+            // Arrange
+            GeneroResponseDTO dto1 = new GeneroResponseDTO();
+            dto1.setNombre("Acción");
+
+            GeneroResponseDTO dto2 = new GeneroResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode funciona cuando todos los campos son null")
+        void testHashCodeConCamposNull() {
+
+            // Arrange
+            GeneroResponseDTO dto = new GeneroResponseDTO();
+
+            // Act + Assert
+            dto.hashCode();
+
+            assertTrue(true);
         }
 
         @Test

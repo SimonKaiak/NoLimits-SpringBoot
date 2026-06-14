@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +62,245 @@ class TiposEmpresaRequestDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el empresaId")
+        void testEqualsEmpresaIdDistinto() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setEmpresaId(5L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setEmpresaId(10L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el tipoEmpresaId")
+        void testEqualsTipoEmpresaIdDistinto() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setTipoEmpresaId(1L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setTipoEmpresaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto =
+                    new TiposEmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto =
+                    new TiposEmpresaRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto =
+                    new TiposEmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene empresaId")
+        void testEqualsEmpresaIdNuloVsNoNulo() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setEmpresaId(5L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene tipoEmpresaId")
+        void testEqualsTipoEmpresaIdNuloVsNoNulo() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setTipoEmpresaId(2L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando empresaId coincide y tipoEmpresaId es distinto")
+        void testEqualsTipoEmpresaDistintoConEmpresaIgual() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setEmpresaId(5L);
+            dto1.setTipoEmpresaId(1L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setEmpresaId(5L);
+            dto2.setTipoEmpresaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando tipoEmpresaId coincide y empresaId es distinto")
+        void testEqualsEmpresaDistintaConTipoEmpresaIgual() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setEmpresaId(5L);
+            dto1.setTipoEmpresaId(2L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setEmpresaId(10L);
+            dto2.setTipoEmpresaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el empresaId")
+        void testHashCodeEmpresaIdDistinto() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setEmpresaId(5L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setEmpresaId(10L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el tipoEmpresaId")
+        void testHashCodeTipoEmpresaIdDistinto() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setTipoEmpresaId(1L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setTipoEmpresaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode coincide cuando los objetos son iguales")
+        void testHashCodeObjetosIguales() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto1 =
+                    new TiposEmpresaRequestDTO();
+            dto1.setEmpresaId(5L);
+            dto1.setTipoEmpresaId(2L);
+
+            TiposEmpresaRequestDTO dto2 =
+                    new TiposEmpresaRequestDTO();
+            dto2.setEmpresaId(5L);
+            dto2.setTipoEmpresaId(2L);
+
+            // Act + Assert
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente para la misma instancia")
+        void testHashCodeConsistente() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto =
+                    new TiposEmpresaRequestDTO();
+            dto.setEmpresaId(5L);
+
+            int hash1 = dto.hashCode();
+            int hash2 = dto.hashCode();
+
+            // Act + Assert
+            assertEquals(hash1, hash2);
+        }
+
+        @Test
+        @DisplayName("toString no retorna null")
+        void testToStringNoEsNull() {
+
+            // Arrange
+            TiposEmpresaRequestDTO dto =
+                    new TiposEmpresaRequestDTO();
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertNotNull(resultado);
         }
 
         @Test

@@ -10,6 +10,8 @@ import com.example.NoLimits.Multimedia.repository.ubicacion.RegionRepository;
 import com.example.NoLimits.Multimedia.service.ubicacion.RegionService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,9 +31,11 @@ import static org.mockito.Mockito.*;
  *
  * Cubre: findAll, findById, save, update, patch, deleteById.
  */
+
 @SpringBootTest
 @ActiveProfiles("test")
-public class RegionServiceTest extends AbstractContainerBaseTest {
+@DisplayName("Tests de RegionService")
+class RegionServiceTest extends AbstractContainerBaseTest {
 
     @Autowired
     private RegionService regionService;
@@ -42,279 +46,540 @@ public class RegionServiceTest extends AbstractContainerBaseTest {
     @MockBean
     private ComunaRepository comunaRepository;
 
-    // ===================== HELPERS =====================
+    // =====================================================
+    // MÉTODOS AUXILIARES
+    // =====================================================
 
     private RegionModel crearRegion() {
-        RegionModel r = new RegionModel();
-        r.setId(1L);
-        r.setNombre("Región Metropolitana");
-        return r;
+
+        RegionModel region = new RegionModel();
+        region.setId(1L);
+        region.setNombre("Región Metropolitana");
+
+        return region;
     }
 
-    // ===================== FIND ALL =====================
+    // =====================================================
+    // FIND ALL
+    // =====================================================
 
-    @Test
-    public void testFindAll_DevuelveLista() {
-        when(regionRepository.findAll()).thenReturn(List.of(crearRegion()));
+    @Nested
+    @DisplayName("findAll()")
+    class FindAllTests {
 
-        List<RegionResponseDTO> result = regionService.findAll();
+        @Test
+        @DisplayName("Retorna lista de regiones")
+        void testFindAll_DevuelveLista() {
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
+            // Arrange
+            when(regionRepository.findAll())
+                    .thenReturn(List.of(crearRegion()));
 
-        RegionResponseDTO dto = result.get(0);
-        assertEquals(1L, dto.getId());
-        assertEquals("Región Metropolitana", dto.getNombre());
+            // Act
+            List<RegionResponseDTO> result =
+                    regionService.findAll();
 
-        verify(regionRepository, times(1)).findAll();
+            // Assert
+            assertNotNull(result);
+            assertEquals(1, result.size());
+
+            RegionResponseDTO dto = result.get(0);
+
+            assertEquals(1L, dto.getId());
+            assertEquals("Región Metropolitana", dto.getNombre());
+
+            verify(regionRepository, times(1))
+                    .findAll();
+        }
+
+        @Test
+        @DisplayName("Retorna lista vacía cuando no existen regiones")
+        void testFindAll_ListaVacia_DevuelveVacio() {
+
+            // Arrange
+            when(regionRepository.findAll())
+                    .thenReturn(List.of());
+
+            // Act
+            List<RegionResponseDTO> result =
+                    regionService.findAll();
+
+            // Assert
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+
+            verify(regionRepository, times(1))
+                    .findAll();
+        }
+
+        @Test
+        @DisplayName("Retorna múltiples regiones")
+        void testFindAll_MultipleRegiones_DevuelveTodas() {
+
+            // Arrange
+            RegionModel region2 = new RegionModel();
+            region2.setId(2L);
+            region2.setNombre("Región de Valparaíso");
+
+            when(regionRepository.findAll())
+                    .thenReturn(List.of(crearRegion(), region2));
+
+            // Act
+            List<RegionResponseDTO> result =
+                    regionService.findAll();
+
+            // Assert
+            assertEquals(2, result.size());
+            assertEquals(
+                    "Región Metropolitana",
+                    result.get(0).getNombre()
+            );
+            assertEquals(
+                    "Región de Valparaíso",
+                    result.get(1).getNombre()
+            );
+
+            verify(regionRepository, times(1))
+                    .findAll();
+        }
     }
 
-    @Test
-    public void testFindAll_ListaVacia_DevuelveVacio() {
-        when(regionRepository.findAll()).thenReturn(List.of());
+    // =====================================================
+    // FIND BY ID
+    // =====================================================
 
-        List<RegionResponseDTO> result = regionService.findAll();
+    @Nested
+    @DisplayName("findById()")
+    class FindByIdTests {
 
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        @Test
+        @DisplayName("Retorna región cuando existe")
+        void testFindById_Existe_DevuelveDTO() {
+
+            // Arrange
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(crearRegion()));
+
+            // Act
+            RegionResponseDTO result =
+                    regionService.findById(1L);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1L, result.getId());
+            assertEquals(
+                    "Región Metropolitana",
+                    result.getNombre()
+            );
+
+            verify(regionRepository, times(1))
+                    .findById(1L);
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando la región no existe")
+        void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            when(regionRepository.findById(99L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(
+                    RecursoNoEncontradoException.class,
+                    () -> regionService.findById(99L)
+            );
+
+            verify(regionRepository, times(1))
+                    .findById(99L);
+        }
     }
 
-    @Test
-    public void testFindAll_MultipleRegiones_DevuelveTodas() {
-        RegionModel r2 = new RegionModel();
-        r2.setId(2L);
-        r2.setNombre("Región de Valparaíso");
+    // =====================================================
+    // SAVE
+    // =====================================================
 
-        when(regionRepository.findAll()).thenReturn(List.of(crearRegion(), r2));
+    @Nested
+    @DisplayName("save()")
+    class SaveTests {
 
-        List<RegionResponseDTO> result = regionService.findAll();
+        @Test
+        @DisplayName("Guarda una región correctamente")
+        void testSave_OK_CreaRegion() {
 
-        assertEquals(2, result.size());
-        assertEquals("Región Metropolitana", result.get(0).getNombre());
-        assertEquals("Región de Valparaíso", result.get(1).getNombre());
+            // Arrange
+            RegionRequestDTO dto = new RegionRequestDTO();
+            dto.setNombre("  Región X  ");
+
+            when(regionRepository.save(any(RegionModel.class)))
+                    .thenAnswer(invocation -> {
+                        RegionModel region =
+                                invocation.getArgument(0);
+                        region.setId(5L);
+                        return region;
+                    });
+
+            // Act
+            RegionResponseDTO result =
+                    regionService.save(dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(5L, result.getId());
+            assertEquals("Región X", result.getNombre());
+
+            verify(regionRepository, times(1))
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando el nombre está vacío")
+        void testSave_NombreVacio_LanzaIllegalArgumentException() {
+
+            // Arrange
+            RegionRequestDTO dto = new RegionRequestDTO();
+            dto.setNombre("   ");
+
+            // Act
+            IllegalArgumentException ex =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            () -> regionService.save(dto)
+                    );
+
+            // Assert
+            assertTrue(
+                    ex.getMessage().contains(
+                            "nombre de la región es obligatorio"
+                    )
+            );
+
+            verify(regionRepository, never())
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando el nombre es null")
+        void testSave_NombreNull_LanzaIllegalArgumentException() {
+
+            // Arrange
+            RegionRequestDTO dto = new RegionRequestDTO();
+            dto.setNombre(null);
+
+            // Act + Assert
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> regionService.save(dto)
+            );
+
+            verify(regionRepository, never())
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Normaliza espacios del nombre")
+        void testSave_NombreConEspacios_SeNormaliza() {
+
+            // Arrange
+            RegionRequestDTO dto = new RegionRequestDTO();
+            dto.setNombre("  Región del Maule  ");
+
+            when(regionRepository.save(any(RegionModel.class)))
+                    .thenAnswer(invocation -> {
+                        RegionModel region =
+                                invocation.getArgument(0);
+                        region.setId(7L);
+                        return region;
+                    });
+
+            // Act
+            RegionResponseDTO result =
+                    regionService.save(dto);
+
+            // Assert
+            assertEquals(
+                    "Región del Maule",
+                    result.getNombre()
+            );
+
+            verify(regionRepository, times(1))
+                    .save(any(RegionModel.class));
+        }
     }
 
-    // ===================== FIND BY ID =====================
+        // =====================================================
+    // UPDATE (PUT)
+    // =====================================================
 
-    @Test
-    public void testFindById_Existe_DevuelveDTO() {
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(crearRegion()));
+    @Nested
+    @DisplayName("update()")
+    class UpdateTests {
 
-        RegionResponseDTO result = regionService.findById(1L);
+        @Test
+        @DisplayName("Actualiza el nombre de una región")
+        void testUpdate_CambiaNombre() {
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals("Región Metropolitana", result.getNombre());
+            // Arrange
+            RegionModel existente = crearRegion();
+
+            RegionUpdateDTO dto = new RegionUpdateDTO();
+            dto.setNombre("  Nueva Región  ");
+
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(existente));
+
+            when(regionRepository.save(any(RegionModel.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            // Act
+            RegionResponseDTO result =
+                    regionService.update(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(1L, result.getId());
+            assertEquals("Nueva Región", result.getNombre());
+
+            verify(regionRepository, times(1))
+                    .findById(1L);
+
+            verify(regionRepository, times(1))
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando el nombre está vacío")
+        void testUpdate_NombreVacio_LanzaIllegalArgument() {
+
+            // Arrange
+            RegionModel existente = crearRegion();
+
+            RegionUpdateDTO dto = new RegionUpdateDTO();
+            dto.setNombre("   ");
+
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(existente));
+
+            // Act + Assert
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> regionService.update(1L, dto)
+            );
+
+            verify(regionRepository, never())
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando la región no existe")
+        void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            RegionUpdateDTO dto = new RegionUpdateDTO();
+            dto.setNombre("Región Nueva");
+
+            when(regionRepository.findById(99L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(
+                    RecursoNoEncontradoException.class,
+                    () -> regionService.update(99L, dto)
+            );
+
+            verify(regionRepository, never())
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Mantiene el nombre actual cuando no se envía uno nuevo")
+        void testUpdate_SinNombre_MantieneValorActual() {
+
+            // Arrange
+            RegionModel existente = crearRegion();
+
+            RegionUpdateDTO dto = new RegionUpdateDTO();
+            dto.setNombre(null);
+
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(existente));
+
+            when(regionRepository.save(any(RegionModel.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            // Act
+            RegionResponseDTO result =
+                    regionService.update(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(
+                    "Región Metropolitana",
+                    result.getNombre()
+            );
+
+            verify(regionRepository, times(1))
+                    .save(any(RegionModel.class));
+        }
     }
 
-    @Test
-    public void testFindById_NoExiste_LanzaRecursoNoEncontrado() {
-        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
+    // =====================================================
+    // PATCH
+    // =====================================================
 
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> regionService.findById(99L));
+    @Nested
+    @DisplayName("patch()")
+    class PatchTests {
+
+        @Test
+        @DisplayName("Actualiza parcialmente una región")
+        void testPatch_CambiaNombre() {
+
+            // Arrange
+            RegionModel existente = crearRegion();
+
+            RegionUpdateDTO dto = new RegionUpdateDTO();
+            dto.setNombre("  Región Patch  ");
+
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(existente));
+
+            when(regionRepository.save(any(RegionModel.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            // Act
+            RegionResponseDTO result =
+                    regionService.patch(1L, dto);
+
+            // Assert
+            assertNotNull(result);
+            assertEquals(
+                    "Región Patch",
+                    result.getNombre()
+            );
+
+            verify(regionRepository, times(1))
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando el nombre está vacío")
+        void testPatch_NombreVacio_LanzaIllegalArgumentException() {
+
+            // Arrange
+            RegionModel existente = crearRegion();
+
+            RegionUpdateDTO dto = new RegionUpdateDTO();
+            dto.setNombre("   ");
+
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(existente));
+
+            // Act + Assert
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> regionService.patch(1L, dto)
+            );
+
+            verify(regionRepository, never())
+                    .save(any(RegionModel.class));
+        }
+
+        @Test
+        @DisplayName("Lanza excepción cuando la región no existe")
+        void testPatch_IdNoExiste_LanzaRecursoNoEncontrado() {
+
+            // Arrange
+            when(regionRepository.findById(99L))
+                    .thenReturn(Optional.empty());
+
+            // Act + Assert
+            assertThrows(
+                    RecursoNoEncontradoException.class,
+                    () -> regionService.patch(
+                            99L,
+                            new RegionUpdateDTO()
+                    )
+            );
+
+            verify(regionRepository, times(1))
+                    .findById(99L);
+        }
     }
 
-    // ===================== SAVE =====================
+    // =====================================================
+    // DELETE
+    // =====================================================
 
-    @Test
-    public void testSave_OK_CreaRegion() {
-        RegionRequestDTO dto = new RegionRequestDTO();
-        dto.setNombre("  Región X  ");
+    @Nested
+    @DisplayName("deleteById()")
+    class DeleteByIdTests {
 
-        when(regionRepository.save(any(RegionModel.class)))
-                .thenAnswer(inv -> {
-                    RegionModel r = inv.getArgument(0);
-                    r.setId(5L);
-                    return r;
-                });
+        @Test
+        @DisplayName("Lanza excepción cuando existen comunas asociadas")
+        void testDeleteById_ConComunas_LanzaIllegalStateException() {
 
-        RegionResponseDTO result = regionService.save(dto);
+            // Arrange
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(crearRegion()));
 
-        assertNotNull(result);
-        assertEquals(5L, result.getId());
-        assertEquals("Región X", result.getNombre()); // nombre normalizado sin espacios extra
-        verify(regionRepository, times(1)).save(any(RegionModel.class));
-    }
+            when(comunaRepository.existsByRegion_Id(1L))
+                    .thenReturn(true);
 
-    @Test
-    public void testSave_NombreVacio_LanzaIllegalArgumentException() {
-        RegionRequestDTO dto = new RegionRequestDTO();
-        dto.setNombre("   "); // solo espacios
+            // Act
+            IllegalStateException ex =
+                    assertThrows(
+                            IllegalStateException.class,
+                            () -> regionService.deleteById(1L)
+                    );
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> regionService.save(dto));
+            // Assert
+            assertTrue(
+                    ex.getMessage().contains(
+                            "tiene comunas asociadas"
+                    )
+            );
 
-        assertTrue(ex.getMessage().contains("nombre de la región es obligatorio"));
-        verify(regionRepository, never()).save(any(RegionModel.class));
-    }
+            verify(regionRepository, never())
+                    .deleteById(anyLong());
+        }
 
-    @Test
-    public void testSave_NombreNull_LanzaIllegalArgumentException() {
-        RegionRequestDTO dto = new RegionRequestDTO();
-        dto.setNombre(null);
+        @Test
+        @DisplayName("Elimina una región sin comunas asociadas")
+        void testDeleteById_SinComunas_EliminaOK() {
 
-        assertThrows(IllegalArgumentException.class,
-                () -> regionService.save(dto));
+            // Arrange
+            when(regionRepository.findById(1L))
+                    .thenReturn(Optional.of(crearRegion()));
 
-        verify(regionRepository, never()).save(any(RegionModel.class));
-    }
+            when(comunaRepository.existsByRegion_Id(1L))
+                    .thenReturn(false);
 
-    @Test
-    public void testSave_NombreConEspacios_SeNormaliza() {
-        RegionRequestDTO dto = new RegionRequestDTO();
-        dto.setNombre("  Región del Maule  ");
+            // Act
+            regionService.deleteById(1L);
 
-        when(regionRepository.save(any(RegionModel.class)))
-                .thenAnswer(inv -> {
-                    RegionModel r = inv.getArgument(0);
-                    r.setId(7L);
-                    return r;
-                });
+            // Assert
+            verify(regionRepository, times(1))
+                    .deleteById(1L);
+        }
 
-        RegionResponseDTO result = regionService.save(dto);
+        @Test
+        @DisplayName("Lanza excepción cuando la región no existe")
+        void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
 
-        assertEquals("Región del Maule", result.getNombre());
-    }
+            // Arrange
+            when(regionRepository.findById(99L))
+                    .thenReturn(Optional.empty());
 
-    // ===================== UPDATE (PUT) =====================
+            // Act + Assert
+            assertThrows(
+                    RecursoNoEncontradoException.class,
+                    () -> regionService.deleteById(99L)
+            );
 
-    @Test
-    public void testUpdate_CambiaNombre() {
-        RegionModel existente = crearRegion();
-
-        RegionUpdateDTO in = new RegionUpdateDTO();
-        in.setNombre("  Nueva Región  ");
-
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(regionRepository.save(any(RegionModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        RegionResponseDTO result = regionService.update(1L, in);
-
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals("Nueva Región", result.getNombre());
-    }
-
-    @Test
-    public void testUpdate_NombreVacio_LanzaIllegalArgument() {
-        RegionModel existente = crearRegion();
-
-        RegionUpdateDTO in = new RegionUpdateDTO();
-        in.setNombre("   ");
-
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> regionService.update(1L, in));
-
-        verify(regionRepository, never()).save(any(RegionModel.class));
-    }
-
-    @Test
-    public void testUpdate_IdNoExiste_LanzaRecursoNoEncontrado() {
-        RegionUpdateDTO in = new RegionUpdateDTO();
-        in.setNombre("Región Nueva");
-
-        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> regionService.update(99L, in));
-
-        verify(regionRepository, never()).save(any(RegionModel.class));
-    }
-
-    @Test
-    public void testUpdate_SinNombre_MantieneValorActual() {
-        RegionModel existente = crearRegion();
-
-        RegionUpdateDTO in = new RegionUpdateDTO();
-        in.setNombre(null); // no viene nombre en el DTO
-
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(regionRepository.save(any(RegionModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        RegionResponseDTO result = regionService.update(1L, in);
-
-        assertNotNull(result);
-        assertEquals("Región Metropolitana", result.getNombre()); // sin cambios
-    }
-
-    // ===================== PATCH =====================
-
-    @Test
-    public void testPatch_CambiaNombre() {
-        RegionModel existente = crearRegion();
-
-        RegionUpdateDTO in = new RegionUpdateDTO();
-        in.setNombre("  Región Patch  ");
-
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(regionRepository.save(any(RegionModel.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        RegionResponseDTO result = regionService.patch(1L, in);
-
-        assertNotNull(result);
-        assertEquals("Región Patch", result.getNombre());
-    }
-
-    @Test
-    public void testPatch_NombreVacio_LanzaIllegalArgumentException() {
-        RegionModel existente = crearRegion();
-
-        RegionUpdateDTO in = new RegionUpdateDTO();
-        in.setNombre("   ");
-
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(existente));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> regionService.patch(1L, in));
-
-        verify(regionRepository, never()).save(any(RegionModel.class));
-    }
-
-    @Test
-    public void testPatch_IdNoExiste_LanzaRecursoNoEncontrado() {
-        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> regionService.patch(99L, new RegionUpdateDTO()));
-    }
-
-    // ===================== DELETE =====================
-
-    @Test
-    public void testDeleteById_ConComunas_LanzaIllegalStateException() {
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(crearRegion()));
-        when(comunaRepository.existsByRegion_Id(1L)).thenReturn(true);
-
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> regionService.deleteById(1L));
-
-        assertTrue(ex.getMessage().contains("tiene comunas asociadas"));
-        verify(regionRepository, never()).deleteById(anyLong());
-    }
-
-    @Test
-    public void testDeleteById_SinComunas_EliminaOK() {
-        when(regionRepository.findById(1L)).thenReturn(Optional.of(crearRegion()));
-        when(comunaRepository.existsByRegion_Id(1L)).thenReturn(false);
-
-        regionService.deleteById(1L);
-
-        verify(regionRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    public void testDeleteById_NoExiste_LanzaRecursoNoEncontrado() {
-        when(regionRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> regionService.deleteById(99L));
-
-        verify(regionRepository, never()).deleteById(anyLong());
+            verify(regionRepository, never())
+                    .deleteById(anyLong());
+        }
     }
 }
+

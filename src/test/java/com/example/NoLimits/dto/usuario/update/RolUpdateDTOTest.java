@@ -76,5 +76,84 @@ class RolUpdateDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("ADMIN"));
         }
+
+        @Test
+        @DisplayName("equals retorna true cuando es la misma instancia")
+        void testEqualsMismaInstancia() {
+
+            RolUpdateDTO dto = new RolUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            RolUpdateDTO dto = new RolUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsConOtroTipo() {
+
+            RolUpdateDTO dto = new RolUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nombre")
+        void testEqualsNombreDistinto() {
+
+            RolUpdateDTO dto1 = new RolUpdateDTO();
+            dto1.setNombre("ADMIN");
+
+            RolUpdateDTO dto2 = new RolUpdateDTO();
+            dto2.setNombre("CLIENTE");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            RolUpdateDTO dto1 = new RolUpdateDTO();
+            dto1.setDescripcion("Administrador");
+
+            RolUpdateDTO dto2 = new RolUpdateDTO();
+            dto2.setDescripcion("Cliente");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            RolUpdateDTO dto1 = new RolUpdateDTO();
+            dto1.setActivo(true);
+
+            RolUpdateDTO dto2 = new RolUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el contenido")
+        void testHashCodeDistinto() {
+
+            RolUpdateDTO dto1 = new RolUpdateDTO();
+            dto1.setNombre("ADMIN");
+
+            RolUpdateDTO dto2 = new RolUpdateDTO();
+            dto2.setNombre("CLIENTE");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 }

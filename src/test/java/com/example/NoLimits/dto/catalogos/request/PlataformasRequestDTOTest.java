@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +60,173 @@ class PlataformasRequestDTOTest {
             dto2.setPlataformaId(1L);
 
             assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el productoId")
+        void testEqualsProductoIdDistinto() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el plataformaId")
+        void testEqualsPlataformaIdDistinto() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+            dto2.setPlataformaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            PlataformasRequestDTO dto = new PlataformasRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            PlataformasRequestDTO dto = new PlataformasRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            PlataformasRequestDTO dto = new PlataformasRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene productoId")
+        void testEqualsProductoIdNuloVsNoNulo() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene plataformaId")
+        void testEqualsPlataformaIdNuloVsNoNulo() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando productoId coincide pero plataformaId es distinto")
+        void testEqualsPlataformaIdDistintoConProductoIgual() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setProductoId(10L);
+            dto1.setPlataformaId(1L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+            dto2.setProductoId(10L);
+            dto2.setPlataformaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el productoId")
+        void testHashCodeProductoIdDistinto() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setProductoId(10L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+            dto2.setProductoId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el plataformaId")
+        void testHashCodePlataformaIdDistinto() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setPlataformaId(1L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+            dto2.setPlataformaId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode coincide cuando los objetos son iguales")
+        void testHashCodeObjetosIguales() {
+
+            // Arrange
+            PlataformasRequestDTO dto1 = new PlataformasRequestDTO();
+            dto1.setProductoId(10L);
+            dto1.setPlataformaId(1L);
+
+            PlataformasRequestDTO dto2 = new PlataformasRequestDTO();
+            dto2.setProductoId(10L);
+            dto2.setPlataformaId(1L);
+
+            // Act + Assert
             assertEquals(dto1.hashCode(), dto2.hashCode());
         }
 

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +71,99 @@ class EstadoResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            EstadoResponseDTO dto1 = new EstadoResponseDTO();
+            dto1.setId(1L);
+
+            EstadoResponseDTO dto2 = new EstadoResponseDTO();
+            dto2.setId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            EstadoResponseDTO dto1 = new EstadoResponseDTO();
+            dto1.setNombre("Activo");
+
+            EstadoResponseDTO dto2 = new EstadoResponseDTO();
+            dto2.setNombre("Inactivo");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripción")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            EstadoResponseDTO dto1 = new EstadoResponseDTO();
+            dto1.setDescripcion("Producto disponible");
+
+            EstadoResponseDTO dto2 = new EstadoResponseDTO();
+            dto2.setDescripcion("Producto agotado");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            EstadoResponseDTO dto1 = new EstadoResponseDTO();
+            dto1.setActivo(true);
+
+            EstadoResponseDTO dto2 = new EstadoResponseDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            EstadoResponseDTO dto = new EstadoResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            EstadoResponseDTO dto = new EstadoResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            EstadoResponseDTO dto = new EstadoResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test

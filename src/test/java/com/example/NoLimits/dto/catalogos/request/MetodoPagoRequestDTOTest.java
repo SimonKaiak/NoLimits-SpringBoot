@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +60,173 @@ class MetodoPagoRequestDTOTest {
             dto2.setActivo(true);
 
             assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setNombre("Tarjeta de Crédito");
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+            dto2.setNombre("Transferencia");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setActivo(true);
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto = new MetodoPagoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto = new MetodoPagoRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto = new MetodoPagoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setNombre("Tarjeta de Crédito");
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setActivo(true);
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando nombre coincide pero activo es distinto")
+        void testEqualsActivoDistintoConNombreIgual() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setNombre("Tarjeta de Crédito");
+            dto1.setActivo(true);
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+            dto2.setNombre("Tarjeta de Crédito");
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setNombre("Tarjeta de Crédito");
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+            dto2.setNombre("Transferencia");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setActivo(true);
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode coincide cuando los objetos son iguales")
+        void testHashCodeObjetosIguales() {
+
+            // Arrange
+            MetodoPagoRequestDTO dto1 = new MetodoPagoRequestDTO();
+            dto1.setNombre("Tarjeta de Crédito");
+            dto1.setActivo(true);
+
+            MetodoPagoRequestDTO dto2 = new MetodoPagoRequestDTO();
+            dto2.setNombre("Tarjeta de Crédito");
+            dto2.setActivo(true);
+
+            // Act + Assert
             assertEquals(dto1.hashCode(), dto2.hashCode());
         }
 
