@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +67,198 @@ class EstadoUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setNombre("Agotado");
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setNombre("Disponible");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setDescripcion("Producto sin stock disponible");
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setDescripcion("Producto disponible para compra");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setActivo(true);
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            EstadoUpdateDTO dto = new EstadoUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            EstadoUpdateDTO dto = new EstadoUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            EstadoUpdateDTO dto = new EstadoUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setNombre("Agotado");
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene descripcion")
+        void testEqualsDescripcionNuloVsNoNulo() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setDescripcion("Producto sin stock disponible");
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setActivo(true);
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setNombre("Agotado");
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setNombre("Disponible");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia la descripcion")
+        void testHashCodeDescripcionDistinta() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setDescripcion("Producto sin stock disponible");
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setDescripcion("Producto disponible para compra");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setActivo(true);
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es igual cuando ambos objetos tienen los mismos valores")
+        void testHashCodeIgual() {
+
+            EstadoUpdateDTO dto1 = new EstadoUpdateDTO();
+            dto1.setNombre("Agotado");
+            dto1.setDescripcion("Producto sin stock disponible");
+            dto1.setActivo(true);
+
+            EstadoUpdateDTO dto2 = new EstadoUpdateDTO();
+            dto2.setNombre("Agotado");
+            dto2.setDescripcion("Producto sin stock disponible");
+            dto2.setActivo(true);
+
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente para la misma instancia")
+        void testHashCodeConsistente() {
+
+            EstadoUpdateDTO dto = new EstadoUpdateDTO();
+            dto.setNombre("Agotado");
+
+            int hash1 = dto.hashCode();
+            int hash2 = dto.hashCode();
+
+            assertEquals(hash1, hash2);
+        }
+
+        @Test
+        @DisplayName("toString no retorna null")
+        void testToStringNoEsNull() {
+
+            EstadoUpdateDTO dto = new EstadoUpdateDTO();
+
+            String resultado = dto.toString();
+
+            assertNotNull(resultado);
         }
 
         @Test

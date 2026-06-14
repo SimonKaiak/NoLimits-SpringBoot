@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +71,99 @@ class ClasificacionResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            ClasificacionResponseDTO dto1 = new ClasificacionResponseDTO();
+            dto1.setId(1L);
+
+            ClasificacionResponseDTO dto2 = new ClasificacionResponseDTO();
+            dto2.setId(2L);
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            ClasificacionResponseDTO dto1 = new ClasificacionResponseDTO();
+            dto1.setNombre("T");
+
+            ClasificacionResponseDTO dto2 = new ClasificacionResponseDTO();
+            dto2.setNombre("M");
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripción")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            ClasificacionResponseDTO dto1 = new ClasificacionResponseDTO();
+            dto1.setDescripcion("Descripción 1");
+
+            ClasificacionResponseDTO dto2 = new ClasificacionResponseDTO();
+            dto2.setDescripcion("Descripción 2");
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            ClasificacionResponseDTO dto1 = new ClasificacionResponseDTO();
+            dto1.setActivo(true);
+
+            ClasificacionResponseDTO dto2 = new ClasificacionResponseDTO();
+            dto2.setActivo(false);
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            ClasificacionResponseDTO dto = new ClasificacionResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(null, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            ClasificacionResponseDTO dto = new ClasificacionResponseDTO();
+
+            // Act & Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            ClasificacionResponseDTO dto = new ClasificacionResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test

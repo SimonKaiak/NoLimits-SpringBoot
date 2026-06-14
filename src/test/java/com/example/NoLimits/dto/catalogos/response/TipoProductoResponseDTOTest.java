@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +71,110 @@ class TipoProductoResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            TipoProductoResponseDTO dto1 =
+                    new TipoProductoResponseDTO();
+            dto1.setId(1L);
+
+            TipoProductoResponseDTO dto2 =
+                    new TipoProductoResponseDTO();
+            dto2.setId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            TipoProductoResponseDTO dto1 =
+                    new TipoProductoResponseDTO();
+            dto1.setNombre("Película");
+
+            TipoProductoResponseDTO dto2 =
+                    new TipoProductoResponseDTO();
+            dto2.setNombre("Videojuego");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripción")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            TipoProductoResponseDTO dto1 =
+                    new TipoProductoResponseDTO();
+            dto1.setDescripcion("Categoría general para clasificar productos");
+
+            TipoProductoResponseDTO dto2 =
+                    new TipoProductoResponseDTO();
+            dto2.setDescripcion("Categoría para productos digitales");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            TipoProductoResponseDTO dto1 =
+                    new TipoProductoResponseDTO();
+            dto1.setActivo(true);
+
+            TipoProductoResponseDTO dto2 =
+                    new TipoProductoResponseDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            TipoProductoResponseDTO dto =
+                    new TipoProductoResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            TipoProductoResponseDTO dto =
+                    new TipoProductoResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            TipoProductoResponseDTO dto =
+                    new TipoProductoResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test

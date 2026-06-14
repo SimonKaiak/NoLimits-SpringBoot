@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +71,110 @@ class TiposDeDesarrolladorResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto1 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto1.setId(5L);
+
+            TiposDeDesarrolladorResponseDTO dto2 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto2.setId(6L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia desarrolladorId")
+        void testEqualsDesarrolladorIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto1 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto1.setDesarrolladorId(10L);
+
+            TiposDeDesarrolladorResponseDTO dto2 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto2.setDesarrolladorId(20L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia tipoDeDesarrolladorId")
+        void testEqualsTipoDeDesarrolladorIdDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto1 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto1.setTipoDeDesarrolladorId(1L);
+
+            TiposDeDesarrolladorResponseDTO dto2 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto2.setTipoDeDesarrolladorId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia tipoDeDesarrolladorNombre")
+        void testEqualsTipoDeDesarrolladorNombreDistinto() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto1 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto1.setTipoDeDesarrolladorNombre("Estudio");
+
+            TiposDeDesarrolladorResponseDTO dto2 =
+                    new TiposDeDesarrolladorResponseDTO();
+            dto2.setTipoDeDesarrolladorNombre("Publisher");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto =
+                    new TiposDeDesarrolladorResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto =
+                    new TiposDeDesarrolladorResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            TiposDeDesarrolladorResponseDTO dto =
+                    new TiposDeDesarrolladorResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test

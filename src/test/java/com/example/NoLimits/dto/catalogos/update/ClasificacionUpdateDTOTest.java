@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +66,157 @@ class ClasificacionUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setNombre("T");
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+            dto2.setNombre("M");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setDescripcion("Contenido apto para adolescentes.");
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+            dto2.setDescripcion("Solo para adultos.");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setActivo(true);
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            ClasificacionUpdateDTO dto = new ClasificacionUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            ClasificacionUpdateDTO dto = new ClasificacionUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            ClasificacionUpdateDTO dto = new ClasificacionUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setNombre("T");
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene descripcion")
+        void testEqualsDescripcionNuloVsNoNulo() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setDescripcion("Contenido apto para adolescentes.");
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setActivo(true);
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setNombre("T");
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+            dto2.setNombre("M");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia la descripcion")
+        void testHashCodeDescripcionDistinta() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setDescripcion("Contenido apto para adolescentes.");
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+            dto2.setDescripcion("Solo para adultos.");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            ClasificacionUpdateDTO dto1 = new ClasificacionUpdateDTO();
+            dto1.setActivo(true);
+
+            ClasificacionUpdateDTO dto2 = new ClasificacionUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
         }
 
         @Test

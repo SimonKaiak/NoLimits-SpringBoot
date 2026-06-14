@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +71,99 @@ class MetodoEnvioResponseDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el id")
+        void testEqualsIdDistinto() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto1 = new MetodoEnvioResponseDTO();
+            dto1.setId(1L);
+
+            MetodoEnvioResponseDTO dto2 = new MetodoEnvioResponseDTO();
+            dto2.setId(2L);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto1 = new MetodoEnvioResponseDTO();
+            dto1.setNombre("Retiro en tienda");
+
+            MetodoEnvioResponseDTO dto2 = new MetodoEnvioResponseDTO();
+            dto2.setNombre("Despacho a domicilio");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripción")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto1 = new MetodoEnvioResponseDTO();
+            dto1.setDescripcion("Retiro presencial");
+
+            MetodoEnvioResponseDTO dto2 = new MetodoEnvioResponseDTO();
+            dto2.setDescripcion("Entrega a domicilio");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto1 = new MetodoEnvioResponseDTO();
+            dto1.setActivo(true);
+
+            MetodoEnvioResponseDTO dto2 = new MetodoEnvioResponseDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto = new MetodoEnvioResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto = new MetodoEnvioResponseDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            MetodoEnvioResponseDTO dto = new MetodoEnvioResponseDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
         }
 
         @Test

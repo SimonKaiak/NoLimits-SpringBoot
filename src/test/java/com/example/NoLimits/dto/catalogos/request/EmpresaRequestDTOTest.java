@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +61,142 @@ class EmpresaRequestDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            EmpresaRequestDTO dto1 =
+                    new EmpresaRequestDTO();
+            dto1.setNombre("Sony Pictures");
+
+            EmpresaRequestDTO dto2 =
+                    new EmpresaRequestDTO();
+            dto2.setNombre("Warner Bros");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            EmpresaRequestDTO dto1 =
+                    new EmpresaRequestDTO();
+            dto1.setActivo(true);
+
+            EmpresaRequestDTO dto2 =
+                    new EmpresaRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            EmpresaRequestDTO dto =
+                    new EmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            EmpresaRequestDTO dto =
+                    new EmpresaRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            EmpresaRequestDTO dto =
+                    new EmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            // Arrange
+            EmpresaRequestDTO dto1 =
+                    new EmpresaRequestDTO();
+            dto1.setNombre("Sony Pictures");
+
+            EmpresaRequestDTO dto2 =
+                    new EmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            // Arrange
+            EmpresaRequestDTO dto1 =
+                    new EmpresaRequestDTO();
+            dto1.setActivo(true);
+
+            EmpresaRequestDTO dto2 =
+                    new EmpresaRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            EmpresaRequestDTO dto1 =
+                    new EmpresaRequestDTO();
+            dto1.setNombre("Sony Pictures");
+
+            EmpresaRequestDTO dto2 =
+                    new EmpresaRequestDTO();
+            dto2.setNombre("Warner Bros");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            // Arrange
+            EmpresaRequestDTO dto1 =
+                    new EmpresaRequestDTO();
+            dto1.setActivo(true);
+
+            EmpresaRequestDTO dto2 =
+                    new EmpresaRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
         }
 
         @Test

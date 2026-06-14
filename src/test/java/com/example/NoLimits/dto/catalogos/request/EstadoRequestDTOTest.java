@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +66,171 @@ class EstadoRequestDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setNombre("Activo");
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+            dto2.setNombre("Inactivo");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setDescripcion("Disponible");
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+            dto2.setDescripcion("No disponible");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setActivo(true);
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            EstadoRequestDTO dto = new EstadoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            EstadoRequestDTO dto = new EstadoRequestDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            EstadoRequestDTO dto = new EstadoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setNombre("Activo");
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene descripcion")
+        void testEqualsDescripcionNuloVsNoNulo() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setDescripcion("Disponible");
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setActivo(true);
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setNombre("Activo");
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+            dto2.setNombre("Inactivo");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia la descripcion")
+        void testHashCodeDescripcionDistinta() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setDescripcion("Disponible");
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+            dto2.setDescripcion("No disponible");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            // Arrange
+            EstadoRequestDTO dto1 = new EstadoRequestDTO();
+            dto1.setActivo(true);
+
+            EstadoRequestDTO dto2 = new EstadoRequestDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
         }
 
         @Test

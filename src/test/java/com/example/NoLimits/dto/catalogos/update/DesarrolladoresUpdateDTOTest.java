@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,6 +61,119 @@ class DesarrolladoresUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el productoId")
+        void testEqualsProductoIdDistinto() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            dto1.setProductoId(10L);
+
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+            dto2.setProductoId(20L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el desarrolladorId")
+        void testEqualsDesarrolladorIdDistinto() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            dto1.setDesarrolladorId(1L);
+
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+            dto2.setDesarrolladorId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            DesarrolladoresUpdateDTO dto = new DesarrolladoresUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            DesarrolladoresUpdateDTO dto = new DesarrolladoresUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            DesarrolladoresUpdateDTO dto = new DesarrolladoresUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene productoId")
+        void testEqualsProductoIdNuloVsNoNulo() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            dto1.setProductoId(10L);
+
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene desarrolladorId")
+        void testEqualsDesarrolladorIdNuloVsNoNulo() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            dto1.setDesarrolladorId(3L);
+
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el productoId")
+        void testHashCodeProductoIdDistinto() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            dto1.setProductoId(10L);
+
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+            dto2.setProductoId(20L);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el desarrolladorId")
+        void testHashCodeDesarrolladorIdDistinto() {
+
+            DesarrolladoresUpdateDTO dto1 = new DesarrolladoresUpdateDTO();
+            dto1.setDesarrolladorId(1L);
+
+            DesarrolladoresUpdateDTO dto2 = new DesarrolladoresUpdateDTO();
+            dto2.setDesarrolladorId(2L);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
         }
 
         @Test

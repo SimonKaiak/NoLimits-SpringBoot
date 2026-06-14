@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +60,134 @@ class DesarrolladorUpdateDTOTest {
             dto2.setActivo(true);
 
             assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setNombre("Insomniac Games");
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+            dto2.setNombre("Naughty Dog");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el activo")
+        void testEqualsActivoDistinto() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setActivo(true);
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            DesarrolladorUpdateDTO dto = new DesarrolladorUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            DesarrolladorUpdateDTO dto = new DesarrolladorUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            DesarrolladorUpdateDTO dto = new DesarrolladorUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setNombre("Insomniac Games");
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setActivo(true);
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setNombre("Insomniac Games");
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+            dto2.setNombre("Naughty Dog");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el activo")
+        void testHashCodeActivoDistinto() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setActivo(true);
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es igual cuando ambos objetos tienen los mismos valores")
+        void testHashCodeIgual() {
+
+            DesarrolladorUpdateDTO dto1 = new DesarrolladorUpdateDTO();
+            dto1.setNombre("Insomniac Games");
+            dto1.setActivo(true);
+
+            DesarrolladorUpdateDTO dto2 = new DesarrolladorUpdateDTO();
+            dto2.setNombre("Insomniac Games");
+            dto2.setActivo(true);
+
             assertEquals(dto1.hashCode(), dto2.hashCode());
         }
 

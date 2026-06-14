@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +67,241 @@ class TipoProductoUpdateDTOTest {
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia el nombre")
+        void testEqualsNombreDistinto() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setNombre("Videojuego");
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+            dto2.setNombre("Película");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia la descripcion")
+        void testEqualsDescripcionDistinta() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setDescripcion("Categoría para videojuegos");
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+            dto2.setDescripcion("Categoría para películas");
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia activo")
+        void testEqualsActivoDistinto() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setActivo(true);
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con null")
+        void testEqualsConNull() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando compara consigo mismo")
+        void testEqualsMismaInstancia() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando compara con otro tipo")
+        void testEqualsOtroTipo() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene nombre")
+        void testEqualsNombreNuloVsNoNulo() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setNombre("Videojuego");
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene descripcion")
+        void testEqualsDescripcionNuloVsNoNulo() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setDescripcion("Categoría para videojuegos");
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando solo uno tiene activo")
+        void testEqualsActivoNuloVsNoNulo() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setActivo(true);
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando ambos objetos tienen campos null")
+        void testEqualsAmbosNulos() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+
+            // Act + Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el nombre")
+        void testHashCodeNombreDistinto() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setNombre("Videojuego");
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+            dto2.setNombre("Película");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia la descripcion")
+        void testHashCodeDescripcionDistinta() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setDescripcion("Categoría para videojuegos");
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+            dto2.setDescripcion("Categoría para películas");
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia activo")
+        void testHashCodeActivoDistinto() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto1 =
+                    new TipoProductoUpdateDTO();
+            dto1.setActivo(true);
+
+            TipoProductoUpdateDTO dto2 =
+                    new TipoProductoUpdateDTO();
+            dto2.setActivo(false);
+
+            // Act + Assert
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode es consistente")
+        void testHashCodeConsistente() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto =
+                    new TipoProductoUpdateDTO();
+            dto.setNombre("Videojuego");
+            dto.setDescripcion("Categoría para videojuegos");
+            dto.setActivo(true);
+
+            // Act
+            int hash1 = dto.hashCode();
+            int hash2 = dto.hashCode();
+
+            // Assert
+            assertEquals(hash1, hash2);
+        }
+
+        @Test
+        @DisplayName("toString no retorna null")
+        void testToStringNoEsNull() {
+
+            // Arrange
+            TipoProductoUpdateDTO dto =
+                    new TipoProductoUpdateDTO();
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertNotNull(resultado);
         }
 
         @Test
