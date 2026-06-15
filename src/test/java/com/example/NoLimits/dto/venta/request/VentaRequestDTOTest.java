@@ -85,6 +85,132 @@ class VentaRequestDTOTest {
         }
 
         @Test
+        @DisplayName("equals mismo objeto retorna true")
+        void equalsMismoObjeto() {
+
+            VentaRequestDTO dto = new VentaRequestDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals con null retorna false")
+        void equalsConNull() {
+
+            VentaRequestDTO dto = new VentaRequestDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals con clase distinta retorna false")
+        void equalsConClaseDistinta() {
+
+            VentaRequestDTO dto = new VentaRequestDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals distinto usuario retorna false")
+        void equalsDistintoUsuario() {
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setUsuarioId(1L);
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setUsuarioId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodoPago retorna false")
+        void equalsDistintoMetodoPago() {
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setMetodoPagoId(1L);
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setMetodoPagoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodoEnvio retorna false")
+        void equalsDistintoMetodoEnvio() {
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setMetodoEnvioId(1L);
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setMetodoEnvioId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto estado retorna false")
+        void equalsDistintoEstado() {
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setEstadoId(1L);
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distintos detalles retorna false")
+        void equalsDistintosDetalles() {
+
+            DetalleVentaRequestDTO detalle1 = new DetalleVentaRequestDTO();
+            detalle1.setProductoId(1L);
+
+            DetalleVentaRequestDTO detalle2 = new DetalleVentaRequestDTO();
+            detalle2.setProductoId(2L);
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setDetalles(List.of(detalle1));
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setDetalles(List.of(detalle2));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia usuario")
+        void hashCodeDistintoUsuario() {
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setUsuarioId(1L);
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setUsuarioId(2L);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode igual para objetos equivalentes")
+        void hashCodeIgual() {
+
+            VentaRequestDTO dto1 = new VentaRequestDTO();
+            dto1.setUsuarioId(1L);
+            dto1.setMetodoPagoId(2L);
+
+            VentaRequestDTO dto2 = new VentaRequestDTO();
+            dto2.setUsuarioId(1L);
+            dto2.setMetodoPagoId(2L);
+
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
         @DisplayName("genera toString correctamente")
         void testToString() {
 

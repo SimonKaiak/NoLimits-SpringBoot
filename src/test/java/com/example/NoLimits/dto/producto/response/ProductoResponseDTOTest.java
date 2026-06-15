@@ -169,6 +169,112 @@ class ProductoResponseDTOTest {
         }
 
         @Test
+        @DisplayName("Equals retorna true para misma instancia")
+        void equalsMismaInstancia() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false con null")
+        void equalsConNull() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(null, dto);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false con otra clase")
+        void equalsConOtraClase() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertNotEquals("texto", dto);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia id")
+        void equalsDistintoId() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setId(2L);
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia nombre")
+        void equalsDistintoNombre() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setNombre("Spider-Man");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setNombre("Batman");
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia precio")
+        void equalsDistintoPrecio() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setPrecio(1000.0);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setPrecio(2000.0);
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("HashCode objeto vacío")
+        void hashCodeObjetoVacio() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act
+            int hash = dto.hashCode();
+
+            // Assert
+            assertNotEquals(0, hash);
+        }
+
+        @Test
+        @DisplayName("ToString objeto vacío")
+        void toStringObjetoVacio() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act
+            String resultado = dto.toString();
+
+            // Assert
+            assertNotNull(resultado);
+        }
+
+        @Test
         @DisplayName("genera toString correctamente")
         void testToString() {
 
@@ -181,4 +287,127 @@ class ProductoResponseDTOTest {
             assertTrue(resultado.contains("Spider-Man"));
         }
     }
+
+    @Nested
+    @DisplayName("Colecciones")
+    class Colecciones {
+
+        @Test
+        @DisplayName("Permite listas vacías")
+        void listasVacias() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act
+            dto.setPlataformas(List.of());
+            dto.setGeneros(List.of());
+            dto.setEmpresas(List.of());
+            dto.setDesarrolladores(List.of());
+            dto.setImagenes(List.of());
+            dto.setLinksCompra(List.of());
+
+            // Assert
+            assertTrue(dto.getPlataformas().isEmpty());
+            assertTrue(dto.getGeneros().isEmpty());
+            assertTrue(dto.getEmpresas().isEmpty());
+            assertTrue(dto.getDesarrolladores().isEmpty());
+            assertTrue(dto.getImagenes().isEmpty());
+            assertTrue(dto.getLinksCompra().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Mantiene múltiples elementos")
+        void multiplesElementos() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act
+            dto.setGeneros(List.of("Acción", "Aventura", "Drama"));
+
+            // Assert
+            assertEquals(3, dto.getGeneros().size());
+            assertTrue(dto.getGeneros().contains("Drama"));
+        }
+
+        @Test
+        @DisplayName("Mantiene imágenes correctamente")
+        void multiplesImagenes() {
+
+            // Arrange
+            ProductoResponseDTO dto = new ProductoResponseDTO();
+
+            // Act
+            dto.setImagenes(List.of(
+                    "img1.webp",
+                    "img2.webp",
+                    "img3.webp"
+            ));
+
+            // Assert
+            assertEquals(3, dto.getImagenes().size());
+        }
+    }
+
+    @Nested
+    @DisplayName("Igualdad avanzada")
+    class IgualdadAvanzada {
+
+        @Test
+        @DisplayName("Objetos vacíos son iguales")
+        void objetosVaciosSonIguales() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos vacíos generan mismo hash")
+        void objetosVaciosMismoHash() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en listas")
+        void equalsListaDiferente() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setGeneros(List.of("Acción"));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setGeneros(List.of("Drama"));
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en saga")
+        void equalsSagaDiferente() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setSaga("Spider-Man");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setSaga("Batman");
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+    }
+
 }
