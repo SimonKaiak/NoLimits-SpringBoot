@@ -195,5 +195,31 @@ class UsuarioRequestDTOTest {
 
             assertNotEquals(dto1, dto2);
         }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia apellidos")
+        void testEqualsApellidosDistintos() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setApellidos("Pérez");
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setApellidos("González");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode cambia cuando cambia el contenido")
+        void testHashCodeDistinto() {
+
+            UsuarioRequestDTO dto1 = new UsuarioRequestDTO();
+            dto1.setCorreo("juan@test.cl");
+
+            UsuarioRequestDTO dto2 = new UsuarioRequestDTO();
+            dto2.setCorreo("pedro@test.cl");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 }

@@ -60,10 +60,14 @@ class RolResponseDTOTest {
             RolResponseDTO dto1 = new RolResponseDTO();
             dto1.setId(1L);
             dto1.setNombre("CLIENTE");
+            dto1.setDescripcion("Rol por defecto");
+            dto1.setActivo(true);
 
             RolResponseDTO dto2 = new RolResponseDTO();
             dto2.setId(1L);
             dto2.setNombre("CLIENTE");
+            dto2.setDescripcion("Rol por defecto");
+            dto2.setActivo(true);
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
@@ -74,12 +78,18 @@ class RolResponseDTOTest {
         void testToString() {
 
             RolResponseDTO dto = new RolResponseDTO();
+            dto.setId(1L);
             dto.setNombre("CLIENTE");
+            dto.setDescripcion("Rol por defecto");
+            dto.setActivo(true);
 
             String resultado = dto.toString();
 
             assertNotNull(resultado);
+            assertTrue(resultado.contains("1"));
             assertTrue(resultado.contains("CLIENTE"));
+            assertTrue(resultado.contains("Rol por defecto"));
+            assertTrue(resultado.contains("true"));
         }
 
         @Test
@@ -160,6 +170,19 @@ class RolResponseDTOTest {
             dto2.setActivo(false);
 
             // Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia descripción")
+        void testEqualsDescripcionDistinta() {
+
+            RolResponseDTO dto1 = new RolResponseDTO();
+            dto1.setDescripcion("Rol por defecto");
+
+            RolResponseDTO dto2 = new RolResponseDTO();
+            dto2.setDescripcion("Rol administrador");
+
             assertNotEquals(dto1, dto2);
         }
     }

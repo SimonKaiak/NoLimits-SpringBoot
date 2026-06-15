@@ -93,6 +93,39 @@ class ComunaResponseDTOTest {
             // Assert
             assertEquals(dto, dto);
         }
+
+        @Test
+        @DisplayName("Objetos diferentes por id")
+        void testNotEqualsPorId() {
+            ComunaResponseDTO dto1 = crearDTO();
+            ComunaResponseDTO dto2 = crearDTO();
+
+            dto2.setId(999L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por regionId")
+        void testNotEqualsPorRegionId() {
+            ComunaResponseDTO dto1 = crearDTO();
+            ComunaResponseDTO dto2 = crearDTO();
+
+            dto2.setRegionId(99L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por regionNombre")
+        void testNotEqualsPorRegionNombre() {
+            ComunaResponseDTO dto1 = crearDTO();
+            ComunaResponseDTO dto2 = crearDTO();
+
+            dto2.setRegionNombre("Valparaíso");
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 
     @Nested
