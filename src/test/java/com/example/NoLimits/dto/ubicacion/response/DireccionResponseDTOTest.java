@@ -95,6 +95,83 @@ class DireccionResponseDTOTest {
             // Assert
             assertEquals(dto, dto);
         }
+
+        @Test
+        @DisplayName("Objetos diferentes por id")
+        void testNotEqualsPorId() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setId(99L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por calle")
+        void testNotEqualsPorCalle() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setCalle("Los Leones");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por complemento")
+        void testNotEqualsPorComplemento() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setComplemento("Casa B");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por código postal")
+        void testNotEqualsPorCodigoPostal() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setCodigoPostal("7500000");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por comuna")
+        void testNotEqualsPorComuna() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setComuna("Providencia");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por región")
+        void testNotEqualsPorRegion() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setRegion("Valparaíso");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Objetos diferentes por activo")
+        void testNotEqualsPorActivo() {
+            DireccionResponseDTO dto1 = crearDTO();
+            DireccionResponseDTO dto2 = crearDTO();
+
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 
     @Nested

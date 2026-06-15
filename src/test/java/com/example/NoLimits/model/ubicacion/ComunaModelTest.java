@@ -93,13 +93,28 @@ class ComunaModelTest {
         @DisplayName("objetos con mismo contenido son iguales")
         void objetosConMismoContenidoSonIguales() {
 
+            RegionModel region1 = new RegionModel();
+            region1.setId(13L);
+            region1.setNombre("Metropolitana");
+
+            RegionModel region2 = new RegionModel();
+            region2.setId(13L);
+            region2.setNombre("Metropolitana");
+
+            List<DireccionModel> direcciones1 = new ArrayList<>();
+            List<DireccionModel> direcciones2 = new ArrayList<>();
+
             ComunaModel c1 = new ComunaModel();
             c1.setId(1L);
             c1.setNombre("Santiago");
+            c1.setRegion(region1);
+            c1.setDirecciones(direcciones1);
 
             ComunaModel c2 = new ComunaModel();
             c2.setId(1L);
             c2.setNombre("Santiago");
+            c2.setRegion(region2);
+            c2.setDirecciones(direcciones2);
 
             assertEquals(c1, c2);
             assertEquals(c1.hashCode(), c2.hashCode());

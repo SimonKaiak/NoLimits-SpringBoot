@@ -89,6 +89,17 @@ class RegionResponseDTOTest {
             // Assert
             assertEquals(dto, dto);
         }
+
+        @Test
+        @DisplayName("Objetos diferentes por id")
+        void testNotEqualsPorId() {
+            RegionResponseDTO dto1 = crearDTO();
+            RegionResponseDTO dto2 = crearDTO();
+
+            dto2.setId(99L);
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 
     @Nested

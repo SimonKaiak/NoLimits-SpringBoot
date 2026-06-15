@@ -103,13 +103,8 @@ class VentaResponseDTOTest {
         @DisplayName("genera equals y hashCode correctamente")
         void testEqualsYHashCode() {
 
-            VentaResponseDTO dto1 = new VentaResponseDTO();
-            dto1.setId(10L);
-            dto1.setUsuarioNombre("Juan Pérez Soto");
-
-            VentaResponseDTO dto2 = new VentaResponseDTO();
-            dto2.setId(10L);
-            dto2.setUsuarioNombre("Juan Pérez Soto");
+            VentaResponseDTO dto1 = crearDTOCompleto();
+            VentaResponseDTO dto2 = crearDTOCompleto();
 
             assertEquals(dto1, dto2);
             assertEquals(dto1.hashCode(), dto2.hashCode());
@@ -266,6 +261,58 @@ class VentaResponseDTOTest {
         }
 
         @Test
+        @DisplayName("equals distinto usuarioId retorna false")
+        void equalsDistintoUsuarioId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setUsuarioId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setUsuarioId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodoPagoId retorna false")
+        void equalsDistintoMetodoPagoId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setMetodoPagoId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setMetodoPagoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodoEnvioId retorna false")
+        void equalsDistintoMetodoEnvioId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setMetodoEnvioId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setMetodoEnvioId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto estadoId retorna false")
+        void equalsDistintoEstadoId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setEstadoId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
         @DisplayName("hashCode igual para objetos equivalentes")
         void hashCodeIgual() {
 
@@ -319,5 +366,33 @@ class VentaResponseDTOTest {
             assertTrue(resultado.contains("10"));
             assertTrue(resultado.contains("PENDIENTE"));
         }
+    }
+
+    private VentaResponseDTO crearDTOCompleto() {
+
+        DetalleVentaResponseDTO detalle = new DetalleVentaResponseDTO();
+        detalle.setId(1L);
+        detalle.setProductoId(10L);
+        detalle.setProductoNombre("Control Xbox Series X");
+        detalle.setCantidad(2);
+        detalle.setPrecioUnitario(12990F);
+        detalle.setSubtotal(25980F);
+
+        VentaResponseDTO dto = new VentaResponseDTO();
+        dto.setId(10L);
+        dto.setFechaCompra(LocalDate.of(2025, 7, 6));
+        dto.setHoraCompra(LocalTime.of(14, 30));
+        dto.setUsuarioId(1L);
+        dto.setUsuarioNombre("Juan Pérez Soto");
+        dto.setMetodoPagoId(2L);
+        dto.setMetodoPagoNombre("Tarjeta de Crédito");
+        dto.setMetodoEnvioId(3L);
+        dto.setMetodoEnvioNombre("Despacho a domicilio");
+        dto.setEstadoId(4L);
+        dto.setEstadoNombre("PENDIENTE");
+        dto.setTotalVenta(45990F);
+        dto.setDetalles(List.of(detalle));
+
+        return dto;
     }
 }

@@ -309,5 +309,18 @@ class DireccionModelTest {
 
             assertNotNull(direccion.toString());
         }
+
+        @Test
+        @DisplayName("equals detecta id diferente")
+        void equalsIdDiferente() {
+
+            DireccionModel d1 = new DireccionModel();
+            d1.setId(1L);
+
+            DireccionModel d2 = new DireccionModel();
+            d2.setId(2L);
+
+            assertNotEquals(d1, d2);
+        }
     }
 }
