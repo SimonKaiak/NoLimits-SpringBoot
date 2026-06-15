@@ -106,6 +106,198 @@ class ComunaModelTest {
         }
 
         @Test
+        @DisplayName("equals retorna true para misma instancia")
+        void equalsMismaInstancia() {
+
+            // Arrange
+            ComunaModel comuna = new ComunaModel();
+
+            // Act & Assert
+            assertEquals(comuna, comuna);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con null")
+        void equalsConNull() {
+
+            // Arrange
+            ComunaModel comuna = new ComunaModel();
+
+            // Act & Assert
+            assertNotEquals(null, comuna);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con otra clase")
+        void equalsConOtraClase() {
+
+            // Arrange
+            ComunaModel comuna = new ComunaModel();
+
+            // Act & Assert
+            assertNotEquals("texto", comuna);
+        }
+
+        @Test
+        @DisplayName("objetos vacíos son iguales")
+        void objetosVaciosSonIguales() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+            ComunaModel c2 = new ComunaModel();
+
+            // Act & Assert
+            assertEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("objetos vacíos generan mismo hash")
+        void objetosVaciosMismoHash() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+            ComunaModel c2 = new ComunaModel();
+
+            // Act & Assert
+            assertEquals(c1.hashCode(), c2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode objeto vacío")
+        void hashCodeObjetoVacio() {
+
+            // Arrange
+            ComunaModel comuna = new ComunaModel();
+
+            // Act
+            int hash = comuna.hashCode();
+
+            // Assert
+            assertNotEquals(0, hash);
+        }
+
+        @Test
+        @DisplayName("equals detecta id diferente")
+        void equalsIdDiferente() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+            c1.setId(1L);
+
+            ComunaModel c2 = new ComunaModel();
+            c2.setId(2L);
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("equals detecta nombre diferente")
+        void equalsNombreDiferente() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+            c1.setNombre("Santiago");
+
+            ComunaModel c2 = new ComunaModel();
+            c2.setNombre("Providencia");
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("equals detecta region diferente")
+        void equalsRegionDiferente() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+            c1.setRegion(new RegionModel());
+
+            ComunaModel c2 = new ComunaModel();
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("equals detecta lista direcciones diferente")
+        void equalsDireccionesDiferentes() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+            c1.setDirecciones(new ArrayList<>());
+
+            ComunaModel c2 = new ComunaModel();
+
+            List<DireccionModel> direcciones = new ArrayList<>();
+            direcciones.add(new DireccionModel());
+
+            c2.setDirecciones(direcciones);
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("equals detecta nombre null versus valor")
+        void equalsNombreNullVsValor() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+
+            ComunaModel c2 = new ComunaModel();
+            c2.setNombre("Santiago");
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("equals detecta region null versus valor")
+        void equalsRegionNullVsValor() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+
+            ComunaModel c2 = new ComunaModel();
+            c2.setRegion(new RegionModel());
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("equals detecta direcciones null versus lista")
+        void equalsDireccionesNullVsLista() {
+
+            // Arrange
+            ComunaModel c1 = new ComunaModel();
+
+            ComunaModel c2 = new ComunaModel();
+            c2.setDirecciones(new ArrayList<>());
+
+            // Act & Assert
+            assertNotEquals(c1, c2);
+        }
+
+        @Test
+        @DisplayName("toString contiene nombre")
+        void toStringContieneNombre() {
+
+            // Arrange
+            ComunaModel comuna = new ComunaModel();
+            comuna.setNombre("Santiago");
+
+            // Act
+            String resultado = comuna.toString();
+
+            // Assert
+            assertNotNull(resultado);
+            assertTrue(resultado.contains("Santiago"));
+        }
+
+        @Test
         @DisplayName("toString no debe retornar null")
         void toStringNoDebeRetornarNull() {
 

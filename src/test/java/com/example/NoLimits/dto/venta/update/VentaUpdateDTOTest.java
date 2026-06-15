@@ -77,6 +77,147 @@ class VentaUpdateDTOTest {
         }
 
         @Test
+        @DisplayName("equals mismo objeto retorna true")
+        void equalsMismoObjeto() {
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals con null retorna false")
+        void equalsConNull() {
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals con clase distinta retorna false")
+        void equalsConClaseDistinta() {
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals distinta fecha retorna false")
+        void equalsDistintaFecha() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setFechaCompra(LocalDate.of(2025, 7, 6));
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 7, 7));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinta hora retorna false")
+        void equalsDistintaHora() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setHoraCompra(LocalTime.of(14, 30));
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setHoraCompra(LocalTime.of(15, 30));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodo pago retorna false")
+        void equalsDistintoMetodoPago() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setMetodoPagoId(1L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setMetodoPagoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodo envio retorna false")
+        void equalsDistintoMetodoEnvio() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setMetodoEnvioId(1L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setMetodoEnvioId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto estado retorna false")
+        void equalsDistintoEstado() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setEstadoId(1L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna true cuando todos los campos son iguales")
+        void equalsTodosLosCamposIguales() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto1.setHoraCompra(LocalTime.of(14, 30));
+            dto1.setMetodoPagoId(1L);
+            dto1.setMetodoEnvioId(2L);
+            dto1.setEstadoId(3L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto2.setHoraCompra(LocalTime.of(14, 30));
+            dto2.setMetodoPagoId(1L);
+            dto2.setMetodoEnvioId(2L);
+            dto2.setEstadoId(3L);
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode igual para objetos equivalentes")
+        void hashCodeIgual() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setMetodoPagoId(1L);
+            dto1.setEstadoId(3L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setMetodoPagoId(1L);
+            dto2.setEstadoId(3L);
+
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode distinto cuando cambia metodo pago")
+        void hashCodeDistinto() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setMetodoPagoId(1L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setMetodoPagoId(2L);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
         @DisplayName("genera toString correctamente")
         void testToString() {
 
@@ -88,5 +229,20 @@ class VentaUpdateDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("3"));
         }
+
+        @Test
+        @DisplayName("toString contiene estado y metodo pago")
+        void toStringContieneCampos() {
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+            dto.setMetodoPagoId(1L);
+            dto.setEstadoId(3L);
+
+            String resultado = dto.toString();
+
+            assertTrue(resultado.contains("1"));
+            assertTrue(resultado.contains("3"));
+        }
+
     }
 }
