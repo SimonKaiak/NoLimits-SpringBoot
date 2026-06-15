@@ -178,6 +178,27 @@ public class ClasificacionServiceTest extends AbstractContainerBaseTest {
     }
 
     @Test
+    public void testUpdate_MismoNombre_NoVerificaDuplicado() {
+        ClasificacionModel existente = createClasificacion(); // nombre "T"
+
+        ClasificacionRequestDTO cambios = new ClasificacionRequestDTO();
+        cambios.setNombre("T"); // mismo nombre (case-insensitive)
+        cambios.setDescripcion("Descripción actualizada");
+        cambios.setActivo(true);
+
+        when(clasificacionRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(clasificacionRepository.save(any(ClasificacionModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ClasificacionResponseDTO actualizada = clasificacionService.update(1L, cambios);
+
+        assertNotNull(actualizada);
+        assertEquals("T", actualizada.getNombre());
+        verify(clasificacionRepository, org.mockito.Mockito.never())
+                .existsByNombreIgnoreCase(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
     public void testUpdate_NombreDuplicado() {
         ClasificacionModel existente = createClasificacion(); // nombre T
 
@@ -418,5 +439,23 @@ public class ClasificacionServiceTest extends AbstractContainerBaseTest {
         assertNotNull(resultado);
         assertEquals(1, resultado.getContenido().size());
         assertEquals("T", resultado.getContenido().get(0).getNombre());
+    }
+
+    @Test
+    public void testListarPaginado_FiltroBlanco_UsaTodos() {
+        ClasificacionModel c = createClasificacion();
+        Page<ClasificacionModel> page = new org.springframework.data.domain.PageImpl<>(List.of(c));
+
+        when(clasificacionRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
+            .thenReturn(page);
+
+        var resultado = clasificacionService.listarPaginado(1, 10, "   ");
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.getContenido().size());
+        verify(clasificacionRepository, org.mockito.Mockito.never())
+                .findByNombreContainingIgnoreCase(
+                        org.mockito.ArgumentMatchers.anyString(),
+                        any(org.springframework.data.domain.Pageable.class));
     }
 }

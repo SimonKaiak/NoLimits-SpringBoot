@@ -11,6 +11,9 @@ import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.PlataformasService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -184,6 +187,27 @@ class PlataformasServiceTest extends AbstractContainerBaseTest{
 
         assertNotNull(dto);
         assertEquals(100L, dto.getId());
+        assertEquals(10L, dto.getProductoId());
+        assertEquals(20L, dto.getPlataformaId());
+        assertEquals("PlayStation 5", dto.getPlataformaNombre());
+        verify(plataformasRepository, never()).save(any(PlataformasModel.class));
+    }
+
+    @Test
+    void testLink_ExisteSegunFlagPeroNoEncontradaEnLista_DevuelveTransitoria() {
+        // existsByProducto_IdAndPlataforma_Id dice que existe, pero findByProducto_Id
+        // no la incluye (inconsistencia) -> se usa el fallback orElseGet
+        when(productoRepository.findById(10L)).thenReturn(Optional.of(producto()));
+        when(plataformaRepository.findById(20L)).thenReturn(Optional.of(plataforma()));
+        when(plataformasRepository.existsByProducto_IdAndPlataforma_Id(10L, 20L))
+                .thenReturn(true);
+        when(plataformasRepository.findByProducto_Id(10L))
+                .thenReturn(List.of()); // lista vacía -> findFirst() vacío
+
+        PlataformasResponseDTO dto = service.link(10L, 20L);
+
+        assertNotNull(dto);
+        assertNull(dto.getId()); // relación transitoria, nunca se guardó (sin ID)
         assertEquals(10L, dto.getProductoId());
         assertEquals(20L, dto.getPlataformaId());
         assertEquals("PlayStation 5", dto.getPlataformaNombre());
