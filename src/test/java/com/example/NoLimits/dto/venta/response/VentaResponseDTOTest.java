@@ -116,6 +116,184 @@ class VentaResponseDTOTest {
         }
 
         @Test
+        @DisplayName("equals mismo objeto retorna true")
+        void equalsMismoObjeto() {
+
+            VentaResponseDTO dto = new VentaResponseDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals con null retorna false")
+        void equalsConNull() {
+
+            VentaResponseDTO dto = new VentaResponseDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals con clase distinta retorna false")
+        void equalsConClaseDistinta() {
+
+            VentaResponseDTO dto = new VentaResponseDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals distinto id retorna false")
+        void equalsDistintoId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto usuario retorna false")
+        void equalsDistintoUsuario() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setUsuarioNombre("Juan");
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setUsuarioNombre("Pedro");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodo pago retorna false")
+        void equalsDistintoMetodoPago() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setMetodoPagoNombre("Tarjeta");
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setMetodoPagoNombre("OnePay");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto metodo envio retorna false")
+        void equalsDistintoMetodoEnvio() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setMetodoEnvioNombre("Despacho");
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setMetodoEnvioNombre("Retiro");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto estado retorna false")
+        void equalsDistintoEstado() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setEstadoNombre("PENDIENTE");
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setEstadoNombre("PAGADA");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinto total retorna false")
+        void equalsDistintoTotal() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setTotalVenta(1000F);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setTotalVenta(2000F);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinta fecha retorna false")
+        void equalsDistintaFecha() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setFechaCompra(LocalDate.of(2025, 1, 1));
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 1, 2));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distinta hora retorna false")
+        void equalsDistintaHora() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setHoraCompra(LocalTime.of(10, 0));
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setHoraCompra(LocalTime.of(11, 0));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals distintos detalles retorna false")
+        void equalsDistintosDetalles() {
+
+            DetalleVentaResponseDTO detalle1 = new DetalleVentaResponseDTO();
+            detalle1.setProductoId(1L);
+
+            DetalleVentaResponseDTO detalle2 = new DetalleVentaResponseDTO();
+            detalle2.setProductoId(2L);
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setDetalles(List.of(detalle1));
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setDetalles(List.of(detalle2));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode igual para objetos equivalentes")
+        void hashCodeIgual() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setId(1L);
+            dto1.setUsuarioNombre("Juan");
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(1L);
+            dto2.setUsuarioNombre("Juan");
+
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode distinto cuando cambia id")
+        void hashCodeDistinto() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(2L);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
         @DisplayName("genera toString correctamente")
         void testToString() {
 
@@ -125,6 +303,20 @@ class VentaResponseDTOTest {
             String resultado = dto.toString();
 
             assertNotNull(resultado);
+            assertTrue(resultado.contains("PENDIENTE"));
+        }
+
+        @Test
+        @DisplayName("toString contiene id y estado")
+        void toStringContieneCampos() {
+
+            VentaResponseDTO dto = new VentaResponseDTO();
+            dto.setId(10L);
+            dto.setEstadoNombre("PENDIENTE");
+
+            String resultado = dto.toString();
+
+            assertTrue(resultado.contains("10"));
             assertTrue(resultado.contains("PENDIENTE"));
         }
     }
