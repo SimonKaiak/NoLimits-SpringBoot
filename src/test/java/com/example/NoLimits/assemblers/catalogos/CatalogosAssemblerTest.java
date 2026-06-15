@@ -93,4 +93,108 @@ class CatalogosAssemblerTest {
             assertTrue(model.hasLink("crear"));
         }
     }
+
+    @Nested
+    @DisplayName("EmpresaModelAssembler")
+    class EmpresaAssemblerTests {
+
+        private final com.example.NoLimits.Multimedia.assemblers.catalogos.EmpresaModelAssembler assembler =
+                new com.example.NoLimits.Multimedia.assemblers.catalogos.EmpresaModelAssembler();
+
+        @Test
+        @DisplayName("id no null → crea links")
+        void conId_creaLinks() {
+            com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO dto =
+                    new com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO();
+            dto.setId(1L);
+            dto.setNombre("Empresa Test");
+
+            var model = assembler.toModel(dto);
+
+            assertNotNull(model);
+            assertTrue(model.hasLink("self"));
+        }
+
+        @Test
+        @DisplayName("id null → sin links de id")
+        void conIdNull_sinLinks() {
+            com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO dto =
+                    new com.example.NoLimits.Multimedia.dto.catalogos.response.EmpresaResponseDTO();
+            dto.setId(null);
+            dto.setNombre("Sin ID");
+
+            var model = assembler.toModel(dto);
+
+            assertNotNull(model);
+            assertFalse(model.hasLink("self"));
+        }
+    }
+
+    @Nested
+    @DisplayName("EstadoModelAssembler")
+    class EstadoAssemblerTests {
+
+        private final com.example.NoLimits.Multimedia.assemblers.catalogos.EstadoModelAssembler assembler =
+                new com.example.NoLimits.Multimedia.assemblers.catalogos.EstadoModelAssembler();
+
+        @Test
+        @DisplayName("id no null → crea links")
+        void conId_creaLinks() {
+            com.example.NoLimits.Multimedia.dto.catalogos.response.EstadoResponseDTO dto =
+                    new com.example.NoLimits.Multimedia.dto.catalogos.response.EstadoResponseDTO();
+            dto.setId(1L);
+            dto.setNombre("Activo");
+
+            var model = assembler.toModel(dto);
+
+            assertNotNull(model);
+            assertTrue(model.hasLink("self"));
+        }
+
+        @Test
+        @DisplayName("id null → assembler igual crea model")
+        void conIdNull_sinLinks() {
+            com.example.NoLimits.Multimedia.dto.catalogos.response.EstadoResponseDTO dto =
+                    new com.example.NoLimits.Multimedia.dto.catalogos.response.EstadoResponseDTO();
+            dto.setId(null);
+
+            var model = assembler.toModel(dto);
+
+            assertNotNull(model);
+        }
+    }
+
+    @Nested
+    @DisplayName("MetodoEnvioModelAssembler")
+    class MetodoEnvioAssemblerTests {
+
+        private final com.example.NoLimits.Multimedia.assemblers.catalogos.MetodoEnvioModelAssembler assembler =
+                new com.example.NoLimits.Multimedia.assemblers.catalogos.MetodoEnvioModelAssembler();
+
+        @Test
+        @DisplayName("id no null → crea links")
+        void conId_creaLinks() {
+            com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO dto =
+                    new com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO();
+            dto.setId(1L);
+            dto.setNombre("Envío Express");
+
+            var model = assembler.toModel(dto);
+
+            assertNotNull(model);
+            assertTrue(model.hasLink("self"));
+        }
+
+        @Test
+        @DisplayName("id null → assembler igual crea model")
+        void conIdNull_sinLinks() {
+            com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO dto =
+                    new com.example.NoLimits.Multimedia.dto.catalogos.response.MetodoEnvioResponseDTO();
+            dto.setId(null);
+
+            var model = assembler.toModel(dto);
+
+            assertNotNull(model);
+        }
+    }
 }

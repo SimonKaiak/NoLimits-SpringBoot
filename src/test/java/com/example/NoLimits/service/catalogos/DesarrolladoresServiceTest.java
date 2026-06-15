@@ -13,6 +13,9 @@ import com.example.NoLimits.Multimedia.repository.producto.ProductoRepository;
 import com.example.NoLimits.Multimedia.service.catalogos.DesarrolladoresService;
 import com.example.NoLimits.config.AbstractContainerBaseTest;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -118,6 +121,26 @@ class DesarrolladoresServiceTest extends AbstractContainerBaseTest{
         assertEquals(100L, dto.getId());
         assertEquals(1L, dto.getProductoId());
         assertEquals(10L, dto.getDesarrolladorId());
+    }
+
+    @Test
+    void testFindByProducto_RelacionConCamposNull_MapeaIdsComoNull() {
+        DesarrolladoresModel relSinDatos = new DesarrolladoresModel();
+        relSinDatos.setId(200L);
+        relSinDatos.setProducto(null);
+        relSinDatos.setDesarrollador(null);
+
+        when(desarrolladoresRepository.findByProducto_Id(1L))
+                .thenReturn(List.of(relSinDatos));
+
+        List<DesarrolladoresResponseDTO> lista = desarrolladoresService.findByProducto(1L);
+
+        assertNotNull(lista);
+        assertEquals(1, lista.size());
+        DesarrolladoresResponseDTO dto = lista.get(0);
+        assertEquals(200L, dto.getId());
+        assertNull(dto.getProductoId());
+        assertNull(dto.getDesarrolladorId());
     }
 
     @Test

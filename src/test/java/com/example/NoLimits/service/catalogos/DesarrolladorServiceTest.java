@@ -235,6 +235,18 @@ public class DesarrolladorServiceTest extends AbstractContainerBaseTest {
     }
 
     @Test
+    void testPatch_ActivoIgual_NoActualiza() {
+        DesarrolladorModel existente = dev(); // activo = true
+        when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(desarrolladorRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        DesarrolladorResponseDTO dto = desarrolladorService.patch(1L, upd(null, true));
+
+        assertTrue(dto.getActivo());
+        assertEquals("Insomniac Games", dto.getNombre());
+    }
+
+    @Test
     void testPatch_NombreVacio_LanzaIllegalArgument() {
         when(desarrolladorRepository.findById(1L)).thenReturn(Optional.of(dev()));
         assertThrows(IllegalArgumentException.class, () -> desarrolladorService.patch(1L, upd("   ", null)));

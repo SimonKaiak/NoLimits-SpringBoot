@@ -295,6 +295,42 @@ class GenerosServiceTest extends AbstractContainerBaseTest{
     }
 
     @Test
+    void testPatch_CambiaProducto_RelacionSinGenero_NoVerificaDuplicado() {
+        GenerosModel rel = relacion();
+        rel.setGenero(null); // rel.getGenero() == null -> rama izquierda del && es false
+
+        when(generosRepository.findById(100L)).thenReturn(Optional.of(rel));
+        when(productoRepository.findById(2L)).thenReturn(Optional.of(producto2()));
+        when(generosRepository.save(any(GenerosModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        GenerosResponseDTO dto = generosService.patch(100L, 2L, null);
+
+        assertNotNull(dto);
+        assertEquals(100L, dto.getId());
+        assertEquals(2L, dto.getProductoId());
+        verify(generosRepository, never()).existsByProducto_IdAndGenero_Id(anyLong(), anyLong());
+    }
+
+    @Test
+    void testPatch_CambiaGenero_RelacionSinProducto_NoVerificaDuplicado() {
+        GenerosModel rel = relacion();
+        rel.setProducto(null); // rel.getProducto() == null -> rama izquierda del && es false
+
+        when(generosRepository.findById(100L)).thenReturn(Optional.of(rel));
+        when(generoRepository.findById(20L)).thenReturn(Optional.of(genero2()));
+        when(generosRepository.save(any(GenerosModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        GenerosResponseDTO dto = generosService.patch(100L, null, 20L);
+
+        assertNotNull(dto);
+        assertEquals(100L, dto.getId());
+        assertEquals(20L, dto.getGeneroId());
+        verify(generosRepository, never()).existsByProducto_IdAndGenero_Id(anyLong(), anyLong());
+    }
+
+    @Test
     void testPatch_RelacionNoExiste_Lanza404() {
         when(generosRepository.findById(999L)).thenReturn(Optional.empty());
 

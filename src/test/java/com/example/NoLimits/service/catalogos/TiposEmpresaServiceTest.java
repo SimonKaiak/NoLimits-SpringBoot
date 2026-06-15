@@ -110,6 +110,26 @@ public class TiposEmpresaServiceTest extends AbstractContainerBaseTest{
         assertEquals("Publisher", dto.getTipoEmpresaNombre());
     }
 
+    @Test
+    public void testFindAllByEmpresa_IgnoraRelacionesConEmpresaNull() {
+        TiposEmpresaModel rel = relacion(); // empresa id = 1L
+
+        TiposEmpresaModel relSinEmpresa = new TiposEmpresaModel();
+        relSinEmpresa.setId(20L);
+        relSinEmpresa.setEmpresa(null);
+        relSinEmpresa.setTipoEmpresa(tipoEmpresa());
+
+        when(tiposEmpresaRepository.findAll())
+                .thenReturn(List.of(rel, relSinEmpresa));
+
+        List<TiposEmpresaResponseDTO> resultado =
+                tiposEmpresaService.findAllByEmpresa(1L);
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals(10L, resultado.get(0).getId());
+    }
+
     // ==========================
     // link
     // ==========================
@@ -254,6 +274,37 @@ public class TiposEmpresaServiceTest extends AbstractContainerBaseTest{
         assertNotNull(res);
         assertEquals(10L, res.getId());
         assertEquals(1L, res.getEmpresaId());
+        assertEquals(5L, res.getTipoEmpresaId());
+        assertEquals("Distribuidora", res.getTipoEmpresaNombre());
+    }
+
+    @Test
+    public void testPatch_CambiaEmpresaYTipo_OK() {
+        TiposEmpresaModel rel = relacion(); // empresa=1L, tipoEmpresa=2L
+
+        EmpresaModel nuevaEmpresa = new EmpresaModel();
+        nuevaEmpresa.setId(99L);
+        nuevaEmpresa.setNombre("Microsoft");
+
+        TipoEmpresaModel nuevoTipo = new TipoEmpresaModel();
+        nuevoTipo.setId(5L);
+        nuevoTipo.setNombre("Distribuidora");
+
+        when(tiposEmpresaRepository.findById(10L)).thenReturn(Optional.of(rel));
+        when(empresaRepository.findById(99L)).thenReturn(Optional.of(nuevaEmpresa));
+        when(tiposEmpresaRepository.existsByEmpresa_IdAndTipoEmpresa_Id(99L, 2L)).thenReturn(false);
+        when(tipoEmpresaRepository.findById(5L)).thenReturn(Optional.of(nuevoTipo));
+        when(tiposEmpresaRepository.existsByEmpresa_IdAndTipoEmpresa_Id(99L, 5L)).thenReturn(false);
+        when(tiposEmpresaRepository.save(any(TiposEmpresaModel.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        TiposEmpresaUpdateDTO dto = updateDto(99L, 5L);
+
+        TiposEmpresaResponseDTO res = tiposEmpresaService.patch(10L, dto);
+
+        assertNotNull(res);
+        assertEquals(10L, res.getId());
+        assertEquals(99L, res.getEmpresaId());
         assertEquals(5L, res.getTipoEmpresaId());
         assertEquals("Distribuidora", res.getTipoEmpresaNombre());
     }
