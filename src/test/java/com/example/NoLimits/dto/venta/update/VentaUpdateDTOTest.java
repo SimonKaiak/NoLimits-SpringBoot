@@ -244,5 +244,137 @@ class VentaUpdateDTOTest {
             assertTrue(resultado.contains("3"));
         }
 
+        @Test
+        @DisplayName("equals fecha null vs valor")
+        void equalsFechaNullVsValor() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 7, 6));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals hora null vs valor")
+        void equalsHoraNullVsValor() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setHoraCompra(LocalTime.of(14, 30));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals metodo pago null vs valor")
+        void equalsMetodoPagoNullVsValor() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setMetodoPagoId(1L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals metodo envio null vs valor")
+        void equalsMetodoEnvioNullVsValor() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setMetodoEnvioId(1L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals estado null vs valor")
+        void equalsEstadoNullVsValor() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setEstadoId(1L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals cuando ambos objetos tienen todos los campos nulos")
+        void equalsTodosNulos() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode con todos los campos nulos")
+        void hashCodeTodosNulos() {
+
+            VentaUpdateDTO dto = new VentaUpdateDTO();
+
+            assertDoesNotThrow(dto::hashCode);
+        }
+
+        @Test
+        @DisplayName("equals misma fecha pero distinta hora")
+        void equalsMismaFechaDistintaHora() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto1.setHoraCompra(LocalTime.of(14, 30));
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto2.setHoraCompra(LocalTime.of(15, 30));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals misma fecha y hora pero distinto metodo pago")
+        void equalsMismaFechaHoraDistintoMetodoPago() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto1.setHoraCompra(LocalTime.of(14, 30));
+            dto1.setMetodoPagoId(1L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto2.setHoraCompra(LocalTime.of(14, 30));
+            dto2.setMetodoPagoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals mismos campos previos pero distinto estado")
+        void equalsCamposPreviosIgualesEstadoDistinto() {
+
+            VentaUpdateDTO dto1 = new VentaUpdateDTO();
+            dto1.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto1.setHoraCompra(LocalTime.of(14, 30));
+            dto1.setMetodoPagoId(1L);
+            dto1.setMetodoEnvioId(2L);
+            dto1.setEstadoId(3L);
+
+            VentaUpdateDTO dto2 = new VentaUpdateDTO();
+            dto2.setFechaCompra(LocalDate.of(2025, 7, 6));
+            dto2.setHoraCompra(LocalTime.of(14, 30));
+            dto2.setMetodoPagoId(1L);
+            dto2.setMetodoEnvioId(2L);
+            dto2.setEstadoId(4L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
     }
 }

@@ -178,5 +178,56 @@ class IgdbTokenServiceTest {
                     eq(IgdbTokenResponse.class)
             );
         }
+
+        @Test
+        @DisplayName("lanza RuntimeException cuando expiresIn es null")
+        void lanzaRuntimeExceptionCuandoExpiresInEsNull() throws Exception {
+
+            RestTemplate restTemplateMock = mock(RestTemplate.class);
+            IgdbTokenService service = crearServiceConMock(restTemplateMock);
+
+            IgdbTokenResponse tokenResponse =
+                    crearTokenResponse("token-valido", null);
+
+            when(restTemplateMock.postForEntity(
+                    anyString(),
+                    isNull(),
+                    eq(IgdbTokenResponse.class)
+            )).thenReturn(ResponseEntity.ok(tokenResponse));
+
+            RuntimeException ex = assertThrows(
+                    RuntimeException.class,
+                    service::getAccessToken
+            );
+
+            assertEquals(
+                    "No se pudo obtener token IGDB",
+                    ex.getMessage()
+            );
+        }
+
+        @Test
+        @DisplayName("renueva token cuando accessToken existe pero expiresAt es null")
+        void renuevaTokenCuandoExpiresAtEsNull() throws Exception {
+
+            RestTemplate restTemplateMock = mock(RestTemplate.class);
+            IgdbTokenService service = crearServiceConMock(restTemplateMock);
+
+            setPrivateField(service, "accessToken", "token-antiguo");
+            setPrivateField(service, "expiresAt", null);
+
+            IgdbTokenResponse tokenResponse =
+                    crearTokenResponse("token-nuevo", 3600L);
+
+            when(restTemplateMock.postForEntity(
+                    anyString(),
+                    isNull(),
+                    eq(IgdbTokenResponse.class)
+            )).thenReturn(ResponseEntity.ok(tokenResponse));
+
+            String resultado = service.getAccessToken();
+
+            assertEquals("token-nuevo", resultado);
+        }
     }
 }

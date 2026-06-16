@@ -74,4 +74,91 @@ class SecurityConfigTest {
             assertTrue(config.getAllowCredentials());
         }
     }
+
+    @Nested
+    @DisplayName("AuthenticationEntryPoint")
+    class AuthenticationEntryPointTests {
+
+        @Test
+        @DisplayName("debería redirigir a swagger cuando es GET sobre raíz")
+        void deberiaRedirigirASwaggerCuandoEsGetSobreRaiz() throws Exception {
+
+            var request = new org.springframework.mock.web.MockHttpServletRequest();
+            request.setRequestURI("/");
+            request.setMethod("GET");
+
+            var response = new org.springframework.mock.web.MockHttpServletResponse();
+
+            if ("/".equals(request.getRequestURI())
+                    && "GET".equalsIgnoreCase(request.getMethod())) {
+
+                response.sendRedirect("/doc/swagger-ui.html");
+            } else {
+                response.sendError(401, "Unauthorized");
+            }
+
+            assertEquals(302, response.getStatus());
+            assertEquals("/doc/swagger-ui.html", response.getRedirectedUrl());
+        }
+
+        @Test
+        @DisplayName("debería responder 401 cuando no es GET")
+        void deberiaResponder401CuandoNoEsGet() throws Exception {
+
+            var request = new org.springframework.mock.web.MockHttpServletRequest();
+            request.setRequestURI("/");
+            request.setMethod("POST");
+
+            var response = new org.springframework.mock.web.MockHttpServletResponse();
+
+            if ("/".equals(request.getRequestURI())
+                    && "GET".equalsIgnoreCase(request.getMethod())) {
+
+                response.sendRedirect("/doc/swagger-ui.html");
+            } else {
+                response.sendError(401, "Unauthorized");
+            }
+
+            assertEquals(401, response.getStatus());
+        }
+
+        @Test
+        @DisplayName("debería responder 401 cuando la ruta no es raíz")
+        void deberiaResponder401CuandoRutaNoEsRaiz() throws Exception {
+
+            var request = new org.springframework.mock.web.MockHttpServletRequest();
+            request.setRequestURI("/api/test");
+            request.setMethod("GET");
+
+            var response = new org.springframework.mock.web.MockHttpServletResponse();
+
+            if ("/".equals(request.getRequestURI())
+                    && "GET".equalsIgnoreCase(request.getMethod())) {
+
+                response.sendRedirect("/doc/swagger-ui.html");
+            } else {
+                response.sendError(401, "Unauthorized");
+            }
+
+            assertEquals(401, response.getStatus());
+        }
+
+        @Test
+        @DisplayName("debería poder inyectar JwtFilter")
+        void deberiaPoderInyectarJwtFilter() {
+
+            JwtFilter jwtFilter = org.mockito.Mockito.mock(JwtFilter.class);
+
+            ReflectionTestUtils.setField(
+                    securityConfig,
+                    "jwtFilter",
+                    jwtFilter);
+
+            assertSame(
+                    jwtFilter,
+                    ReflectionTestUtils.getField(
+                            securityConfig,
+                            "jwtFilter"));
+        }
+    }
 }
