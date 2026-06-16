@@ -67,6 +67,32 @@ class AdminInitializerTest {
             verifyNoInteractions(usuarioRepository);
             verifyNoInteractions(rolRepository);
         }
+
+        @Test
+        @DisplayName("it: debería retornar sin tocar repositorios cuando correo es null")
+        void deberiaRetornarSinTocarRepositoriosCuandoCorreoEsNull() throws Exception {
+
+            ReflectionTestUtils.setField(adminInitializer, "correo", null);
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
+
+            adminInitializer.run();
+
+            verifyNoInteractions(usuarioRepository);
+            verifyNoInteractions(rolRepository);
+        }
+
+        @Test
+        @DisplayName("it: debería retornar sin tocar repositorios cuando password es null")
+        void deberiaRetornarSinTocarRepositoriosCuandoPasswordEsNull() throws Exception {
+
+            ReflectionTestUtils.setField(adminInitializer, "correo", "admin@test.com");
+            ReflectionTestUtils.setField(adminInitializer, "password", null);
+
+            adminInitializer.run();
+
+            verifyNoInteractions(usuarioRepository);
+            verifyNoInteractions(rolRepository);
+        }
     }
 
     @Nested
@@ -118,6 +144,31 @@ class AdminInitializerTest {
 
             assertEquals("admin@test.com", adminGuardado.getCorreo());
             assertEquals(adminRol, adminGuardado.getRol());
+        }
+
+        @Test
+        @DisplayName("it: no debería consultar ADMIN cuando ROLE_ADMIN existe")
+        void noDeberiaConsultarAdminCuandoRoleAdminExiste() throws Exception {
+
+            ReflectionTestUtils.setField(adminInitializer, "correo", "admin@test.com");
+            ReflectionTestUtils.setField(adminInitializer, "password", "admin123");
+
+            RolModel adminRol = new RolModel();
+            adminRol.setNombre("ROLE_ADMIN");
+
+            when(rolRepository.findByNombreIgnoreCase("ROLE_ADMIN"))
+                    .thenReturn(Optional.of(adminRol));
+
+            when(usuarioRepository.findByCorreoIgnoreCase("admin@test.com"))
+                    .thenReturn(Optional.empty());
+
+            when(passwordEncoder.encode("admin123"))
+                    .thenReturn("password-encriptada");
+
+            adminInitializer.run();
+
+            verify(rolRepository).findByNombreIgnoreCase("ROLE_ADMIN");
+            verify(rolRepository, never()).findByNombreIgnoreCase("ADMIN");
         }
     }
 

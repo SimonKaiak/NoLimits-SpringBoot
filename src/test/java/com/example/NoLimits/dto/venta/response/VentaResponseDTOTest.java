@@ -15,6 +15,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class VentaResponseDTOTest {
 
+    private VentaResponseDTO crearDTOCompleto() {
+
+        DetalleVentaResponseDTO detalle = new DetalleVentaResponseDTO();
+        detalle.setId(1L);
+        detalle.setProductoId(10L);
+        detalle.setProductoNombre("Control Xbox Series X");
+        detalle.setCantidad(2);
+        detalle.setPrecioUnitario(12990F);
+        detalle.setSubtotal(25980F);
+
+        VentaResponseDTO dto = new VentaResponseDTO();
+        dto.setId(10L);
+        dto.setFechaCompra(LocalDate.of(2025, 7, 6));
+        dto.setHoraCompra(LocalTime.of(14, 30));
+        dto.setUsuarioId(1L);
+        dto.setUsuarioNombre("Juan Pérez Soto");
+        dto.setMetodoPagoId(2L);
+        dto.setMetodoPagoNombre("Tarjeta de Crédito");
+        dto.setMetodoEnvioId(3L);
+        dto.setMetodoEnvioNombre("Despacho a domicilio");
+        dto.setEstadoId(4L);
+        dto.setEstadoNombre("PENDIENTE");
+        dto.setTotalVenta(45990F);
+        dto.setDetalles(List.of(detalle));
+
+        return dto;
+    }
+
     @Nested
     @DisplayName("Getters y Setters")
     class GettersSetters {
@@ -366,33 +394,113 @@ class VentaResponseDTOTest {
             assertTrue(resultado.contains("10"));
             assertTrue(resultado.contains("PENDIENTE"));
         }
-    }
 
-    private VentaResponseDTO crearDTOCompleto() {
+        @Test
+        @DisplayName("equals id null vs valor")
+        void equalsIdNullVsValor() {
 
-        DetalleVentaResponseDTO detalle = new DetalleVentaResponseDTO();
-        detalle.setId(1L);
-        detalle.setProductoId(10L);
-        detalle.setProductoNombre("Control Xbox Series X");
-        detalle.setCantidad(2);
-        detalle.setPrecioUnitario(12990F);
-        detalle.setSubtotal(25980F);
+            VentaResponseDTO dto1 = new VentaResponseDTO();
 
-        VentaResponseDTO dto = new VentaResponseDTO();
-        dto.setId(10L);
-        dto.setFechaCompra(LocalDate.of(2025, 7, 6));
-        dto.setHoraCompra(LocalTime.of(14, 30));
-        dto.setUsuarioId(1L);
-        dto.setUsuarioNombre("Juan Pérez Soto");
-        dto.setMetodoPagoId(2L);
-        dto.setMetodoPagoNombre("Tarjeta de Crédito");
-        dto.setMetodoEnvioId(3L);
-        dto.setMetodoEnvioNombre("Despacho a domicilio");
-        dto.setEstadoId(4L);
-        dto.setEstadoNombre("PENDIENTE");
-        dto.setTotalVenta(45990F);
-        dto.setDetalles(List.of(detalle));
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(1L);
 
-        return dto;
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals usuarioNombre null vs valor")
+        void equalsUsuarioNombreNullVsValor() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setUsuarioNombre("Juan");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals totalVenta null vs valor")
+        void equalsTotalVentaNullVsValor() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setTotalVenta(1000F);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals cuando ambos objetos tienen todos los campos nulos")
+        void equalsTodosNulos() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("hashCode con todos los campos nulos")
+        void hashCodeTodosNulos() {
+
+            VentaResponseDTO dto = new VentaResponseDTO();
+
+            assertDoesNotThrow(dto::hashCode);
+        }
+
+        @Test
+        @DisplayName("equals mismo id pero distinto usuarioId")
+        void equalsMismoIdDistintoUsuarioId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setId(1L);
+            dto1.setUsuarioId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(1L);
+            dto2.setUsuarioId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals mismos ids pero distinto metodoPagoId")
+        void equalsMismosCamposPreviosDistintoMetodoPagoId() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setId(1L);
+            dto1.setUsuarioId(1L);
+            dto1.setMetodoPagoId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(1L);
+            dto2.setUsuarioId(1L);
+            dto2.setMetodoPagoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals mismos campos previos pero distinto estadoId")
+        void equalsCamposPreviosIgualesEstadoIdDistinto() {
+
+            VentaResponseDTO dto1 = new VentaResponseDTO();
+            dto1.setId(1L);
+            dto1.setUsuarioId(1L);
+            dto1.setMetodoPagoId(1L);
+            dto1.setMetodoEnvioId(1L);
+            dto1.setEstadoId(1L);
+
+            VentaResponseDTO dto2 = new VentaResponseDTO();
+            dto2.setId(1L);
+            dto2.setUsuarioId(1L);
+            dto2.setMetodoPagoId(1L);
+            dto2.setMetodoEnvioId(1L);
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 }

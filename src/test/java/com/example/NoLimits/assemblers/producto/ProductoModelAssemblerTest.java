@@ -70,4 +70,5 @@ class ProductoModelAssemblerTest {
         assertTrue(model.hasLink("productos_mismo_tipo_y_estado"));
         assertTrue(model.hasLink("productos_misma_saga"));
     }
+
 }
