@@ -90,3 +90,11 @@ src/main/resources/application-local.properties
 
 .env
 NoLimits-SpringBoot-main/.env
+
+# ============================================================
+# EVIDENCIAS Y DOCUMENTACIÓN DE APOYO
+# ============================================================
+
+# Evidencias utilizadas durante el desarrollo y pruebas
+# No deben formar parte del repositorio según indicación del profesor
+evidencias/
