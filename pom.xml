@@ -72,21 +72,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Testcontainers PostgreSQL -->
-		<dependency>
-    		<groupId>org.testcontainers</groupId>
-    		<artifactId>junit-jupiter</artifactId>
-    		<version>1.19.8</version>
-    		<scope>test</scope>
-		</dependency>
-
-		<dependency>
-    		<groupId>org.testcontainers</groupId>
-    		<artifactId>postgresql</artifactId>
-    		<version>1.19.8</version>
-    		<scope>test</scope>
-		</dependency>
-
 		<!-- Validaciones Bean Validation (@NotNull, @Size, etc.) -->
 		<dependency>
     		<groupId>org.springframework.boot</groupId>
@@ -206,6 +191,15 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.12</version>
+
+				<configuration>
+					<excludes>
+						<!-- Seeder de datos de desarrollo (@Profile("dev")).
+						     Nunca corre bajo el perfil "test" ni en producción,
+						     así que no tiene sentido exigirle cobertura. -->
+						<exclude>**/DataLoader.class</exclude>
+					</excludes>
+				</configuration>
 
 				<executions>
 					<execution>
