@@ -380,6 +380,175 @@ class ProductoRequestDTOTest {
             // Act & Assert
             assertNotEquals(dto1, dto2);
         }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en sinopsis")
+        void equalsSinopsisDistinta() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setSinopsis("Sinopsis A");
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setSinopsis("Sinopsis B");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en urlTrailer")
+        void equalsUrlTrailerDistinta() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setUrlTrailer("url1");
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setUrlTrailer("url2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en anio")
+        void equalsAnioDistinto() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setAnio(2000);
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setAnio(2020);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en tipoProductoId")
+        void equalsTipoProductoDistinto() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setTipoProductoId(1L);
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setTipoProductoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en clasificacionId")
+        void equalsClasificacionDistinta() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setClasificacionId(1L);
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setClasificacionId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en estadoId")
+        void equalsEstadoDistinto() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setEstadoId(1L);
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en portadaSaga")
+        void equalsPortadaSagaDistinta() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setPortadaSaga("ruta1");
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setPortadaSaga("ruta2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en generos")
+        void equalsGenerosDistintos() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setGenerosIds(List.of(1L));
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setGenerosIds(List.of(2L));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en empresas")
+        void equalsEmpresasDistintas() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setEmpresasIds(List.of(1L));
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setEmpresasIds(List.of(2L));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en desarrolladores")
+        void equalsDesarrolladoresDistintos() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setDesarrolladoresIds(List.of(1L));
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setDesarrolladoresIds(List.of(2L));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en imagenes")
+        void equalsImagenesDistintas() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setImagenesRutas(List.of("img1"));
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setImagenesRutas(List.of("img2"));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en tipoEmpresaId")
+        void equalsTipoEmpresaDistinto() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setTipoEmpresaId(1L);
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setTipoEmpresaId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en tipoDesarrolladorId")
+        void equalsTipoDesarrolladorDistinto() {
+
+            ProductoRequestDTO dto1 = new ProductoRequestDTO();
+            dto1.setTipoDesarrolladorId(1L);
+
+            ProductoRequestDTO dto2 = new ProductoRequestDTO();
+            dto2.setTipoDesarrolladorId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 
 }

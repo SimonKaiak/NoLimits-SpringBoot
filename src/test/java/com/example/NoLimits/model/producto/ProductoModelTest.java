@@ -30,6 +30,42 @@ class ProductoModelTest {
             assertEquals("Película", producto.getSinopsis());
             assertEquals(2002, producto.getAnio());
         }
+
+        @Test
+        @DisplayName("constructor completo asigna valores correctamente")
+        void constructorCompletoLombok() {
+
+            ProductoModel producto = new ProductoModel(
+                    1L,
+                    "Spider-Man",
+                    10000.0,
+                    "Sinopsis",
+                    "trailer",
+                    2002,
+                    "Marvel",
+                    "portada.webp",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals(1L, producto.getId());
+            assertEquals("Spider-Man", producto.getNombre());
+            assertEquals(10000.0, producto.getPrecio());
+            assertEquals("Sinopsis", producto.getSinopsis());
+            assertEquals("trailer", producto.getUrlTrailer());
+            assertEquals(2002, producto.getAnio());
+            assertEquals("Marvel", producto.getSaga());
+            assertEquals("portada.webp", producto.getPortadaSaga());
+        }
     }
 
     @Nested
@@ -175,6 +211,31 @@ class ProductoModelTest {
             ProductoModel p1 = new ProductoModel();
             ProductoModel p2 = new ProductoModel(); p2.setId(1L);
             assertNotEquals(p1, p2);
+        }
+    }
+
+    @Nested
+    @DisplayName("Cobertura adicional Equals y HashCode")
+    class CoberturaAdicionalEqualsHashCode {
+
+        @Test
+        @DisplayName("Comparación con otra clase")
+        void testEqualsOtraClase() {
+
+            ProductoModel producto = new ProductoModel();
+
+            assertNotEquals("texto", producto);
+        }
+
+        @Test
+        @DisplayName("Objetos vacíos son iguales")
+        void testObjetosVaciosSonIguales() {
+
+            ProductoModel p1 = new ProductoModel();
+            ProductoModel p2 = new ProductoModel();
+
+            assertEquals(p1, p2);
+            assertEquals(p1.hashCode(), p2.hashCode());
         }
     }
 

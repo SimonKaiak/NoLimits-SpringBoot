@@ -285,6 +285,184 @@ class ProductoUpdateDTOTest {
             assertNotNull(resultado);
             assertTrue(resultado.contains("Spider-Man"));
         }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en sinopsis")
+        void equalsSinopsisDistinta() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setSinopsis("Sinopsis 1");
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setSinopsis("Sinopsis 2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en urlTrailer")
+        void equalsUrlTrailerDistinta() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setUrlTrailer("url1");
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setUrlTrailer("url2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en anio")
+        void equalsAnioDistinto() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setAnio(2020);
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setAnio(2021);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en tipoProductoId")
+        void equalsTipoProductoIdDistinto() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setTipoProductoId(1L);
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setTipoProductoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en clasificacionId")
+        void equalsClasificacionIdDistinto() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setClasificacionId(1L);
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setClasificacionId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en estadoId")
+        void equalsEstadoIdDistinto() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setEstadoId(1L);
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en portadaSaga")
+        void equalsPortadaSagaDistinta() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setPortadaSaga("portada1.webp");
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setPortadaSaga("portada2.webp");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en generosIds")
+        void equalsGenerosDistintos() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setGenerosIds(List.of(1L));
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setGenerosIds(List.of(2L));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en empresasIds")
+        void equalsEmpresasDistintas() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setEmpresasIds(List.of(1L));
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setEmpresasIds(List.of(2L));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals detecta diferencia en desarrolladoresIds")
+        void equalsDesarrolladoresDistintos() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+            dto1.setDesarrolladoresIds(List.of(1L));
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setDesarrolladoresIds(List.of(2L));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("null vs valor en sinopsis")
+        void nullVsValorSinopsis() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setSinopsis("texto");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("null vs valor en urlTrailer")
+        void nullVsValorUrlTrailer() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setUrlTrailer("url");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("null vs valor en anio")
+        void nullVsValorAnio() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setAnio(2024);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("null vs valor en tipoProductoId")
+        void nullVsValorTipoProductoId() {
+
+            ProductoUpdateDTO dto1 = new ProductoUpdateDTO();
+
+            ProductoUpdateDTO dto2 = new ProductoUpdateDTO();
+            dto2.setTipoProductoId(1L);
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 
     @Nested

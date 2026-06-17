@@ -246,6 +246,58 @@ class ProductoResumenDTOTest {
             ProductoResumenDTO d2 = new ProductoResumenDTO(); d2.setEstadoNombre("Activo");
             assertNotEquals(d1, d2);
         }
+
+        @Test
+        @DisplayName("diferente por portadaSaga")
+        void testNotEqualsPortadaSaga() {
+            ProductoResumenDTO d1 = crearDTO();
+            ProductoResumenDTO d2 = crearDTO();
+
+            d2.setPortadaSaga("/otra-portada.webp");
+
+            assertNotEquals(d1, d2);
+        }
+
+        @Test
+        @DisplayName("null vs valor — tipoProductoNombre")
+        void testNullVsValorTipoProductoNombre() {
+            ProductoResumenDTO d1 = new ProductoResumenDTO();
+
+            ProductoResumenDTO d2 = new ProductoResumenDTO();
+            d2.setTipoProductoNombre("PELÍCULA");
+
+            assertNotEquals(d1, d2);
+        }
+
+        @Test
+        @DisplayName("null vs valor — portadaSaga")
+        void testNullVsValorPortadaSaga() {
+            ProductoResumenDTO d1 = new ProductoResumenDTO();
+
+            ProductoResumenDTO d2 = new ProductoResumenDTO();
+            d2.setPortadaSaga("/assets/img/saga.webp");
+
+            assertNotEquals(d1, d2);
+        }
+
+        @Test
+        @DisplayName("null vs valor — imagenPortada")
+        void testNullVsValorImagenPortada() {
+            ProductoResumenDTO d1 = new ProductoResumenDTO();
+
+            ProductoResumenDTO d2 = new ProductoResumenDTO();
+            d2.setImagenPortada("/assets/img/imagen.webp");
+
+            assertNotEquals(d1, d2);
+        }
+
+        @Test
+        @DisplayName("hashCode puede ejecutarse sobre objeto vacío")
+        void testHashCodeObjetoVacio() {
+            ProductoResumenDTO dto = new ProductoResumenDTO();
+
+            assertDoesNotThrow(dto::hashCode);
+        }
     }
 
     @Nested

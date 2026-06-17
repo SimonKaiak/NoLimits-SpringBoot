@@ -171,5 +171,111 @@ class LinkCompraDTOTest {
         void toStringVacio() {
             assertNotNull(new LinkCompraDTO().toString());
         }
+
+        @Test
+        @DisplayName("null vs valor — appId")
+        void nullVsValorAppId() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+            dto2.setAppId("12345");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("null vs valor — precioActual")
+        void nullVsValorPrecioActual() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+            dto2.setPrecioActual(19990.0);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("valor vs null — plataformaId")
+        void valorVsNullPlataformaId() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+            dto1.setPlataformaId(1L);
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("valor vs null — url")
+        void valorVsNullUrl() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+            dto1.setUrl("https://steam.com");
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("valor vs null — label")
+        void valorVsNullLabel() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+            dto1.setLabel("Steam");
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("valor vs null — appId")
+        void valorVsNullAppId() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+            dto1.setAppId("12345");
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("valor vs null — precioActual")
+        void valorVsNullPrecioActual() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+            dto1.setPrecioActual(19990.0);
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("todos los campos iguales")
+        void todosLosCamposIguales() {
+
+            LinkCompraDTO dto1 = new LinkCompraDTO();
+            dto1.setPlataformaId(1L);
+            dto1.setUrl("https://steam.com");
+            dto1.setLabel("Steam");
+            dto1.setAppId("12345");
+            dto1.setPrecioActual(19990.0);
+
+            LinkCompraDTO dto2 = new LinkCompraDTO();
+            dto2.setPlataformaId(1L);
+            dto2.setUrl("https://steam.com");
+            dto2.setLabel("Steam");
+            dto2.setAppId("12345");
+            dto2.setPrecioActual(19990.0);
+
+            assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 }

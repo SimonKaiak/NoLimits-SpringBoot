@@ -93,6 +93,233 @@ class DireccionRequestDTOTest {
             // Assert
             assertEquals(dto, dto);
         }
+
+        @Test
+        @DisplayName("Comparación con otra clase")
+        void testNotEqualsDifferentClass() {
+
+            // Arrange
+            DireccionRequestDTO dto = crearDTO();
+
+            // Assert
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("Null vs valor calle")
+        void nullVsValorCalle() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+            dto2.setCalle("Av. Siempre Viva");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null calle")
+        void valorVsNullCalle() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+            dto1.setCalle("Av. Siempre Viva");
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor complemento")
+        void nullVsValorComplemento() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+            dto2.setComplemento("Depto 101");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null complemento")
+        void valorVsNullComplemento() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+            dto1.setComplemento("Depto 101");
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor codigo postal")
+        void nullVsValorCodigoPostal() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+            dto2.setCodigoPostal("8320000");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null codigo postal")
+        void valorVsNullCodigoPostal() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+            dto1.setCodigoPostal("8320000");
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor comunaId")
+        void nullVsValorComunaId() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+            dto2.setComunaId(13101L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null comunaId")
+        void valorVsNullComunaId() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+            dto1.setComunaId(13101L);
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor usuarioId")
+        void nullVsValorUsuarioId() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+            dto2.setUsuarioId(5L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null usuarioId")
+        void valorVsNullUsuarioId() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+            dto1.setUsuarioId(5L);
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor activo")
+        void nullVsValorActivo() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+            dto2.setActivo(true);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null activo")
+        void valorVsNullActivo() {
+
+            DireccionRequestDTO dto1 = new DireccionRequestDTO();
+            dto1.setActivo(true);
+
+            DireccionRequestDTO dto2 = new DireccionRequestDTO();
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Diferente calle")
+        void diferenteCalle() {
+
+            DireccionRequestDTO dto1 = crearDTO();
+
+            DireccionRequestDTO dto2 = crearDTO();
+            dto2.setCalle("Otra calle");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Diferente complemento")
+        void diferenteComplemento() {
+
+            DireccionRequestDTO dto1 = crearDTO();
+
+            DireccionRequestDTO dto2 = crearDTO();
+            dto2.setComplemento("Otro depto");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Diferente codigo postal")
+        void diferenteCodigoPostal() {
+
+            DireccionRequestDTO dto1 = crearDTO();
+
+            DireccionRequestDTO dto2 = crearDTO();
+            dto2.setCodigoPostal("9999999");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Diferente comunaId")
+        void diferenteComunaId() {
+
+            DireccionRequestDTO dto1 = crearDTO();
+
+            DireccionRequestDTO dto2 = crearDTO();
+            dto2.setComunaId(999L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Diferente usuarioId")
+        void diferenteUsuarioId() {
+
+            DireccionRequestDTO dto1 = crearDTO();
+
+            DireccionRequestDTO dto2 = crearDTO();
+            dto2.setUsuarioId(999L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Diferente activo")
+        void diferenteActivo() {
+
+            DireccionRequestDTO dto1 = crearDTO();
+
+            DireccionRequestDTO dto2 = crearDTO();
+            dto2.setActivo(false);
+
+            assertNotEquals(dto1, dto2);
+        }
     }
 
     @Nested

@@ -76,6 +76,140 @@ class DetalleVentaResponseDTOTest {
         }
 
         @Test
+        @DisplayName("equals retorna true para misma instancia")
+        void equalsMismaInstancia() {
+
+            DetalleVentaResponseDTO dto = new DetalleVentaResponseDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con null")
+        void equalsConNull() {
+
+            DetalleVentaResponseDTO dto = new DetalleVentaResponseDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con otro tipo")
+        void equalsConOtroTipo() {
+
+            DetalleVentaResponseDTO dto = new DetalleVentaResponseDTO();
+
+            assertNotEquals(dto, "texto");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia id")
+        void equalsDistintoId() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            dto1.setId(1L);
+
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+            dto2.setId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia productoId")
+        void equalsDistintoProductoId() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            dto1.setProductoId(10L);
+
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+            dto2.setProductoId(20L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia productoNombre")
+        void equalsDistintoProductoNombre() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            dto1.setProductoNombre("Xbox");
+
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+            dto2.setProductoNombre("PlayStation");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia cantidad")
+        void equalsDistintaCantidad() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            dto1.setCantidad(1);
+
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+            dto2.setCantidad(2);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia precioUnitario")
+        void equalsDistintoPrecioUnitario() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            dto1.setPrecioUnitario(1000F);
+
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+            dto2.setPrecioUnitario(2000F);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia subtotal")
+        void equalsDistintoSubtotal() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            dto1.setSubtotal(1000F);
+
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+            dto2.setSubtotal(2000F);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("objetos vacíos son iguales")
+        void objetosVaciosSonIguales() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("objetos vacíos generan mismo hashCode")
+        void objetosVaciosMismoHashCode() {
+
+            DetalleVentaResponseDTO dto1 = new DetalleVentaResponseDTO();
+            DetalleVentaResponseDTO dto2 = new DetalleVentaResponseDTO();
+
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode puede ejecutarse con objeto vacío")
+        void hashCodeObjetoVacio() {
+
+            DetalleVentaResponseDTO dto = new DetalleVentaResponseDTO();
+
+            assertDoesNotThrow(dto::hashCode);
+        }
+
+        @Test
         @DisplayName("genera toString correctamente")
         void testToString() {
 

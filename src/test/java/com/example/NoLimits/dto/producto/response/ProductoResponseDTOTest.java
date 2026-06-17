@@ -247,6 +247,266 @@ class ProductoResponseDTOTest {
         }
 
         @Test
+        @DisplayName("Equals retorna false cuando cambia sinopsis")
+        void equalsDistintaSinopsis() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setSinopsis("Sinopsis 1");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setSinopsis("Sinopsis 2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia urlTrailer")
+        void equalsDistintoTrailer() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setUrlTrailer("url1");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setUrlTrailer("url2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia anio")
+        void equalsDistintoAnio() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setAnio(2020);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setAnio(2024);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia clasificacionId")
+        void equalsDistintaClasificacionId() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setClasificacionId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setClasificacionId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia clasificacionNombre")
+        void equalsDistintaClasificacionNombre() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setClasificacionNombre("TE");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setClasificacionNombre("M");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia estadoId")
+        void equalsDistintoEstadoId() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setEstadoId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setEstadoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia estadoNombre")
+        void equalsDistintoEstadoNombre() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setEstadoNombre("Activo");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setEstadoNombre("Inactivo");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia portadaSaga")
+        void equalsDistintaPortadaSaga() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setPortadaSaga("img1");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setPortadaSaga("img2");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia empresas")
+        void equalsEmpresasDistintas() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setEmpresas(List.of("Sony"));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setEmpresas(List.of("Nintendo"));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia desarrolladores")
+        void equalsDesarrolladoresDistintos() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setDesarrolladores(List.of("Insomniac"));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setDesarrolladores(List.of("Rockstar"));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia imagenes")
+        void equalsImagenesDistintas() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setImagenes(List.of("img1"));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setImagenes(List.of("img2"));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia tipoEmpresaId")
+        void equalsTipoEmpresaIdDistinto() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoEmpresaId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoEmpresaId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia tipoEmpresaNombre")
+        void equalsTipoEmpresaNombreDistinto() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoEmpresaNombre("Publisher");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoEmpresaNombre("Developer");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia tipoDesarrolladorId")
+        void equalsTipoDesarrolladorIdDistinto() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoDesarrolladorId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoDesarrolladorId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Equals retorna false cuando cambia tipoDesarrolladorNombre")
+        void equalsTipoDesarrolladorNombreDistinto() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoDesarrolladorNombre("Estudio");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoDesarrolladorNombre("Independiente");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals detecta diferencia en tipoProductoId")
+        void equalsTipoProductoIdDiferente() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoProductoId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoProductoId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals detecta diferencia en tipoProductoNombre")
+        void equalsTipoProductoNombreDiferente() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoProductoNombre("PELICULA");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoProductoNombre("VIDEOJUEGO");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals detecta diferencia en plataformas")
+        void equalsPlataformasDiferentes() {
+
+            PlataformaSimpleDTO p1 = new PlataformaSimpleDTO();
+            p1.setId(1L);
+
+            PlataformaSimpleDTO p2 = new PlataformaSimpleDTO();
+            p2.setId(2L);
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setPlataformas(List.of(p1));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setPlataformas(List.of(p2));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals detecta diferencia en linksCompra")
+        void equalsLinksCompraDiferentes() {
+
+            LinkCompraDTO l1 = new LinkCompraDTO();
+            l1.setUrl("url1");
+
+            LinkCompraDTO l2 = new LinkCompraDTO();
+            l2.setUrl("url2");
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setLinksCompra(List.of(l1));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setLinksCompra(List.of(l2));
+
+            assertNotEquals(dto1, dto2);
+        }
+
+    
+        @Test
         @DisplayName("HashCode objeto vacío")
         void hashCodeObjetoVacio() {
 
@@ -348,6 +608,130 @@ class ProductoResponseDTOTest {
             // Assert
             assertEquals(3, dto.getImagenes().size());
         }
+
+        @Test
+        @DisplayName("Null vs valor en tipoProductoId")
+        void testNullVsValorTipoProductoId() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoProductoId(1L);
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor en tipoProductoNombre")
+        void testNullVsValorTipoProductoNombre() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setTipoProductoNombre("PELICULA");
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor en plataformas")
+        void testNullVsValorPlataformas() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+
+            PlataformaSimpleDTO plataforma = new PlataformaSimpleDTO();
+            plataforma.setId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setPlataformas(List.of(plataforma));
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor en linksCompra")
+        void testNullVsValorLinksCompra() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+
+            LinkCompraDTO link = new LinkCompraDTO();
+            link.setUrl("url");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+            dto2.setLinksCompra(List.of(link));
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null en tipoProductoId")
+        void testValorVsNullTipoProductoId() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoProductoId(1L);
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null en tipoProductoNombre")
+        void testValorVsNullTipoProductoNombre() {
+
+            // Arrange
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setTipoProductoNombre("PELICULA");
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null en plataformas")
+        void testValorVsNullPlataformas() {
+
+            // Arrange
+            PlataformaSimpleDTO plataforma = new PlataformaSimpleDTO();
+            plataforma.setId(1L);
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setPlataformas(List.of(plataforma));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Valor vs null en linksCompra")
+        void testValorVsNullLinksCompra() {
+
+            // Arrange
+            LinkCompraDTO link = new LinkCompraDTO();
+            link.setUrl("url");
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            dto1.setLinksCompra(List.of(link));
+
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            // Act & Assert
+            assertNotEquals(dto1, dto2);
+        }
     }
 
     @Nested
@@ -406,6 +790,59 @@ class ProductoResponseDTOTest {
 
             // Act & Assert
             assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("todos los campos iguales")
+        void todosLosCamposIguales() {
+
+            ProductoResponseDTO dto1 = new ProductoResponseDTO();
+            ProductoResponseDTO dto2 = new ProductoResponseDTO();
+
+            dto1.setId(1L);
+            dto2.setId(1L);
+
+            dto1.setNombre("Spider-Man");
+            dto2.setNombre("Spider-Man");
+
+            dto1.setPrecio(1000.0);
+            dto2.setPrecio(1000.0);
+
+            dto1.setSinopsis("Sinopsis");
+            dto2.setSinopsis("Sinopsis");
+
+            dto1.setUrlTrailer("url");
+            dto2.setUrlTrailer("url");
+
+            dto1.setAnio(2024);
+            dto2.setAnio(2024);
+
+            dto1.setTipoProductoId(1L);
+            dto2.setTipoProductoId(1L);
+
+            dto1.setTipoProductoNombre("PELICULA");
+            dto2.setTipoProductoNombre("PELICULA");
+
+            dto1.setClasificacionId(1L);
+            dto2.setClasificacionId(1L);
+
+            dto1.setClasificacionNombre("TE");
+            dto2.setClasificacionNombre("TE");
+
+            dto1.setEstadoId(1L);
+            dto2.setEstadoId(1L);
+
+            dto1.setEstadoNombre("Activo");
+            dto2.setEstadoNombre("Activo");
+
+            dto1.setSaga("Marvel");
+            dto2.setSaga("Marvel");
+
+            dto1.setPortadaSaga("img");
+            dto2.setPortadaSaga("img");
+
+            assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
         }
 
     }

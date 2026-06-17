@@ -10,6 +10,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests de ComunaUpdateDTO")
 class ComunaUpdateDTOTest {
 
+    private ComunaUpdateDTO crearDTO() {
+
+        ComunaUpdateDTO dto = new ComunaUpdateDTO();
+        dto.setNombre("Santiago Centro");
+        dto.setRegionId(13L);
+
+        return dto;
+    }
+
     @Nested
     @DisplayName("Getters y Setters")
     class GetterSetterTests {
@@ -83,6 +92,98 @@ class ComunaUpdateDTOTest {
             // Assert
             assertEquals(dto, dto);
         }
+
+        @Test
+        @DisplayName("Comparación con otra clase retorna false")
+        void testEqualsOtraClase() {
+
+            ComunaUpdateDTO dto = crearDTO();
+
+            assertNotEquals("texto", dto);
+        }
+
+        @Test
+        @DisplayName("Objetos vacíos son iguales")
+        void testObjetosVaciosIguales() {
+
+            ComunaUpdateDTO dto1 = new ComunaUpdateDTO();
+            ComunaUpdateDTO dto2 = new ComunaUpdateDTO();
+
+            assertEquals(dto1, dto2);
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("Diferente regionId")
+        void testNotEqualsRegionId() {
+
+            ComunaUpdateDTO dto1 = crearDTO();
+            ComunaUpdateDTO dto2 = crearDTO();
+
+            dto2.setRegionId(99L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor en nombre")
+        void testNullVsValorNombre() {
+
+            ComunaUpdateDTO dto1 = new ComunaUpdateDTO();
+
+            ComunaUpdateDTO dto2 = new ComunaUpdateDTO();
+            dto2.setNombre("Santiago Centro");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Null vs valor en regionId")
+        void testNullVsValorRegionId() {
+
+            ComunaUpdateDTO dto1 = new ComunaUpdateDTO();
+
+            ComunaUpdateDTO dto2 = new ComunaUpdateDTO();
+            dto2.setRegionId(13L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Nombre distinto pero misma región")
+        void testNotEqualsSoloNombre() {
+
+            ComunaUpdateDTO dto1 = crearDTO();
+
+            ComunaUpdateDTO dto2 = crearDTO();
+            dto2.setNombre("Maipú");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("HashCode cambia al modificar regionId")
+        void testHashCodeDistintoRegionId() {
+
+            ComunaUpdateDTO dto1 = crearDTO();
+
+            ComunaUpdateDTO dto2 = crearDTO();
+            dto2.setRegionId(99L);
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("HashCode cambia al modificar nombre")
+        void testHashCodeDistintoNombre() {
+
+            ComunaUpdateDTO dto1 = crearDTO();
+
+            ComunaUpdateDTO dto2 = crearDTO();
+            dto2.setNombre("Providencia");
+
+            assertNotEquals(dto1.hashCode(), dto2.hashCode());
+        }
     }
 
     @Nested
@@ -104,14 +205,12 @@ class ComunaUpdateDTOTest {
             assertTrue(result.contains("Santiago Centro"));
             assertTrue(result.contains("13"));
         }
-    }
 
-    private ComunaUpdateDTO crearDTO() {
+        @Test
+        @DisplayName("ToString objeto vacío")
+        void testToStringVacio() {
 
-        ComunaUpdateDTO dto = new ComunaUpdateDTO();
-        dto.setNombre("Santiago Centro");
-        dto.setRegionId(13L);
-
-        return dto;
+            assertNotNull(new ComunaUpdateDTO().toString());
+        }
     }
 }

@@ -64,6 +64,88 @@ class PlataformaSimpleDTOTest {
         }
 
         @Test
+        @DisplayName("equals retorna true para misma instancia")
+        void equalsMismaInstancia() {
+
+            PlataformaSimpleDTO dto = new PlataformaSimpleDTO();
+
+            assertEquals(dto, dto);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con null")
+        void equalsConNull() {
+
+            PlataformaSimpleDTO dto = new PlataformaSimpleDTO();
+
+            assertNotEquals(dto, null);
+        }
+
+        @Test
+        @DisplayName("equals retorna false con otra clase")
+        void equalsConOtraClase() {
+
+            PlataformaSimpleDTO dto = new PlataformaSimpleDTO();
+
+            assertNotEquals(dto, "Netflix");
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia id")
+        void equalsDistintoId() {
+
+            PlataformaSimpleDTO dto1 = new PlataformaSimpleDTO();
+            dto1.setId(1L);
+
+            PlataformaSimpleDTO dto2 = new PlataformaSimpleDTO();
+            dto2.setId(2L);
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("equals retorna false cuando cambia nombre")
+        void equalsDistintoNombre() {
+
+            PlataformaSimpleDTO dto1 = new PlataformaSimpleDTO();
+            dto1.setNombre("Netflix");
+
+            PlataformaSimpleDTO dto2 = new PlataformaSimpleDTO();
+            dto2.setNombre("Disney+");
+
+            assertNotEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("objetos vacíos son iguales")
+        void objetosVaciosSonIguales() {
+
+            PlataformaSimpleDTO dto1 = new PlataformaSimpleDTO();
+            PlataformaSimpleDTO dto2 = new PlataformaSimpleDTO();
+
+            assertEquals(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("objetos vacíos generan mismo hashCode")
+        void objetosVaciosMismoHashCode() {
+
+            PlataformaSimpleDTO dto1 = new PlataformaSimpleDTO();
+            PlataformaSimpleDTO dto2 = new PlataformaSimpleDTO();
+
+            assertEquals(dto1.hashCode(), dto2.hashCode());
+        }
+
+        @Test
+        @DisplayName("hashCode puede ejecutarse sobre objeto vacío")
+        void hashCodeObjetoVacio() {
+
+            PlataformaSimpleDTO dto = new PlataformaSimpleDTO();
+
+            assertDoesNotThrow(dto::hashCode);
+        }
+
+        @Test
         @DisplayName("genera toString correctamente")
         void testToString() {
 
