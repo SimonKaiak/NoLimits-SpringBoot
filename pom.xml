@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.0</version>
+		<version>3.3.13</version>
 		<relativePath/> <!-- Busca el parent desde repositorio remoto -->
 	</parent>
 
@@ -45,6 +45,8 @@
 	<properties>
 		<!-- Versión de Java utilizada en todo el proyecto -->
 		<java.version>17</java.version>
+		<postgresql.version>42.7.10</postgresql.version>
+    	<commons-lang3.version>3.18.0</commons-lang3.version>
 	</properties>
 
 	<!-- ========================
