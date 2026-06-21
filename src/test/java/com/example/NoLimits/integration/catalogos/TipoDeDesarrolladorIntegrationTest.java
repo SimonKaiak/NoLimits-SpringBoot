@@ -1,0 +1,113 @@
+package com.example.NoLimits.integration.catalogos;
+
+import com.example.NoLimits.Multimedia.repository.catalogos.TipoDeDesarrolladorRepository;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem:nolimits_tipo_desarrollador_integration_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
+        "spring.sql.init.mode=never",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+        "spring.jpa.properties.hibernate.id.new_generator_mappings=false"
+})
+@AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
+@DisplayName("T-Integración · Tipos de Desarrollador")
+class TipoDeDesarrolladorIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private TipoDeDesarrolladorRepository tipoDeDesarrolladorRepository;
+
+    @BeforeEach
+    void limpiarDatos() {
+        tipoDeDesarrolladorRepository.deleteAll();
+    }
+
+    @Nested
+    @DisplayName("describe: integración Controller → Service → Repository")
+    class IntegracionTipoDeDesarrollador {
+
+        @Test
+        @DisplayName("it: crea un tipo de desarrollador y lo persiste")
+        void crearTipoDeDesarrollador_persisteEnBaseDeDatos() throws Exception {
+            String body = """
+                    {
+                      "nombre": "Estudio"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/tipos-desarrollador")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.nombre").value("Estudio"));
+
+            assertTrue(tipoDeDesarrolladorRepository.existsByNombreIgnoreCase("Estudio"));
+        }
+
+        @Test
+        @DisplayName("it: obtiene un tipo de desarrollador por ID desde la base de datos")
+        void obtenerTipoDeDesarrolladorPorId_retornaDatoPersistido() throws Exception {
+            String body = """
+                    {
+                      "nombre": "Publisher"
+                    }
+                    """;
+
+            String response = mockMvc.perform(post("/api/v1/tipos-desarrollador")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            Long id = Long.valueOf(response.replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+            mockMvc.perform(get("/api/v1/tipos-desarrollador/" + id))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.nombre").value("Publisher"));
+        }
+
+        @Test
+        @DisplayName("it: valida duplicados usando Service y Repository real")
+        void crearTipoDeDesarrolladorDuplicado_retornaError() throws Exception {
+            String body = """
+                    {
+                      "nombre": "Indie"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/tipos-desarrollador")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(post("/api/v1/tipos-desarrollador")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+}
