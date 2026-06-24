@@ -1,6 +1,6 @@
 # NoLimits - Backend Spring Boot
 
-Proyecto de backend desarrollado con Spring Boot para la plataforma NoLimits, un sistema de gestión de productos multimedia (videojuegos, películas, libros) con funcionalidades de ventas, reseñas, usuarios y un chatbot integrado con OpenAI.
+Proyecto de backend desarrollado con Spring Boot para la plataforma NoLimits, un sistema de gestión de productos multimedia (videojuegos, películas, series, animes, libros, música) con funcionalidades de ventas, reseñas, usuarios y un chatbot integrado con OpenAI.
 
 Asignatura: Desarrollo de Aplicaciones Web  
 Sección: 001D  
